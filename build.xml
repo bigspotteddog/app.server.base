@@ -30,7 +30,6 @@
 
     <!-- Compile classpath -->
     <path id="compile.classpath">
-        <fileset dir="lib/compile" includes="*.jar"/>
         <fileset dir="lib/runtime" includes="*.jar"/>
     </path>
     <property name="compile.classpath" refid="compile.classpath"/>
