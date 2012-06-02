@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+
+<project name="app.server.base" default="release">
+    <property name="app.folder.name" value="app"/>
+
+    <property environment="env"/>
+    <property name="env.BUILD_NUMBER" value="UNSTABLE"/>
+    <property name="build.number" value=".${env.BUILD_NUMBER}"/>
+    <property name="app.version" value="1.0.0${build.number}"/>
+    <echo message="Building ${ant.project.name} version ${app.version}"/>
+
+    <property name="build.home" value="${basedir}/build"/>
+    <property name="app.home" value="${build.home}/${ant.project.name}"/>
+    <property name="lib.dir" value="${basedir}/lib"/>
+    <property name="build.classes" value="${build.home}/${ant.project.name}.jar.build"/>
+    <property name="build.lib.dir" value="${app.home}/webapps/root/WEB-INF/lib"/>
+    <property name="build.jarfile" value="${build.lib.dir}/${ant.project.name}.jar"/>
+
+    <property name="dist.home" value="${basedir}/build/dist"/>
+
+    <property name="package.name" value="${ant.project.name}"/>
+    <property name="package.architecture" value="i386"/>
+
+    <property name="src.dir" value="${basedir}/src"/>
+
+    <!-- ant4j build tasks -->
+    <path id="buildtools.classpath">
+        <fileset dir="${basedir}/lib/build" includes="*.jar"/>
+    </path>
+
+    <!-- Compile classpath -->
+    <path id="compile.classpath">
+        <fileset dir="lib/compile" includes="*.jar"/>
+        <fileset dir="lib/runtime" includes="*.jar"/>
+    </path>
+    <property name="compile.classpath" refid="compile.classpath"/>
+
+    <!--========================= TARGETS ==================================-->
+
+    <target name="clean" description="Clean the build, deleting the ./build folder.">
+        <delete dir="${build.home}"/>
+    </target>
+
+    <target name="all" description="Build everything" depends="clean,main-jar"/>
+
+    <target name="release" description="Build everything"
+            depends="clean,main-jar"/>
+
+    <target name="main-jar" description="Build the main jar.">
+        <property name="build-folder" value="${build.home}/${ant.project.name}.jar.build"/>
+        <mkdir dir="${build-folder}"/>
+
+        <javac source="1.6"
+               target="1.6"
+               debug="true"
+               optimize="true"
+               srcdir="src/${app.folder.name}_jar/java"
+               destdir="${build-folder}"
+               includeantruntime="false">
+            <classpath refid="compile.classpath"/>
+        </javac>
+        <mkdir dir="${dist.home}"/>
+        <jar destfile="${dist.home}/${ant.project.name}-${app.version}.jar" basedir="${build-folder}"/>
+    </target>
+</project>

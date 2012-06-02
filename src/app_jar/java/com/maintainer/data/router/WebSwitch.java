@@ -1,0 +1,238 @@
+package com.maintainer.data.router;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.logging.Logger;
+
+import org.apache.log4j.PropertyConfigurator;
+import org.restlet.Application;
+import org.restlet.Request;
+import org.restlet.Response;
+import org.restlet.Restlet;
+import org.restlet.data.MediaType;
+import org.restlet.data.Status;
+import org.restlet.ext.crypto.CookieAuthenticator;
+import org.restlet.representation.StringRepresentation;
+import org.restlet.routing.Router;
+import org.restlet.routing.Template;
+import org.restlet.routing.TemplateRoute;
+
+import com.maintainer.data.controller.CheckPermissionController;
+import com.maintainer.data.controller.GenericController;
+import com.maintainer.data.controller.LoginController;
+import com.maintainer.data.controller.LogoutController;
+import com.maintainer.data.controller.PingController;
+import com.maintainer.data.controller.UserResourceController;
+import com.maintainer.data.provider.DataProvider;
+import com.maintainer.data.provider.DataProviderFactory;
+import com.maintainer.data.security.MyCookieAuthenticator;
+import com.maintainer.data.security.MyEnroler;
+import com.maintainer.data.security.MyVerifier;
+import com.maintainer.data.security.PermissionsRoleAuthorizer;
+import com.maintainer.util.Utils;
+
+public class WebSwitch extends Application {
+    private static final Logger log = Logger.getLogger(WebSwitch.class.getName());
+    private static final String GENERIC = "/{resource}";
+    private static final int FIVE_MINUTES = 300;
+    private boolean isSecured = true;
+    private Router securedRouter = null;
+    private PermissionsRoleAuthorizer roleAuthorizer;
+    private boolean isTransactional;
+
+    public WebSwitch() {
+        this(true);
+    }
+
+    public WebSwitch(boolean isSecured) {
+        initializeAppServerLogging();
+
+        this.isSecured = isSecured;
+        this.isTransactional = true;
+        Properties properties = Utils.getApplicationServerProperties();
+        String secured = (String) properties.get("appserver.application.secured");
+        if (secured != null) {
+            this.isSecured = Boolean.parseBoolean(secured);
+        }
+
+        String transactional = (String) properties.get("appserver.application.transactional");
+        if (transactional != null) {
+            this.isTransactional = Boolean.parseBoolean(transactional);
+        }
+
+        initializeDefaultDataProvider();
+        initializeDataProviders();
+
+        try {
+            start();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public static void initializeAppServerLogging() {
+        PropertyConfigurator.configure("etc/log4j.properties");
+        log.info("Logging re-initialized.");
+    }
+
+    protected String getApplicationName() {
+        Properties properties = Utils.getApplicationServerProperties();
+        String name = (String) properties.get("appserver.application.name");
+        if (name != null) return name;
+        return "unknown";
+    }
+
+    protected int getMaxCookieAge() {
+        Properties properties = Utils.getApplicationServerProperties();
+        String age = (String) properties.get("appserver.application.max.cookie.age");
+        if (age == null) return FIVE_MINUTES;
+        return Integer.parseInt(age);
+    }
+
+    public void attachAdditionalRoutes(Router router) {}
+    protected DataProvider<?> registerDefaultDataProvider() { return null; }
+    protected void registerDataProviders(Map<Class<?>, DataProvider<?>> dataProviders) {}
+    protected void registerControllerClasses(Map<String, Class<?>> controllerClasses) {}
+
+    protected void initializeDefaultDataProvider() {
+        DataProviderFactory factory = DataProviderFactory.instance();
+
+        DataProvider<?> dataProvider = registerDefaultDataProvider();
+        if (dataProvider != null) {
+            factory.setDefaultDataProvider(dataProvider);
+        }
+    }
+
+    protected void initializeControllerClasses() {
+        Map<String, Class<?>> map = new LinkedHashMap<String, Class<?>>();
+        registerControllerClasses(map);
+        for (Entry<String, Class<?>> e : map.entrySet()) {
+            GenericController.register(e.getKey(), e.getValue());
+        }
+    }
+
+    protected void initializeDataProviders() {
+        Map<Class<?>, DataProvider<?>> map = new LinkedHashMap<Class<?>, DataProvider<?>>();
+        registerDataProviders(map);
+        DataProviderFactory factory = DataProviderFactory.instance();
+        for (Entry<Class<?>, DataProvider<?>> e : map.entrySet()) {
+            factory.register(e.getKey(), e.getValue());
+        }
+    }
+
+    @Override
+    public Restlet createInboundRoot() {
+        initializeControllerClasses();
+
+        Router router = new Router(getContext());
+        securedRouter = router;
+
+        attachRoutes(router);
+
+        if (isSecured) {
+            CookieAuthenticator co = new MyCookieAuthenticator(getContext(), false, "My cookie realm", "MyExtraSecretKey".getBytes());
+            co.setLoginFormPath("/");
+            co.setVerifier(getVerifier());
+            co.setEnroler(getEnroler(getApplicationName()));
+
+            int maxCookieAge = getMaxCookieAge();
+            co.setMaxCookieAge(maxCookieAge);
+            log.info("Set max cookie age: " + maxCookieAge);
+
+            roleAuthorizer = new PermissionsRoleAuthorizer(getApplicationName());
+            roleAuthorizer.setNext(router);
+
+            co.setNext(roleAuthorizer);
+            return co;
+        }
+
+        return router;
+    }
+
+    protected MyEnroler getEnroler(String applicationName) {
+        return new MyEnroler(applicationName);
+    }
+
+    protected MyVerifier getVerifier() {
+        MyVerifier verifier = new MyVerifier();
+        verifier.setApplication(this);
+        return verifier;
+    }
+
+    protected void attachRoutes(Router router) {
+        RouteMap routes = new RouteMap(router);
+        routes.put("/ping", PingController.class);
+        routes.put("/check", CheckPermissionController.class, Template.MODE_STARTS_WITH);
+        routes.put("/login", LoginController.class);
+        routes.put("/logout", LogoutController.class);
+        routes.put("/users", UserResourceController.class, Template.MODE_STARTS_WITH);
+        routes.put(GENERIC, GenericController.class, Template.MODE_STARTS_WITH);
+
+        fillRoutes(routes);
+
+        TemplateRoute generic = routes.remove(GENERIC);
+        routes.put(GENERIC, generic);
+
+        for(Entry<String, TemplateRoute> e : routes.entrySet()) {
+            TemplateRoute route = e.getValue();
+            addRoute(route);
+        }
+    }
+
+    protected void addRoute(TemplateRoute route) {
+        securedRouter.getRoutes().add(route);
+    }
+
+    protected void fillRoutes(RouteMap routes) {}
+
+    public Router getSecuredRouter() {
+        return securedRouter;
+    }
+
+    @Override
+    public void handle(Request request, Response response) {
+        try {
+            begin(request);
+            super.handle(request, response);
+            commit(request);
+        } catch (Exception e) {
+            response.setStatus(Status.SERVER_ERROR_INTERNAL, e, e.getMessage());
+            response.setEntity(new StringRepresentation(e.getMessage(), MediaType.TEXT_PLAIN));
+        }
+    }
+
+    private void commit(Request request) {
+        if (isTransactional  && !Utils.isInternalRequest(request)) {
+            DataProviderFactory.instance().getDefaultDataProvider().commitTransaction();
+        }
+    }
+
+    private void begin(Request request) {
+        if (isTransactional && !Utils.isInternalRequest(request)) {
+            DataProviderFactory.instance().getDefaultDataProvider().beginTransaction();
+        }
+    }
+
+    public PermissionsRoleAuthorizer getRoleAuthorizer() {
+        return roleAuthorizer;
+    }
+
+    public boolean isSecured() {
+        return isSecured;
+    }
+
+    public boolean isTransactional() {
+        return isTransactional;
+    }
+
+    public void setTransactional(boolean isTransactional) {
+        this.isTransactional = isTransactional;
+    }
+
+    public void setSecured(boolean isSecured) {
+        this.isSecured = isSecured;
+    }
+}

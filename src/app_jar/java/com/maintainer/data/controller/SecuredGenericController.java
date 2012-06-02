@@ -1,0 +1,81 @@
+package com.maintainer.data.controller;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+
+import org.restlet.Request;
+import org.restlet.data.ClientInfo;
+import org.restlet.security.User;
+
+import com.maintainer.data.provider.Query;
+import com.maintainer.data.router.WebSwitch;
+import com.maintainer.data.security.model.Filter;
+import com.maintainer.data.security.model.Role;
+import com.maintainer.util.Utils;
+
+public class SecuredGenericController extends GenericController {
+    private static final Logger log = Logger.getLogger(SecuredGenericController.class.getName());
+    private static final Map<String, String> securityResources = new HashMap<String, String>();
+
+    static {
+        securityResources.put("users", "users");
+        securityResources.put("applications", "applications");
+        securityResources.put("roles", "roles");
+        securityResources.put("functions", "functions");
+        securityResources.put("filters", "filters");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected Query addParametersToQuery(Request request, Resource resource, Query query) throws Exception {
+        String security = Utils.getApplicationServerProperties().getProperty("appserver.application.secured");
+        if (Boolean.parseBoolean(security)) {
+            ClientInfo clientInfo = request.getClientInfo();
+            User user = clientInfo.getUser();
+            String identifier = user.getIdentifier();
+
+            if (notSecurityResource(resource)) {
+                WebSwitch application = (WebSwitch) getApplication();
+
+                List<Role> roles = (List<Role>) Utils.subrequest(
+                        application,
+                        "roles?users.username=" + identifier,
+                        request
+                );
+
+                if (roles != null && !roles.isEmpty()) {
+                	StringBuilder buf = new StringBuilder().append('[');
+                    for (Role role : roles) {
+                        if (buf.length() > 1) buf.append(',');
+                        buf.append(role.getId());
+                    }
+                    buf.append(']');
+
+                    String idsString = buf.toString();
+					log.debug("Looking for resource: " + "filters?role:in=" + idsString + "&resource=" + resource.getResource());
+
+                    List<Filter> filters = (List<Filter>) Utils.subrequest(
+                            application,
+                            "filters?role:in=" + idsString + "&resource=" + resource.getResource(),
+                            request
+                    );
+
+                    for (Filter filter : filters) {
+                        log.debug("Adding filter: " + filter.getFilter() + ", " + filter.getIds().toString());
+                        query.filter(filter.getFilter(), filter.getIds());
+                    }
+                }
+            }
+        }
+
+        return super.addParametersToQuery(request, resource, query);
+    }
+
+    private boolean notSecurityResource(Resource resource) {
+        return securityResources.get(resource.getResource()) == null;
+    }
+}
