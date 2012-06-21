@@ -1,5 +1,7 @@
 package com.maintainer.data.model;
 
+import java.util.Date;
+
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.MappedSuperclass;
@@ -14,6 +16,8 @@ public class EntityImpl implements EntityBase {
     @com.google.code.morphia.annotations.Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private Date modified;
 
     @Override
     public void setId(Long id) {
@@ -45,5 +49,15 @@ public class EntityImpl implements EntityBase {
     @Override
     public Key getKey() {
         return new Key(getClass(), getId());
+    }
+
+     @Override
+    public Date getModified() {
+        return modified;
+    }
+
+    @Override
+    public void setModified(Date modified) {
+        this.modified = modified;
     }
 }
