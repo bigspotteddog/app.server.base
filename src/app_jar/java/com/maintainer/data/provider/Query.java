@@ -14,10 +14,12 @@ public class Query extends LinkedHashMap<String, Object> {
     public static final String GE_ = ">=";
     public static final String LT_ = "<";
     public static final String LE_ = "<=";
+	public static final String IN = ":in";
 
     public static final String ORDER = ":order";
     public static final String OFFSET = ":offset";
     public static final String LIMIT = ":limit";
+
 
     private Class<?> kind;
     private String order;

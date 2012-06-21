@@ -43,7 +43,7 @@ public class HibernateDataProvider<T extends EntityBase> extends AbstractDataPro
     }
 
     @Override
-    protected void preMerge(T incoming, T existing) {
+    protected void preMerge(final T incoming, final T existing) {
         getDatastore().evict(existing);
     }
 
@@ -56,51 +56,51 @@ public class HibernateDataProvider<T extends EntityBase> extends AbstractDataPro
     public void commitTransaction() {
         try {
             HibernateUtil.commitTransaction(true);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public T post(T item) throws Exception {
+    public T post(final T item) throws Exception {
         autocreate(item);
-        Session datastore = getDatastore();
+        final Session datastore = getDatastore();
         datastore.saveOrUpdate(item);
         return item;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public T get(Key key) {
-        T obj = (T) getDatastore().get(key.getKind(), key.getId());
+    public T get(final Key key) {
+        final T obj = (T) getDatastore().get(key.getKind(), key.getId());
         return obj;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public List<T> getAll(Class<?> kind) throws Exception {
-        Session datastore = getDatastore();
-        Criteria crit = datastore.createCriteria(kind);
-        List<T> list = crit.list();
+    public List<T> getAll(final Class<?> kind) throws Exception {
+        final Session datastore = getDatastore();
+        final Criteria crit = datastore.createCriteria(kind);
+        final List<T> list = crit.list();
         return list;
     }
 
     @Override
-    public T put(T item) throws Exception {
+    public T put(final T item) throws Exception {
         autocreate(item);
-        Session datastore = getDatastore();
+        final Session datastore = getDatastore();
         datastore.merge(item);
         return item;
     }
 
     @Override
-    public Key delete(Key key) throws Exception {
-        Session datastore = getDatastore();
+    public Key delete(final Key key) throws Exception {
+        final Session datastore = getDatastore();
 
-        T cleared = autodelete(key);
+        final T cleared = autodelete(key);
         datastore.evict(cleared);
 
-        T item = get(key);
+        final T item = get(key);
         datastore.merge(cleared);
         datastore.delete(item);
         return key;
@@ -108,16 +108,16 @@ public class HibernateDataProvider<T extends EntityBase> extends AbstractDataPro
 
     @SuppressWarnings("unchecked")
     @Override
-    public Collection<T> find(Query query) {
-        Map<String, String> alias = new HashMap<String, String>();
+    public Collection<T> find(final Query query) {
+        final Map<String, String> alias = new HashMap<String, String>();
 
-        Session datastore = getDatastore();
-        Criteria q = datastore.createCriteria(query.getKind(),
+        final Session datastore = getDatastore();
+        final Criteria q = datastore.createCriteria(query.getKind(),
                 query.getKindName());
-        for (Entry<String, Object> e : query.entrySet()) {
+        for (final Entry<String, Object> e : query.entrySet()) {
             String key = e.getKey();
 
-            String[] split = key.split("(\\s|:)");
+            final String[] split = key.split("(\\s|:)");
             key = split[0];
 
             String op = null;
@@ -125,17 +125,18 @@ public class HibernateDataProvider<T extends EntityBase> extends AbstractDataPro
                 op = split[1];
                 op = ops.get(op);
             }
-            if (op == null)
+
+            if (op == null) {
                 op = "=";
+            }
 
             Object value = e.getValue();
 
-            Class<?> keyType = Utils.getKeyType(query.getKind(), key);
+            final Class<?> keyType = Utils.getKeyType(query.getKind(), key);
             value = Utils.convert(value, keyType);
 
             boolean ignoreCase = false;
-            if (value != null
-                    && String.class.isAssignableFrom(value.getClass())) {
+            if (value != null && String.class.isAssignableFrom(value.getClass())) {
                 ignoreCase = true;
                 if ("like".equals(op)) {
                     value = ((String) value) + "%";
@@ -160,7 +161,7 @@ public class HibernateDataProvider<T extends EntityBase> extends AbstractDataPro
         }
 
         if (query.getOrder() != null) {
-            String[] fields = StringUtils.split(query.getOrder(), ',');
+            final String[] fields = StringUtils.split(query.getOrder(), ',');
             for (String field : fields) {
                 if (field.startsWith("-")) {
                     field = field.substring(1);
@@ -184,20 +185,21 @@ public class HibernateDataProvider<T extends EntityBase> extends AbstractDataPro
             q.setMaxResults(query.getLimit());
         }
 
-        List<T> list = q.list();
+        final List<T> list = q.list();
         return new LinkedHashSet<T>(list);
     }
 
-    protected String createAlias(Criteria q, String kind, String field,
-            Map<String, String> aliasMap) {
-        String[] split = (kind + '.' + field).split("\\.");
-        if (split.length < 2)
-            return field;
+    protected String createAlias(final Criteria q, final String kind, final String field,
+            final Map<String, String> aliasMap) {
+        final String[] split = (kind + '.' + field).split("\\.");
+        if (split.length < 2) {
+			return field;
+		}
 
         int i = 0;
         for (i = 0; i < split.length - 2; i++) {
-            String a = split[i + 1];
-            String b = split[i] + '.' + a;
+            final String a = split[i + 1];
+            final String b = split[i] + '.' + a;
             if (aliasMap.get(a) == null) {
                 q.createAlias(b, a);
                 aliasMap.put(a, b);
@@ -211,19 +213,19 @@ public class HibernateDataProvider<T extends EntityBase> extends AbstractDataPro
         return HibernateUtil.getCurrentSession();
     }
 
-    protected Session getDatastore(boolean forceNewConnection) {
+    protected Session getDatastore(final boolean forceNewConnection) {
         return HibernateUtil.getCurrentSession(forceNewConnection);
     }
 
-    private void evict(T item) {
+    private void evict(final T item) {
         getDatastore().evict(item);
     }
 
     private class MySimpleExpression extends SimpleExpression {
         private static final long serialVersionUID = -6702408555310953731L;
 
-        protected MySimpleExpression(String propertyName, Object value,
-                String op, boolean ignoreCase) {
+        protected MySimpleExpression(final String propertyName, final Object value,
+                final String op, final boolean ignoreCase) {
 
             super(propertyName, value, op, ignoreCase);
         }
