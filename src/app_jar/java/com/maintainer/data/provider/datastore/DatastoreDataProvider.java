@@ -5,10 +5,12 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -23,6 +25,9 @@ import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.SortDirection;
+import com.google.appengine.api.datastore.Text;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.maintainer.data.model.Autocreate;
 import com.maintainer.data.model.EntityBase;
@@ -32,6 +37,8 @@ import com.maintainer.data.provider.Query;
 
 public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataProvider<T> {
     private static final Logger log = Logger.getLogger(DatastoreDataProvider.class.getName());
+    private static final Cache<com.maintainer.data.provider.Key, Object> cache = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.SECONDS).build();
+
     @Override
     public Long getId(Object object) {
         if (object != null && Key.class.isAssignableFrom(object.getClass())) {
@@ -41,12 +48,21 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return super.getId(object);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public T get(com.maintainer.data.provider.Key key) {
+        T cached = (T) cache.getIfPresent(key);
+        if (cached != null) {
+            log.debug(key + " returned from cache.");
+            return cached;
+        }
+
         Key k = createKey(key.getKindName(), key.getId());
         try {
             Entity entity = getEntity(k);
-            return fromEntity(key.getKind(), entity);
+            T fetched = fromEntity(key.getKind(), entity);
+            cache.put(key, fetched);
+            return fetched;
         } catch (EntityNotFoundException e) {
             //ignore, it will just be null
         }
@@ -82,6 +98,8 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                         String className = k.getKind();
                         Class<?> class1 = Class.forName(className);
                         value = get(new com.maintainer.data.provider.Key(class1, k.getId()));
+                    } else if (Text.class.isAssignableFrom(value.getClass())) {
+                        value = ((Text) value).getValue();
                     } else if (Collection.class.isAssignableFrom(value.getClass())) {
                         List<Object> list = new ArrayList<Object>((Collection<? extends Object>) value);
 
@@ -143,6 +161,8 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     public T post(T target) throws Exception {
         autocreate(target);
 
+        target.setModified(new Date());
+
         Entity entity = new Entity(getKindName(target.getClass()));
         entity = toEntity(entity, target);
 
@@ -152,9 +172,26 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return target;
     }
 
+
     @Override
     public T put(T target) throws Exception {
+        com.maintainer.data.provider.Key key = new com.maintainer.data.provider.Key(target.getClass(), target.getId());
+        T existing = get(key);
+
+        if (checkEqual(target, existing)) {
+            return target;
+        } else {
+            log.debug(key + " changed.");
+        }
+
         autocreate(target);
+
+        if (target.getId() == null) {
+            target = post(target);
+            return target;
+        }
+
+        target.setModified(new Date());
 
         Entity entity = getEntity(KeyFactory.createKey(getKindName(target.getClass()), target.getId()));
         entity = toEntity(entity, target);
@@ -163,6 +200,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         Key posted = datastore.put(entity);
         target.setId(posted.getId());
         return target;
+    }
+
+    protected boolean checkEqual(T target, T existing) throws Exception {
+        return isEqual(target, existing);
     }
 
     @SuppressWarnings("unchecked")
@@ -201,6 +242,12 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                 }
             }
 
+            if (value != null && String.class.isAssignableFrom(value.getClass())) {
+                String string = (String) value;
+                if (string.length() > 500) {
+                    value = new Text(string);
+                }
+            }
             entity.setProperty(f.getName(), value);
         }
         return entity;
@@ -210,7 +257,6 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         ArrayList<Field> fields = new ArrayList<Field>();
         Class<?> clazz = target.getClass();
         while (clazz != null) {
-            log.debug("clazz = " + clazz.getName());
             Field[] fields2 = clazz.getDeclaredFields();
             fields.addAll(Lists.newArrayList(fields2));
             clazz = clazz.getSuperclass();
@@ -302,6 +348,8 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                     field = field.substring(1);
                     if (!"id".equals(field.toLowerCase())) {
                         q.addSort(field, SortDirection.DESCENDING);
+                    } else {
+                        q.addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.DESCENDING);
                     }
                 } else {
                     if (!"id".equals(field.toLowerCase())) {
