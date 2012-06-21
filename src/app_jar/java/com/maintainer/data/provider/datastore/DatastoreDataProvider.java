@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -34,15 +35,32 @@ import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
 import com.maintainer.data.provider.AbstractDataProvider;
 import com.maintainer.data.provider.Query;
+import com.maintainer.util.Utils;
 
 public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataProvider<T> {
     private static final Logger log = Logger.getLogger(DatastoreDataProvider.class.getName());
     private static final Cache<com.maintainer.data.provider.Key, Object> cache = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.SECONDS).build();
 
+    private static final Map<String, FilterOperator> ops = new HashMap<String, FilterOperator>();
+
+    public DatastoreDataProvider() {
+        ops.put("ge", FilterOperator.GREATER_THAN_OR_EQUAL);
+        ops.put("gt", FilterOperator.GREATER_THAN);
+        ops.put("le", FilterOperator.LESS_THAN_OR_EQUAL);
+        ops.put("lt", FilterOperator.LESS_THAN);
+        ops.put("eq", FilterOperator.EQUAL);
+        ops.put(">=", FilterOperator.GREATER_THAN_OR_EQUAL);
+        ops.put(">", FilterOperator.GREATER_THAN);
+        ops.put("<=", FilterOperator.LESS_THAN_OR_EQUAL);
+        ops.put("<", FilterOperator.LESS_THAN);
+        ops.put("=", FilterOperator.EQUAL);
+        ops.put("in", FilterOperator.IN);
+    }
+
     @Override
-    public Long getId(Object object) {
+    public Long getId(final Object object) {
         if (object != null && Key.class.isAssignableFrom(object.getClass())) {
-            Key key = (Key) object;
+            final Key key = (Key) object;
             return key.getId();
         }
         return super.getId(object);
@@ -50,66 +68,66 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
     @SuppressWarnings("unchecked")
     @Override
-    public T get(com.maintainer.data.provider.Key key) {
-        T cached = (T) cache.getIfPresent(key);
+    public T get(final com.maintainer.data.provider.Key key) {
+        final T cached = (T) cache.getIfPresent(key);
         if (cached != null) {
             log.debug(key + " returned from cache.");
             return cached;
         }
 
-        Key k = createKey(key.getKindName(), key.getId());
+        final Key k = createKey(key.getKindName(), key.getId());
         try {
-            Entity entity = getEntity(k);
-            T fetched = fromEntity(key.getKind(), entity);
+            final Entity entity = getEntity(k);
+            final T fetched = fromEntity(key.getKind(), entity);
             cache.put(key, fetched);
             return fetched;
-        } catch (EntityNotFoundException e) {
+        } catch (final EntityNotFoundException e) {
             //ignore, it will just be null
         }
         return null;
     }
 
-    private Entity getEntity(Key key) throws EntityNotFoundException {
-        DatastoreService datastore = getDatastore();
-        Entity entity = datastore.get(key);
+    private Entity getEntity(final Key key) throws EntityNotFoundException {
+        final DatastoreService datastore = getDatastore();
+        final Entity entity = datastore.get(key);
         return entity;
     }
 
     @SuppressWarnings("unchecked")
-    private T fromEntity(Class<?> kind, Entity entity) {
+    private T fromEntity(final Class<?> kind, final Entity entity) {
         T obj = null;
 
         try {
-            Constructor<T> c = (Constructor<T>) kind.getDeclaredConstructor((Class[]) null);
+            final Constructor<T> c = (Constructor<T>) kind.getDeclaredConstructor((Class[]) null);
             c.setAccessible(true);
             obj = c.newInstance((Object[]) null);
 
-            Map<String, Object> properties = entity.getProperties();
-            ArrayList<Field> fields = getFields(obj);
-            for (Field f : fields) {
+            final Map<String, Object> properties = entity.getProperties();
+            final ArrayList<Field> fields = getFields(obj);
+            for (final Field f : fields) {
                 f.setAccessible(true);
 
-                String key = f.getName();
+                final String key = f.getName();
                 Object value = properties.get(key);
 
                 if (value != null) {
                     if (Key.class.isAssignableFrom(value.getClass())) {
-                        Key k = (Key) value;
-                        String className = k.getKind();
-                        Class<?> class1 = Class.forName(className);
+                        final Key k = (Key) value;
+                        final String className = k.getKind();
+                        final Class<?> class1 = Class.forName(className);
                         value = get(new com.maintainer.data.provider.Key(class1, k.getId()));
                     } else if (Text.class.isAssignableFrom(value.getClass())) {
                         value = ((Text) value).getValue();
                     } else if (Collection.class.isAssignableFrom(value.getClass())) {
-                        List<Object> list = new ArrayList<Object>((Collection<? extends Object>) value);
+                        final List<Object> list = new ArrayList<Object>((Collection<? extends Object>) value);
 
-                        ListIterator<Object> iterator = list.listIterator();
+                        final ListIterator<Object> iterator = list.listIterator();
                         while(iterator.hasNext()) {
                             Object o = iterator.next();
                             if (Key.class.isAssignableFrom(o.getClass())) {
-                                Key k = (Key) o;
-                                String className = k.getKind();
-                                Class<?> class1 = Class.forName(className);
+                                final Key k = (Key) o;
+                                final String className = k.getKind();
+                                final Class<?> class1 = Class.forName(className);
                                 o = get(new com.maintainer.data.provider.Key(class1, k.getId()));
                                 iterator.set(o);
                             }
@@ -122,43 +140,43 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
             obj.setId(entity.getKey().getId());
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(e);
         }
 
         return obj;
     }
 
-    private Key createKey(String kind, long id) {
-        Key key = KeyFactory.createKey(kind, id);
+    private Key createKey(final String kind, final long id) {
+        final Key key = KeyFactory.createKey(kind, id);
         return key;
     }
 
     private DatastoreService getDatastore() {
-        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        final DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         return datastore;
     }
 
-    private String getKindName(Class<?> clazz) {
+    private String getKindName(final Class<?> clazz) {
         return com.maintainer.data.provider.Key.getKindName(clazz);
     }
 
     @Override
-    public List<T> getAll(Class<?> kind) throws Exception {
-        com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(getKindName(kind));
-        DatastoreService datastore = getDatastore();
-        PreparedQuery p = datastore.prepare(q);
-        List<T> list = new ArrayList<T>();
-        List<Entity> entities = p.asList(FetchOptions.Builder.withDefaults());
-        for (Entity e : entities) {
-            T obj = fromEntity(kind, e);
+    public List<T> getAll(final Class<?> kind) throws Exception {
+        final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(getKindName(kind));
+        final DatastoreService datastore = getDatastore();
+        final PreparedQuery p = datastore.prepare(q);
+        final List<T> list = new ArrayList<T>();
+        final List<Entity> entities = p.asList(FetchOptions.Builder.withDefaults());
+        for (final Entity e : entities) {
+            final T obj = fromEntity(kind, e);
             list.add(obj);
         }
         return list;
     }
 
     @Override
-    public T post(T target) throws Exception {
+    public T post(final T target) throws Exception {
         autocreate(target);
 
         target.setModified(new Date());
@@ -166,8 +184,8 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         Entity entity = new Entity(getKindName(target.getClass()));
         entity = toEntity(entity, target);
 
-        DatastoreService datastore = getDatastore();
-        Key posted = datastore.put(entity);
+        final DatastoreService datastore = getDatastore();
+        final Key posted = datastore.put(entity);
         target.setId(posted.getId());
         return target;
     }
@@ -175,8 +193,8 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
     @Override
     public T put(T target) throws Exception {
-        com.maintainer.data.provider.Key key = new com.maintainer.data.provider.Key(target.getClass(), target.getId());
-        T existing = get(key);
+        final com.maintainer.data.provider.Key key = new com.maintainer.data.provider.Key(target.getClass(), target.getId());
+        final T existing = get(key);
 
         if (checkEqual(target, existing)) {
             return target;
@@ -196,54 +214,54 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         Entity entity = getEntity(KeyFactory.createKey(getKindName(target.getClass()), target.getId()));
         entity = toEntity(entity, target);
 
-        DatastoreService datastore = getDatastore();
-        Key posted = datastore.put(entity);
+        final DatastoreService datastore = getDatastore();
+        final Key posted = datastore.put(entity);
         target.setId(posted.getId());
         return target;
     }
 
-    protected boolean checkEqual(T target, T existing) throws Exception {
+    protected boolean checkEqual(final T target, final T existing) throws Exception {
         return isEqual(target, existing);
     }
 
     @SuppressWarnings("unchecked")
-    private Entity toEntity(Entity entity, T target) throws Exception {
+    private Entity toEntity(final Entity entity, final T target) throws Exception {
 
-        ArrayList<Field> fields = getFields(target);
+        final ArrayList<Field> fields = getFields(target);
 
-        for (Field f : fields) {
+        for (final Field f : fields) {
             f.setAccessible(true);
             Object value = f.get(target);
 
-            Autocreate annotation = f.getAnnotation(Autocreate.class);
+            final Autocreate annotation = f.getAnnotation(Autocreate.class);
             if (annotation != null) {
                 try {
                     if (value != null) {
                         if (EntityBase.class.isAssignableFrom(value.getClass())) {
-                            EntityBase base = (EntityBase) value;
+                            final EntityBase base = (EntityBase) value;
                             value = KeyFactory.createKey(getKindName(base.getClass()), base.getId());
                         } else if (Collection.class.isAssignableFrom(value.getClass())) {
-                            List<Object> list = new ArrayList<Object>((Collection<Object>) value);
+                            final List<Object> list = new ArrayList<Object>((Collection<Object>) value);
                             value = list;
 
-                            ListIterator<Object> iterator = list.listIterator();
+                            final ListIterator<Object> iterator = list.listIterator();
                             while(iterator.hasNext()) {
-                                Object o = iterator.next();
+                                final Object o = iterator.next();
                                 if (EntityBase.class.isAssignableFrom(o.getClass())) {
-                                    EntityBase base = (EntityBase) o;
-                                    Key key = KeyFactory.createKey(getKindName(base.getClass()), base.getId());
+                                    final EntityBase base = (EntityBase) o;
+                                    final Key key = KeyFactory.createKey(getKindName(base.getClass()), base.getId());
                                     iterator.set(key);
                                 }
                             }
                         }
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new RuntimeException(e);
                 }
             }
 
             if (value != null && String.class.isAssignableFrom(value.getClass())) {
-                String string = (String) value;
+                final String string = (String) value;
                 if (string.length() > 500) {
                     value = new Text(string);
                 }
@@ -253,11 +271,11 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return entity;
     }
 
-    private ArrayList<Field> getFields(T target) {
-        ArrayList<Field> fields = new ArrayList<Field>();
+    private ArrayList<Field> getFields(final T target) {
+        final ArrayList<Field> fields = new ArrayList<Field>();
         Class<?> clazz = target.getClass();
         while (clazz != null) {
-            Field[] fields2 = clazz.getDeclaredFields();
+            final Field[] fields2 = clazz.getDeclaredFields();
             fields.addAll(Lists.newArrayList(fields2));
             clazz = clazz.getSuperclass();
         }
@@ -265,82 +283,74 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     }
 
     @Override
-    public com.maintainer.data.provider.Key delete(com.maintainer.data.provider.Key key) throws Exception {
+    public com.maintainer.data.provider.Key delete(final com.maintainer.data.provider.Key key) throws Exception {
         autodelete(key);
 
-        DatastoreService datastore = getDatastore();
+        final DatastoreService datastore = getDatastore();
         datastore.delete(createKey(key.getKindName(), key.getId()));
         return key;
     }
 
-    private void addFilter(com.google.appengine.api.datastore.Query q, String propertyName, FilterOperator operator, Object value) {
+    private void addFilter(final com.google.appengine.api.datastore.Query q, final String propertyName, final FilterOperator operator, Object value) {
         if (EntityImpl.class.isAssignableFrom(value.getClass())) {
-            EntityImpl entity = (EntityImpl) value;
+            final EntityImpl entity = (EntityImpl) value;
             value = createKey(entity.getKey());
         } else if (com.maintainer.data.provider.Key.class.isAssignableFrom(value.getClass())) {
-            com.maintainer.data.provider.Key k = (com.maintainer.data.provider.Key) value;
+            final com.maintainer.data.provider.Key k = (com.maintainer.data.provider.Key) value;
             value = createKey(k);
         }
         q.addFilter(propertyName.trim(), operator, value);
     }
 
-    private Key createKey(com.maintainer.data.provider.Key k) {
+    private Key createKey(final com.maintainer.data.provider.Key k) {
         return createKey(k.getKindName(), k.getId());
     }
 
     @Override
-    public List<T> find(Query query) {
-        DatastoreService datastore = getDatastore();
+    public List<T> find(final Query query) {
+        final DatastoreService datastore = getDatastore();
 
         if (query.getKey() != null) {
             try {
-                Entity entity = datastore.get(createKey(query.getKey()));
-                T fromEntity = fromEntity(query.getKind(), entity);
-                ArrayList<T> list = new ArrayList<T>();
+                final Entity entity = datastore.get(createKey(query.getKey()));
+                final T fromEntity = fromEntity(query.getKind(), entity);
+                final ArrayList<T> list = new ArrayList<T>();
                 list.add(fromEntity);
                 return list;
-            } catch (EntityNotFoundException e1) {
+            } catch (final EntityNotFoundException e1) {
                 e1.printStackTrace();
             }
             return Collections.emptyList();
         }
 
-        com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(getKindName(query.getKind()));
+        final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(getKindName(query.getKind()));
 
-        for (Entry<String, Object> e : query.entrySet()) {
+        for (final Entry<String, Object> e : query.entrySet()) {
             String key = e.getKey();
-            Object value = e.getValue();
-            if (key.endsWith(Query.GE)) {
-                key = key.substring(0, key.length() - 3);
-                addFilter(q, key, FilterOperator.GREATER_THAN_OR_EQUAL, value);
-            } else if (key.endsWith(Query.GE_)) {
-                key = key.substring(0, key.length() - 2);
-                addFilter(q, key, FilterOperator.GREATER_THAN_OR_EQUAL, value);
-            } else if (key.endsWith(Query.GT)) {
-                key = key.substring(0, key.length() - 3);
-                addFilter(q, key, FilterOperator.GREATER_THAN, value);
-            } else if (key.endsWith(Query.GE_)) {
-                key = key.substring(0, key.length() - 1);
-                addFilter(q, key, FilterOperator.GREATER_THAN, value);
-            } else if (key.endsWith(Query.LE)) {
-                key = key.substring(0, key.length() - 3);
-                addFilter(q, key, FilterOperator.LESS_THAN_OR_EQUAL, value);
-            } else if (key.endsWith(Query.LE_)) {
-                key = key.substring(0, key.length() - 2);
-                addFilter(q, key, FilterOperator.LESS_THAN_OR_EQUAL, value);
-            } else if (key.endsWith(Query.LT)) {
-                key = key.substring(0, key.length() - 3);
-                addFilter(q, key, FilterOperator.LESS_THAN, value);
-            } else if (key.endsWith(Query.LT_)) {
-                key = key.substring(0, key.length() - 1);
-                addFilter(q, key, FilterOperator.LESS_THAN, value);
-            } else {
-                addFilter(q, key, FilterOperator.EQUAL, value);
+
+            final String[] split = key.split("(\\s|:)");
+            key = split[0];
+
+            FilterOperator op = null;
+            if (split.length > 1) {
+                final String o = split[1];
+                op = ops.get(o);
             }
+
+            if (op == null) {
+                op = FilterOperator.EQUAL;
+            }
+
+            Object value = e.getValue();
+
+            final Class<?> keyType = Utils.getKeyType(query.getKind(), key);
+            value = Utils.convert(value, keyType);
+
+            addFilter(q, key, op, value);
         }
 
         if (query.getOrder() != null) {
-            String[] fields = StringUtils.split(query.getOrder(), ',');
+            final String[] fields = StringUtils.split(query.getOrder(), ',');
             for (String field : fields) {
 
 
@@ -362,7 +372,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             }
         }
 
-        FetchOptions options = FetchOptions.Builder.withDefaults();
+        final FetchOptions options = FetchOptions.Builder.withDefaults();
         if (query.getOffset() > 0) {
             options.offset(query.getOffset());
         }
@@ -371,12 +381,12 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             options.limit(query.getLimit());
         }
 
-        PreparedQuery p = datastore.prepare(q);
+        final PreparedQuery p = datastore.prepare(q);
 
-        List<T> list = new ArrayList<T>();
-        List<Entity> entities = p.asList(options);
-        for (Entity e : entities) {
-            T target = fromEntity(query.getKind(), e);
+        final List<T> list = new ArrayList<T>();
+        final List<Entity> entities = p.asList(options);
+        for (final Entity e : entities) {
+            final T target = fromEntity(query.getKind(), e);
             list.add(target);
         }
 
