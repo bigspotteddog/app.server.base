@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/app_jar/java"/>
+	<classpathentry kind="lib" path="build/dist/app.server.base-1.0.0.UNSTABLE.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/antlr-2.7.7.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/appengine-api.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/c3p0-0.9.1.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/commons-collections-3.2.1.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/commons-lang3-3.1.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/dom4j-1.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/gson-2.0.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/guava-11.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/hibernate-c3p0-4.0.1.Final.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/hibernate-commons-annotations-4.0.1.Final.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/hibernate-core-4.0.1.Final.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/hibernate-jpa-2.0-api-1.0.1.Final.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/jasypt-1.9.0.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/javassist-3.15.0-GA.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/jboss-logging-3.1.0.CR2.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/jboss-transaction-api_1.1_spec-1.0.0.Final.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/jtds-1.2.5.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/log4j-1.2.16.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/mongo-2.7.2.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/morphia-0.99.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/mysql-connector-java-5.1.18-bin.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/org.json.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/org.restlet.ext.crypto.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/org.restlet.ext.json.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/org.restlet.ext.servlet.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/org.restlet.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="build/app.server.base.jar.build"/>
+</classpath>
