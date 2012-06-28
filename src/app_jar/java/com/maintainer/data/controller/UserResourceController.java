@@ -8,41 +8,41 @@ import com.maintainer.data.provider.DataProvider;
 import com.maintainer.data.provider.Key;
 import com.maintainer.util.Utils;
 
-public class UserResourceController extends GenericController {
+public class UserResourceController extends GenericController<User> {
     @Override
-    protected void prePost(Object obj) {
-        User user = (User) obj;
+    protected void prePost(final User obj) {
+        final User user = obj;
         encryptPassword(user);
     }
 
-    public static void encryptPassword(User user) {
+    public static void encryptPassword(final User user) {
         user.setPassword(Utils.encrypt(user.getPassword()));
     }
 
     @Override
-    protected void prePut(Object obj) {
-        DataProvider<?> provider = getDataProvider();
-        User user = (User) obj;
+    protected void prePut(final User obj) {
+        final DataProvider<?> provider = getDataProvider();
+        final User user = obj;
 
-        User existing = (User) provider.get(new Key(user.getClass(), user.getId()));
+        final User existing = (User) provider.get(new Key(user.getClass(), user.getId()));
         if (existing.getPassword() == null || (user.getPassword() != null && !existing.getPassword().equals(user.getPassword()))) {
             encryptPassword(user);
         }
     }
 
-    public static User createUser(String username, String password) {
+    public static User createUser(final String username, final String password) {
         User user = null;
 
-        Class<?> userClass = getUserClass();
+        final Class<?> userClass = getUserClass();
         if (userClass != null) {
             try {
-                Constructor<?> c = userClass.getDeclaredConstructor();
+                final Constructor<?> c = userClass.getDeclaredConstructor();
                 c.setAccessible(true);
                 user = (User) c.newInstance();
                 user.setUsername(username);
                 user.setPassword(password);
                 return user;
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 e.printStackTrace();
             }
         }
@@ -51,14 +51,14 @@ public class UserResourceController extends GenericController {
     }
 
     public static Class<?> getUserClass() {
-        Properties properties = Utils.getApplicationServerProperties();
-        String className = (String) properties.get("appserver.user.class");
+        final Properties properties = Utils.getApplicationServerProperties();
+        final String className = (String) properties.get("appserver.user.class");
         if (className != null) {
             Class<?> userClass;
             try {
                 userClass = Class.forName(className);
                 return userClass;
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // let it be null
             }
         }

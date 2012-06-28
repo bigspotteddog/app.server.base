@@ -1,12 +1,10 @@
 package com.maintainer.data.controller;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-
 import org.restlet.Request;
 import org.restlet.data.ClientInfo;
 import org.restlet.security.User;
@@ -31,40 +29,42 @@ public class SecuredGenericController extends GenericController {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected Query addParametersToQuery(Request request, Resource resource, Query query) throws Exception {
-        String security = Utils.getApplicationServerProperties().getProperty("appserver.application.secured");
+    protected Query addParametersToQuery(final Request request, final Resource resource, final Query query) throws Exception {
+        final String security = Utils.getApplicationServerProperties().getProperty("appserver.application.secured");
         if (Boolean.parseBoolean(security)) {
-            ClientInfo clientInfo = request.getClientInfo();
-            User user = clientInfo.getUser();
-            String identifier = user.getIdentifier();
+            final ClientInfo clientInfo = request.getClientInfo();
+            final User user = clientInfo.getUser();
+            final String identifier = user.getIdentifier();
 
             if (notSecurityResource(resource)) {
-                WebSwitch application = (WebSwitch) getApplication();
+                final WebSwitch application = (WebSwitch) getApplication();
 
-                List<Role> roles = (List<Role>) Utils.subrequest(
+                final List<Role> roles = (List<Role>) Utils.subrequest(
                         application,
                         "roles?users.username=" + identifier,
                         request
                 );
 
                 if (roles != null && !roles.isEmpty()) {
-                	StringBuilder buf = new StringBuilder().append('[');
-                    for (Role role : roles) {
-                        if (buf.length() > 1) buf.append(',');
+                	final StringBuilder buf = new StringBuilder().append('[');
+                    for (final Role role : roles) {
+                        if (buf.length() > 1) {
+                            buf.append(',');
+                        }
                         buf.append(role.getId());
                     }
                     buf.append(']');
 
-                    String idsString = buf.toString();
+                    final String idsString = buf.toString();
 					log.debug("Looking for resource: " + "filters?role:in=" + idsString + "&resource=" + resource.getResource());
 
-                    List<Filter> filters = (List<Filter>) Utils.subrequest(
+                    final List<Filter> filters = (List<Filter>) Utils.subrequest(
                             application,
                             "filters?role:in=" + idsString + "&resource=" + resource.getResource(),
                             request
                     );
 
-                    for (Filter filter : filters) {
+                    for (final Filter filter : filters) {
                         log.debug("Adding filter: " + filter.getFilter() + ", " + filter.getIds().toString());
                         query.filter(filter.getFilter(), filter.getIds());
                     }
@@ -75,7 +75,7 @@ public class SecuredGenericController extends GenericController {
         return super.addParametersToQuery(request, resource, query);
     }
 
-    private boolean notSecurityResource(Resource resource) {
+    private boolean notSecurityResource(final Resource resource) {
         return securityResources.get(resource.getResource()) == null;
     }
 }
