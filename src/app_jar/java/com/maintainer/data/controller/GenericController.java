@@ -16,34 +16,34 @@ import com.maintainer.data.provider.DataProviderFactory;
 import com.maintainer.data.provider.DefaultDataProviderInitializationException;
 import com.maintainer.util.Utils;
 
-public class GenericController extends ResourcesController<Object> {
+public class GenericController<T> extends ResourcesController<T> {
 
     private static final BiMap<String, Class<?>> map = HashBiMap.create();
 
     static {
-        File file = Utils.getDatabaseConfigurationFile();
-        Properties properties = Utils.getProperties(file);
-        String packageName = (String) properties.get("hibernate.model.package");
-        Class<?>[] classes = Utils.getClassesInPackage(packageName, null);
+        final File file = Utils.getDatabaseConfigurationFile();
+        final Properties properties = Utils.getProperties(file);
+        final String packageName = (String) properties.get("hibernate.model.package");
+        final Class<?>[] classes = Utils.getClassesInPackage(packageName, null);
 
-        for (Class<?> clazz : classes) {
-            Resource resource = clazz.getAnnotation(Resource.class);
+        for (final Class<?> clazz : classes) {
+            final Resource resource = clazz.getAnnotation(Resource.class);
             if (resource != null) {
-                String name = resource.name();
+                final String name = resource.name();
                 register(name, clazz);
             }
         }
     }
 
-    public static void register(String resource, Class<?> clazz) {
+    public static void register(final String resource, final Class<?> clazz) {
         map.put(resource, clazz);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    protected DataProvider<Object> getDataProvider() throws DefaultDataProviderInitializationException {
-        Class<?> clazz = getResourceClass();
-        return (DataProvider<Object>) DataProviderFactory.instance().getDataProvider(clazz);
+    protected DataProvider<T> getDataProvider() throws DefaultDataProviderInitializationException {
+        final Class<?> clazz = getResourceClass();
+        return (DataProvider<T>) DataProviderFactory.instance().getDataProvider(clazz);
     }
 
     private Class<?> getResourceClass() {
@@ -55,7 +55,7 @@ public class GenericController extends ResourcesController<Object> {
 
         resource = resource.toLowerCase();
 
-        Class<?> clazz = getControllerClass(resource);
+        final Class<?> clazz = getControllerClass(resource);
         if (clazz == null) {
             throw new RuntimeException("Invalid resource: " + resource);
         }
@@ -68,18 +68,18 @@ public class GenericController extends ResourcesController<Object> {
     }
 
     @Override
-    public Class<?> getControllerClass(String resource) {
+    public Class<?> getControllerClass(final String resource) {
         return map.get(resource);
     }
 
     @Override
-    public String getResourceMapping(Class<?> clazz) {
+    public String getResourceMapping(final Class<?> clazz) {
         return map.inverse().get(clazz);
     }
 
     public static List<String> getResources() {
-        List<String> resources = new ArrayList<String>();
-        for (Entry<String, Class<?>> e : map.entrySet()) {
+        final List<String> resources = new ArrayList<String>();
+        for (final Entry<String, Class<?>> e : map.entrySet()) {
             resources.add(e.getKey());
         }
         return resources;

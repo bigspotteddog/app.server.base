@@ -217,6 +217,7 @@ public class HibernateDataProvider<T extends EntityBase> extends AbstractDataPro
         return HibernateUtil.getCurrentSession(forceNewConnection);
     }
 
+    @SuppressWarnings("unused")
     private void evict(final T item) {
         getDatastore().evict(item);
     }

@@ -11,28 +11,29 @@ import org.restlet.util.Series;
 import com.google.gson.Gson;
 
 public class LogoutController extends ServerResource {
+    @SuppressWarnings("unused")
     @Post
     public Representation process() {
-        Series<CookieSetting> cookieSettings = getResponse().getCookieSettings();
+        final Series<CookieSetting> cookieSettings = getResponse().getCookieSettings();
         return logout();
     }
 
     public Representation logout() {
         String identifier = "unknown";
-        User user = getRequest().getClientInfo().getUser();
+        final User user = getRequest().getClientInfo().getUser();
         if (user != null) {
             identifier = user.getIdentifier();
         }
-        Gson gson = new Gson();
-        Goodbye welcome = new Goodbye(identifier);
-        String json = gson.toJson(welcome);
+        final Gson gson = new Gson();
+        final Goodbye welcome = new Goodbye(identifier);
+        final String json = gson.toJson(welcome);
         return new JsonRepresentation(json);
     }
 
     public class Goodbye {
         private String goodbye = null;
 
-        public Goodbye(String identifier) {
+        public Goodbye(final String identifier) {
             this.goodbye = identifier;
         }
 

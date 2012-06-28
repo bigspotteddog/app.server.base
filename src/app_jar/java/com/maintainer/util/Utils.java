@@ -58,32 +58,32 @@ public class Utils {
     public static final String SYSPROP_PATH = "app.configuration";
     public static final String ORG_RESTLET_HTTP_HEADERS = "org.restlet.http.headers";
 
-    public static String encrypt(String s) {
-        StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
-        String encryptedPassword = passwordEncryptor.encryptPassword(s);
+    public static String encrypt(final String s) {
+        final StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
+        final String encryptedPassword = passwordEncryptor.encryptPassword(s);
         return encryptedPassword;
     }
 
-    public static boolean validatePassword(String incoming, String encrypted) {
-        StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
-        boolean passwordValid = passwordEncryptor.checkPassword(incoming, encrypted);
+    public static boolean validatePassword(final String incoming, final String encrypted) {
+        final StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
+        final boolean passwordValid = passwordEncryptor.checkPassword(incoming, encrypted);
         return passwordValid;
     }
 
-    public static boolean match(String path0, String path1) {
+    public static boolean match(final String path0, final String path1) {
         boolean isMatch = false;
 
-        String[] split0 = Lists.newArrayList(Splitter.on('.').split(path0)).toArray(new String[0]);
-        String[] split1 = Lists.newArrayList(Splitter.on('.').split(path1)).toArray(new String[0]);
+        final String[] split0 = Lists.newArrayList(Splitter.on('.').split(path0)).toArray(new String[0]);
+        final String[] split1 = Lists.newArrayList(Splitter.on('.').split(path1)).toArray(new String[0]);
 
-        String method0 = split0[split0.length - 1];
-        String method1 = split1[split1.length - 1];
+        final String method0 = split0[split0.length - 1];
+        final String method1 = split1[split1.length - 1];
 
         if (WILDCARD.equals(method1) || method0.equals(method1)) {
             int i = 0;
             for (i = 0; i < split1.length - 1; i++) {
-                String segment0 = split0[i];
-                String segment1 = split1[i];
+                final String segment0 = split0[i];
+                final String segment1 = split1[i];
 
                 if (WILDCARD.equals(segment1)) {
                     isMatch = true;
@@ -119,23 +119,23 @@ public class Utils {
         }.getType();
     }
 
-    public static Class<?> getType(Object obj) {
-        Class<?> clazz = obj.getClass();
+    public static Class<?> getType(final Object obj) {
+        final Class<?> clazz = obj.getClass();
         return getGenericClass(clazz);
     }
 
-    private static Class<?> getGenericClass(Class<?> class1) {
-        Type type = class1.getGenericSuperclass();
+    private static Class<?> getGenericClass(final Class<?> class1) {
+        final Type type = class1.getGenericSuperclass();
 
         return getGenericClass(type);
     }
 
-    private static Class<?> getGenericClass(Type type) {
+    private static Class<?> getGenericClass(final Type type) {
         Class<?> result = null;
 
         if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) type;
-            Type[] fieldArgTypes = pt.getActualTypeArguments();
+            final ParameterizedType pt = (ParameterizedType) type;
+            final Type[] fieldArgTypes = pt.getActualTypeArguments();
             result = (Class<?>) fieldArgTypes[0];
         }
 
@@ -170,12 +170,12 @@ public class Utils {
         String value2 = value.toString();
 
         if (value2.startsWith("[") && value2.endsWith("]")) {
-            ArrayList<Object> list = new ArrayList<Object>();
+            final ArrayList<Object> list = new ArrayList<Object>();
             value2 = value2.replaceAll("[\\[\\]]", "");
-            String[] split = value2.split(",");
+            final String[] split = value2.split(",");
             for (String s : split) {
                 s = s.trim();
-                Object convertedValue = getConvertedValue(s, destClass, s);
+                final Object convertedValue = getConvertedValue(s, destClass, s);
                 log.debug("adding converted value: '" + convertedValue + "'");
                 list.add(convertedValue);
             }
@@ -191,24 +191,24 @@ public class Utils {
      * end
      */
 
-    private static Object getConvertedValue(Object value, Class<?> destClass, String incoming) {
+    private static Object getConvertedValue(Object value, final Class<?> destClass, final String incoming) {
         if (value.getClass().equals(destClass)) {
             return value;
         }
 
         try {
-            Method m = destClass.getMethod("valueOf", String.class);
-            int mods = m.getModifiers();
+            final Method m = destClass.getMethod("valueOf", String.class);
+            final int mods = m.getModifiers();
             if (Modifier.isStatic(mods) && Modifier.isPublic(mods)) {
                 value = m.invoke(null, incoming);
             }
-        } catch (NoSuchMethodException e) {
+        } catch (final NoSuchMethodException e) {
             if (destClass == Character.class) {
                 value = Character.valueOf(incoming.charAt(0));
             }
-        } catch (IllegalAccessException e) {
+        } catch (final IllegalAccessException e) {
             // this won't happen
-        } catch (InvocationTargetException e) {
+        } catch (final InvocationTargetException e) {
             // when this happens, the string cannot be converted to the intended
             // type
             // we are ignoring it here - the original string will be returned.
@@ -221,9 +221,9 @@ public class Utils {
      * http://stackoverflow.com/questions/1102891/how-to-check-a-string-is-a-numeric
      * -type-in-java
      */
-    public static boolean isNumeric(String str) {
-        NumberFormat formatter = NumberFormat.getInstance();
-        ParsePosition pos = new ParsePosition(0);
+    public static boolean isNumeric(final String str) {
+        final NumberFormat formatter = NumberFormat.getInstance();
+        final ParsePosition pos = new ParsePosition(0);
         formatter.parse(str, pos);
         return str.length() == pos.getIndex();
     }
@@ -232,15 +232,15 @@ public class Utils {
      * end
      */
 
-    public static ArrayList<Resource> getResources(Request request) {
-        Reference resourceRef = request.getResourceRef();
+    public static ArrayList<Resource> getResources(final Request request) {
+        final Reference resourceRef = request.getResourceRef();
         String path = resourceRef.getPath(true);
-        Reference rootRef = request.getRootRef();
+        final Reference rootRef = request.getRootRef();
         String root = null;
         if (rootRef != null) {
             try {
                 root = rootRef.getPath(true);
-            } catch (Exception e) {
+            } catch (final Exception e) {
             }
         }
 
@@ -252,12 +252,12 @@ public class Utils {
             path = path.substring(1);
         }
 
-        Iterable<String> segments = Splitter.on('/').split(path);
+        final Iterable<String> segments = Splitter.on('/').split(path);
 
-        ArrayList<Resource> resources = new ArrayList<Resource>();
+        final ArrayList<Resource> resources = new ArrayList<Resource>();
 
         Resource resource = null;
-        for (String s : segments) {
+        for (final String s : segments) {
             if (resource == null) {
                 resource = new Resource(s);
                 resources.add(resource);
@@ -269,15 +269,15 @@ public class Utils {
         return resources;
     }
 
-    public static Class<?> getKeyType(Class<?> clazz, String key) {
-        String[] split = key.split("\\.");
-        for (String fieldName : split) {
-            Field field = getField(clazz, fieldName);
+    public static Class<?> getKeyType(Class<?> clazz, final String key) {
+        final String[] split = key.split("\\.");
+        for (final String fieldName : split) {
+            final Field field = getField(clazz, fieldName);
             if (field != null) {
                 clazz = field.getType();
                 if (Collection.class.isAssignableFrom(clazz)) {
-                    Type genericType = field.getGenericType();
-                    Class<?> clazz2 = getGenericClass(genericType);
+                    final Type genericType = field.getGenericType();
+                    final Class<?> clazz2 = getGenericClass(genericType);
                     if (clazz2 != null) {
                         clazz = clazz2;
                     }
@@ -287,19 +287,19 @@ public class Utils {
         return clazz;
     }
 
-    public static Field getField(Object obj, String fieldName) {
-        Class<?> clazz = obj.getClass();
-        Field field = getField(clazz, fieldName);
+    public static Field getField(final Object obj, final String fieldName) {
+        final Class<?> clazz = obj.getClass();
+        final Field field = getField(clazz, fieldName);
         return field;
     }
 
-    public static Field getField(Class<?> clazz, String name) {
+    public static Field getField(final Class<?> clazz, final String name) {
         Field field = null;
         try {
             field = clazz.getDeclaredField(name);
-        } catch (NoSuchFieldException e) {
+        } catch (final NoSuchFieldException e) {
             if (field == null) {
-                Class<?> superclass = clazz.getSuperclass();
+                final Class<?> superclass = clazz.getSuperclass();
                 if (superclass != null) {
                     field = getField(superclass, name);
                 }
@@ -308,7 +308,7 @@ public class Utils {
         return field;
     }
 
-    public static Class<? extends ServerResource> getTargetServerResource(WebSwitch router, Request request) {
+    public static Class<? extends ServerResource> getTargetServerResource(final WebSwitch router, final Request request) {
         Class<? extends ServerResource> target = null;
 
         Router securedRouter = router.getSecuredRouter();
@@ -317,12 +317,12 @@ public class Utils {
             securedRouter = router.getSecuredRouter();
         }
 
-        Restlet next = securedRouter.getNext(request, new Response(request));
+        final Restlet next = securedRouter.getNext(request, new Response(request));
         if (next instanceof TemplateRoute) {
-            TemplateRoute templateRoute = (TemplateRoute) next;
-            Restlet next2 = templateRoute.getNext();
+            final TemplateRoute templateRoute = (TemplateRoute) next;
+            final Restlet next2 = templateRoute.getNext();
             if (next2 instanceof Finder) {
-                Finder finder = (Finder) next2;
+                final Finder finder = (Finder) next2;
                 target = finder.getTargetClass();
             }
         }
@@ -330,7 +330,7 @@ public class Utils {
         return target;
     }
 
-    public static Class<? extends ServerResource> getTargetServerResource(WebSwitch router, org.restlet.data.Method method, String resource) {
+    public static Class<? extends ServerResource> getTargetServerResource(final WebSwitch router, final org.restlet.data.Method method, final String resource) {
         return getTargetServerResource(router, new Request(method, resource));
     }
 
@@ -346,31 +346,32 @@ public class Utils {
      *            an optional class name pattern.
      * @return The classes
      */
-    public static Class[] getClassesInPackage(String packageName, String regexFilter) {
+    public static Class<?>[] getClassesInPackage(final String packageName, final String regexFilter) {
         Pattern regex = null;
-        if (regexFilter != null)
+        if (regexFilter != null) {
             regex = Pattern.compile(regexFilter);
+        }
 
         try {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             assert classLoader != null;
-            String path = packageName.replace('.', '/');
-            Enumeration<URL> resources = classLoader.getResources(path);
-            List<String> dirs = new ArrayList<String>();
+            final String path = packageName.replace('.', '/');
+            final Enumeration<URL> resources = classLoader.getResources(path);
+            final List<String> dirs = new ArrayList<String>();
             while (resources.hasMoreElements()) {
-                URL resource = resources.nextElement();
+                final URL resource = resources.nextElement();
                 dirs.add(resource.getFile());
             }
-            TreeSet<String> classes = new TreeSet<String>();
-            for (String directory : dirs) {
+            final TreeSet<String> classes = new TreeSet<String>();
+            for (final String directory : dirs) {
                 classes.addAll(findClasses(directory, packageName, regex));
             }
-            ArrayList<Class> classList = new ArrayList<Class>();
-            for (String clazz : classes) {
+            final ArrayList<Class<?>> classList = new ArrayList<Class<?>>();
+            for (final String clazz : classes) {
                 classList.add(Class.forName(clazz));
             }
             return classList.toArray(new Class[classes.size()]);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
             return null;
         }
@@ -390,32 +391,33 @@ public class Utils {
      *            an optional class name pattern. e.g. .*Test
      * @return The classes
      */
-    private static TreeSet<String> findClasses(String path, String packageName, Pattern regex) throws Exception {
-        TreeSet<String> classes = new TreeSet<String>();
+    private static TreeSet<String> findClasses(final String path, final String packageName, final Pattern regex) throws Exception {
+        final TreeSet<String> classes = new TreeSet<String>();
         if (path.startsWith("file:") && path.contains("!")) {
-            String[] split = path.split("!");
-            URL jar = new URL(split[0]);
-            ZipInputStream zip = new ZipInputStream(jar.openStream());
+            final String[] split = path.split("!");
+            final URL jar = new URL(split[0]);
+            final ZipInputStream zip = new ZipInputStream(jar.openStream());
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
                 if (entry.getName().endsWith(".class")) {
-                    String className = entry.getName().replaceAll("[$].*", "").replaceAll("[.]class", "").replace('/', '.');
-                    if (className.startsWith(packageName) && (regex == null || regex.matcher(className).matches()))
+                    final String className = entry.getName().replaceAll("[$].*", "").replaceAll("[.]class", "").replace('/', '.');
+                    if (className.startsWith(packageName) && (regex == null || regex.matcher(className).matches())) {
                         classes.add(className);
+                    }
                 }
             }
         }
-        File dir = new File(path);
+        final File dir = new File(path);
         if (!dir.exists()) {
             return classes;
         }
-        File[] files = dir.listFiles();
-        for (File file : files) {
+        final File[] files = dir.listFiles();
+        for (final File file : files) {
             if (file.isDirectory()) {
                 assert !file.getName().contains(".");
                 classes.addAll(findClasses(file.getAbsolutePath(), packageName + "." + file.getName(), regex));
             } else if (file.getName().endsWith(".class")) {
-                String className = packageName + '.' + file.getName().substring(0, file.getName().length() - 6);
+                final String className = packageName + '.' + file.getName().substring(0, file.getName().length() - 6);
                 if (regex == null || regex.matcher(className).matches()) {
                     log.debug("adding mapped class: " + className);
                     classes.add(className);
@@ -425,21 +427,21 @@ public class Utils {
         return classes;
     }
 
-    public static Properties getProperties(File file) throws ExceptionInInitializerError {
-        Properties properties = new Properties();
+    public static Properties getProperties(final File file) throws ExceptionInInitializerError {
+        final Properties properties = new Properties();
         Reader reader = null;
         try {
             reader = new FileReader(file);
             properties.load(reader);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new ExceptionInInitializerError("Failed to load " + file.getAbsolutePath() + ": " + e);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new ExceptionInInitializerError("Failed to decrypt " + file.getAbsolutePath() + ": " + e);
         } finally {
             if (reader != null) {
                 try {
                     reader.close();
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     // ignore
                 }
             }
@@ -448,7 +450,7 @@ public class Utils {
     }
 
     public static File getDatabaseConfigurationFile() {
-        String path = System.getProperty(SYSPROP_CONFIG_PATH, "etc/database.properties");
+        final String path = System.getProperty(SYSPROP_CONFIG_PATH, "etc/database.properties");
         return new File(path);
     }
 
@@ -461,35 +463,35 @@ public class Utils {
     }
 
     private static File getApplicationConfigurationFile() {
-        String path = System.getProperty(SYSPROP_PATH, "etc/appserver.properties");
+        final String path = System.getProperty(SYSPROP_PATH, "etc/appserver.properties");
         return new File(path);
     }
 
-    public static Class<?> getResourceClass(String resource) {
+    public static Class<?> getResourceClass(final String resource) {
         return GenericController.getResourceMap().get(resource);
     }
 
-    public static Object subrequest(WebSwitch application, String targetResource, Request request) {
-        Reference rootRef = request.getRootRef();
-        Object headers = request.getAttributes().get(ORG_RESTLET_HTTP_HEADERS);
-        ClientInfo clientInfo = request.getClientInfo();
+    public static Object subrequest(final WebSwitch application, final String targetResource, final Request request) {
+        final Reference rootRef = request.getRootRef();
+        final Object headers = request.getAttributes().get(ORG_RESTLET_HTTP_HEADERS);
+        final ClientInfo clientInfo = request.getClientInfo();
 
         return subrequest(targetResource, application, rootRef, headers, clientInfo, request.getEntity(), request.getChallengeResponse());
     }
 
-    public static Object subrequest(String targetResource, WebSwitch application, Reference rootRef, Object headers, ClientInfo clientInfo,
-            Representation entity, ChallengeResponse challengeResponse) {
+    public static Object subrequest(final String targetResource, final WebSwitch application, final Reference rootRef, final Object headers, final ClientInfo clientInfo,
+            final Representation entity, final ChallengeResponse challengeResponse) {
 
-        Request request2 = new Request(org.restlet.data.Method.GET, "/" + targetResource);
+        final Request request2 = new Request(org.restlet.data.Method.GET, "/" + targetResource);
         request2.setEntity(entity);
         request2.setRootRef(rootRef);
         if (headers != null) {
             request2.getAttributes().put(ORG_RESTLET_HTTP_HEADERS, headers);
         }
         request2.setClientInfo(clientInfo);
-        Response response2 = new Response(request2);
+        final Response response2 = new Response(request2);
 
-        Class<? extends ServerResource> serviceClass = Utils.getTargetServerResource(application, org.restlet.data.Method.GET, "/" + targetResource);
+        final Class<? extends ServerResource> serviceClass = Utils.getTargetServerResource(application, org.restlet.data.Method.GET, "/" + targetResource);
         if (serviceClass != null) {
             try {
                 request2.setChallengeResponse(challengeResponse);
@@ -498,21 +500,21 @@ public class Utils {
                 application.handle(request2, response2);
                 log.debug("Response: " + response2.getEntityAsText());
 
-                Representation representation = response2.getEntity();
+                final Representation representation = response2.getEntity();
                 if (representation != null) {
-                    Gson gson = new Gson();
+                    final Gson gson = new Gson();
 
-                    ArrayList<Resource> resources = Utils.getResources(request2);
+                    final ArrayList<Resource> resources = Utils.getResources(request2);
                     if (resources != null) {
-                        Resource res = resources.get(resources.size() - 1);
-                        String resource2 = res.getResource();
-                        Class<?> resourceClass = Utils.getResourceClass(resource2);
+                        final Resource res = resources.get(resources.size() - 1);
+                        final String resource2 = res.getResource();
+                        final Class<?> resourceClass = Utils.getResourceClass(resource2);
                         if (resourceClass != null) {
                             String text = representation.getText();
                             if (text != null) {
                                 text = text.trim();
                                 if (text.startsWith("[")) {
-                                    ParameterizedTypeImpl type = getParameterizedListType(resourceClass);
+                                    final ParameterizedTypeImpl type = getParameterizedListType(resourceClass);
                                     return gson.fromJson(text, type);
                                 } else {
                                     if (text.startsWith("{")) {
@@ -523,7 +525,7 @@ public class Utils {
                         }
                     }
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 e.printStackTrace();
             }
         }
@@ -531,11 +533,11 @@ public class Utils {
         return null;
     }
 
-    public static ParameterizedTypeImpl getParameterizedListType(Class<?> resourceClass) {
+    public static ParameterizedTypeImpl getParameterizedListType(final Class<?> resourceClass) {
         return new ParameterizedTypeImpl(List.class, new Type[] { resourceClass }, null);
     }
 
-    public static boolean isInternalRequest(Request request) {
+    public static boolean isInternalRequest(final Request request) {
         return !request.getResourceRef().toString().startsWith(HTTP);
     }
 

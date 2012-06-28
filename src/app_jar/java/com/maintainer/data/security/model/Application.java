@@ -6,5 +6,5 @@ import com.maintainer.data.model.EntityBase;
 
 public interface Application extends EntityBase {
     String getName();
-    List getFunctions();
+    List<Function> getFunctions();
 }
