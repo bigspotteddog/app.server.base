@@ -6,6 +6,7 @@ import org.apache.log4j.Logger;
 import org.restlet.Context;
 import org.restlet.Request;
 import org.restlet.Response;
+import org.restlet.data.ChallengeResponse;
 import org.restlet.data.ClientInfo;
 import org.restlet.data.CookieSetting;
 import org.restlet.data.MediaType;
@@ -51,16 +52,28 @@ public class MyCookieAuthenticator extends CookieAuthenticator {
         final Class<? extends ServerResource> resourceClass = Utils.getTargetServerResource((WebSwitch) getApplication(), request);
         final Resource annotation = resourceClass.getAnnotation(Resource.class);
 
-        if (annotation != null && !annotation.secured()) {
-            final CookieSetting credentialsCookie = new CookieSetting(getCookieName(), null);
-            final String credentials = request.getResourceRef().getQueryAsForm().getFirstValue("key");
-            if (credentials != null) {
-                credentialsCookie.setValue(credentials);
-                request.getCookies().add(credentialsCookie);
+        if (annotation != null) {
+            if (annotation.useKey()) {
+                final CookieSetting credentialsCookie = new CookieSetting(getCookieName(), null);
+                final String credentials = request.getResourceRef().getQueryAsForm().getFirstValue("key");
+                if (credentials != null) {
+                    credentialsCookie.setValue(credentials);
+                    request.getCookies().add(credentialsCookie);
+                }
+            } else if (!annotation.secured()) {
+                final ChallengeResponse cr = new ChallengeResponse(
+                        getScheme(),
+                        "unsecured",
+                        "unsecured"
+                );
+                request.setChallengeResponse(cr);
+                authenticated = true;
             }
         }
 
-        authenticated = super.authenticate(request, response);
+        if (!authenticated) {
+            authenticated = super.authenticate(request, response);
+        }
 
         if (!authenticated) {
             boolean json = false;
