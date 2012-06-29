@@ -7,4 +7,5 @@ import java.lang.annotation.RetentionPolicy;
 public @interface Resource {
     String name() default "";
     boolean secured() default true;
+    boolean useKey() default false;
 }
