@@ -12,7 +12,9 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -146,6 +149,8 @@ public class Utils {
      * http://www.xinotes.org/notes/note/1330
      */
     private static Map<Class<?>, Class<?>> primitiveMap = new HashMap<Class<?>, Class<?>>();
+
+    private static Gson gson = new Gson();
 
     static {
         primitiveMap.put(boolean.class, Boolean.class);
@@ -543,5 +548,53 @@ public class Utils {
 
     public static Date now() {
         return new Date();
+    }
+
+    public static String toJson(final Object obj) {
+        return gson.toJson(obj);
+    }
+
+    public static Map<String, Object> asMap(final Object object) {
+        final String json = gson.toJson(object);
+        final Map<String, Object> map = gson.fromJson(json, Utils.getItemType());
+        return map;
+    }
+
+    public static Collection<Map<String, Object>> asMap(final Collection<?> collection) {
+        final String json = gson.toJson(collection);
+        final Collection<Map<String, Object>> map = gson.fromJson(json, Utils.getItemsType());
+        return map;
+    }
+
+    public static Date toDate(final String dateString, final String format) throws ParseException {
+        if (dateString == null || dateString.isEmpty()) {
+            return null;
+        }
+
+        final SimpleDateFormat sdf = getSimpleDateFormat(format);
+
+        Date date = null;
+        if (dateString != null) {
+            date = sdf.parse(dateString);
+        }
+
+        return date;
+    }
+
+    private static final Map<String, SimpleDateFormat> sdfs = new ConcurrentHashMap<String, SimpleDateFormat>();
+    private static SimpleDateFormat getSimpleDateFormat(final String format) {
+        SimpleDateFormat sdf = sdfs.get(format);
+        if (sdf == null) {
+            sdf = new SimpleDateFormat(format);
+            sdfs.put(format, sdf);
+        }
+        return sdf;
+    }
+
+    public static Double toDouble(final String string) {
+        if (string == null || string.isEmpty()) {
+            return 0d;
+        }
+        return (Double) convert(string, Double.class);
     }
 }
