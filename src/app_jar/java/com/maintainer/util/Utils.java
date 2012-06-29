@@ -46,6 +46,7 @@ import org.restlet.routing.TemplateRoute;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.maintainer.data.controller.GenericController;
 import com.maintainer.data.controller.Resource;
@@ -150,7 +151,7 @@ public class Utils {
      */
     private static Map<Class<?>, Class<?>> primitiveMap = new HashMap<Class<?>, Class<?>>();
 
-    private static Gson gson = new Gson();
+    private static Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     static {
         primitiveMap.put(boolean.class, Boolean.class);

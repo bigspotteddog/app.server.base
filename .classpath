@@ -24,7 +24,7 @@
 	<classpathentry kind="lib" path="lib/runtime/morphia-0.99.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/mysql-connector-java-5.1.18-bin.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/org.json.jar"/>
-	<classpathentry kind="lib" path="lib/runtime/org.restlet.ext.crypto.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/org.restlet.ext.crypto.jar" sourcepath="/Users/josephc/Documents/workspace/tools/restlet-gae-2.1rc1/src"/>
 	<classpathentry kind="lib" path="lib/runtime/org.restlet.ext.json.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/org.restlet.ext.servlet.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/org.restlet.jar"/>
