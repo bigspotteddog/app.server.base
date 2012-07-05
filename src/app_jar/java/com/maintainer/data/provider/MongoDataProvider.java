@@ -12,24 +12,24 @@ import com.maintainer.data.model.EntityBase;
 public class MongoDataProvider<T extends EntityBase> extends AbstractDataProvider<T> {
 
     @Override
-    protected void merge(T incoming, T existing) throws Exception {
+    protected void merge(final T incoming, final T existing) throws Exception {
         autocreate(incoming);
         super.merge(incoming, existing);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public T get(Key key) {
-        Datastore datastore = getDatastore();
-        T obj = (T) datastore.get(key.getKind(), key.getId());
+    public T get(final Key key) {
+        final Datastore datastore = getDatastore();
+        final T obj = (T) datastore.get(key.getKind(), key.getId());
         return obj;
     }
 
     @Override
-    public List<T> find(com.maintainer.data.provider.Query query) {
-        com.google.code.morphia.query.Query<T> q = createQueryInternal(query.getKind());
+    public List<T> find(final com.maintainer.data.provider.Query query) {
+        final com.google.code.morphia.query.Query<T> q = createQueryInternal(query.getKind());
 
-        for (Entry<String, Object> e : query.entrySet()) {
+        for (final Entry<String, Object> e : query.entrySet()) {
             String key = e.getKey();
             if (key.endsWith(Query.GE)) {
                 key = key.substring(0, key.length() - 3);
@@ -74,35 +74,35 @@ public class MongoDataProvider<T extends EntityBase> extends AbstractDataProvide
             q.limit(query.getLimit());
         }
 
-        List<T> list = q.asList();
+        final List<T> list = q.asList();
         return list;
     }
 
     @Override
-    public List<T> getAll(Class<?> kind) throws Exception {
-        com.google.code.morphia.query.Query<T> find = createQueryInternal(kind);
-        List<T> list = find.asList();
+    public List<T> getAll(final Class<?> kind) throws Exception {
+        final com.google.code.morphia.query.Query<T> find = createQueryInternal(kind);
+        final List<T> list = find.asList();
         return list;
     }
 
     @SuppressWarnings("unchecked")
-    private com.google.code.morphia.query.Query<T> createQueryInternal(Class<?> kind) {
-        Datastore datastore = getDatastore();
-        com.google.code.morphia.query.Query<T> find = (com.google.code.morphia.query.Query<T>) datastore.find(kind);
+    private com.google.code.morphia.query.Query<T> createQueryInternal(final Class<?> kind) {
+        final Datastore datastore = getDatastore();
+        final com.google.code.morphia.query.Query<T> find = (com.google.code.morphia.query.Query<T>) datastore.find(kind);
         return find;
     }
 
     @Override
-    public T post(T obj) throws Exception {
+    public T post(final T obj) throws Exception {
         autocreate(obj);
 
-        Datastore datastore = getDatastore();
+        final Datastore datastore = getDatastore();
 
         Long id = obj.getId();
         if (id == null) {
-            String collName = datastore.getCollection(obj.getClass()).getName();
-            com.google.code.morphia.query.Query<StoredId> q = datastore.find(StoredId.class, "_id", collName);
-            UpdateOperations<StoredId> uOps = datastore.createUpdateOperations(StoredId.class).inc("value");
+            final String collName = datastore.getCollection(obj.getClass()).getName();
+            final com.google.code.morphia.query.Query<StoredId> q = datastore.find(StoredId.class, "_id", collName);
+            final UpdateOperations<StoredId> uOps = datastore.createUpdateOperations(StoredId.class).inc("value");
             StoredId newId = datastore.findAndModify(q, uOps);
             if (newId == null) {
                newId = new StoredId(collName);
@@ -123,7 +123,7 @@ public class MongoDataProvider<T extends EntityBase> extends AbstractDataProvide
         final @Id String className;
         protected Long value = 1L;
 
-        public StoredId(String name) {
+        public StoredId(final String name) {
             className = name;
         }
 
@@ -137,25 +137,25 @@ public class MongoDataProvider<T extends EntityBase> extends AbstractDataProvide
     }
 
     @Override
-    public T put(T obj) throws Exception {
+    public T put(final T obj) throws Exception {
         autocreate(obj);
 
-        Datastore datastore = getDatastore();
+        final Datastore datastore = getDatastore();
         datastore.save(obj);
         return obj;
     }
 
     @Override
-    public Key delete(Key key) {
+    public Key delete(final Key key) throws Exception {
         autodelete(key);
-        Datastore datastore = getDatastore();
+        final Datastore datastore = getDatastore();
         datastore.delete(key.getKind(), key.getId());
         return key;
     }
 
 
     private Datastore getDatastore() {
-        Datastore datastore = MongoConnection.getInstance().getDatastore();
+        final Datastore datastore = MongoConnection.getInstance().getDatastore();
         return datastore;
     }
 }

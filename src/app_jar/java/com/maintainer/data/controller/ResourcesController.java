@@ -322,14 +322,19 @@ public abstract class ResourcesController<T> extends ServerResource {
                 f = key.split(":")[0];
                 f = f.split("\\.")[0];
 
-                final Class<?> clazz = getResourceClass(resource);
-                final Field field = Utils.getField(clazz, f);
-                if (field == null) {
-                    throw new InvalidResourceException();
-                }
-                query.filter(key, Utils.convert(value, field.getType()));
+                addFilterToQuery(resource, key, f, value, query);
             }
         }
+        return query;
+    }
+
+    protected Query addFilterToQuery(final Resource resource, final String key, final String fieldName, final Object value, final Query query) throws Exception {
+        final Class<?> clazz = getResourceClass(resource);
+        final Field field = Utils.getField(clazz, fieldName);
+        if (field == null) {
+            throw new InvalidResourceException();
+        }
+        query.filter(key, Utils.convert(value, field.getType()));
         return query;
     }
 
@@ -356,7 +361,6 @@ public abstract class ResourcesController<T> extends ServerResource {
         return clazz;
     }
 
-    @SuppressWarnings("unchecked")
     @Get("json")
     public Representation getItems() throws Exception {
         final Request request = getRequest();
@@ -365,6 +369,11 @@ public abstract class ResourcesController<T> extends ServerResource {
             return getHead();
         }
 
+        return getItems(request);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected Representation getItems(final Request request) throws Exception {
         Representation response = null;
         String json = null;
         try {
@@ -453,7 +462,7 @@ public abstract class ResourcesController<T> extends ServerResource {
         return kind;
     }
 
-    protected void prePost(final T obj) {
+    protected void prePost(final T obj) throws Exception {
     }
 
     @Put("json")
@@ -481,7 +490,7 @@ public abstract class ResourcesController<T> extends ServerResource {
         return response;
     }
 
-    protected void prePut(final T obj) {
+    protected void prePut(final T obj) throws Exception {
     }
 
     @Delete("json")
@@ -509,7 +518,7 @@ public abstract class ResourcesController<T> extends ServerResource {
         return response;
     }
 
-    protected void preDelete(final T obj) {
+    protected void preDelete(final T obj) throws Exception {
     }
 
     protected String getResource() {

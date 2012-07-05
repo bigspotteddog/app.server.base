@@ -20,7 +20,7 @@ public class UserResourceController extends GenericController<User> {
     }
 
     @Override
-    protected void prePut(final User obj) {
+    protected void prePut(final User obj) throws Exception {
         final DataProvider<?> provider = getDataProvider();
         final User user = obj;
 
