@@ -25,7 +25,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     public void commitTransaction() {}
 
     @Override
-    public abstract T get(Key key);
+    public abstract T get(Key key) throws Exception;
 
     @Override
     public abstract List<T> getAll(Class<?> kind) throws Exception;
@@ -37,20 +37,20 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     public abstract Key delete(Key key) throws Exception;
 
     @Override
-    public abstract Collection<T> find(Query query);
+    public abstract Collection<T> find(Query query) throws Exception;
 
-    protected void preMerge(T incoming, T existing) {}
+    protected void preMerge(final T incoming, final T existing) {}
 
     @Override
-    public T merge(T incoming) throws Exception {
-        long id = ((EntityImpl) incoming).getId();
+    public T merge(final T incoming) throws Exception {
+        final long id = ((EntityImpl) incoming).getId();
 
         if (id == 0) {
             throw new Exception("no id specified");
         }
 
-        Key key = new Key(incoming.getClass(), id);
-        T existing = get(key);
+        final Key key = new Key(incoming.getClass(), id);
+        final T existing = get(key);
 
         if (existing == null) {
             throw new Exception("not found");
@@ -65,16 +65,16 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         return existing;
     }
 
-    protected void merge(T incoming, T existing) throws Exception {
+    protected void merge(final T incoming, final T existing) throws Exception {
         mergeAny(incoming, existing);
     }
 
-    protected boolean isEqual(Object incoming, Object existing) throws Exception {
+    protected boolean isEqual(final Object incoming, final Object existing) throws Exception {
         boolean equals = false;
 
         if (incoming != null && existing != null) {
-            String incomingJson = gson.toJson(incoming);
-            String existingJson = gson.toJson(existing);
+            final String incomingJson = gson.toJson(incoming);
+            final String existingJson = gson.toJson(existing);
 
             equals = incomingJson.equals(existingJson);
         } else if (incoming == null && existing == null) {
@@ -84,19 +84,19 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         return equals;
     }
 
-    protected void mergeAny(Object incoming, Object existing) throws Exception {
+    protected void mergeAny(final Object incoming, final Object existing) throws Exception {
         log.debug("mergeAny");
 
-        Field[] fields = getFields(incoming);
-        for (Field f : fields) {
+        final Field[] fields = getFields(incoming);
+        for (final Field f : fields) {
             f.setAccessible(true);
 
-            Object value = f.get(incoming);
+            final Object value = f.get(incoming);
             if (value != null) {
                 log.debug(f.getName() + " = " + value);
                 f.set(existing, value);
             } else {
-                Object value2 = f.get(existing);
+                final Object value2 = f.get(existing);
                 if (value2 != null) {
                     log.debug("clearing " + f.getName() + " = " + value);
                     f.set(existing, null);
@@ -105,12 +105,12 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         }
     }
 
-    private Field[] getFields(Object incoming) {
-        ArrayList<Field> fields = new ArrayList<Field>();
+    private Field[] getFields(final Object incoming) {
+        final ArrayList<Field> fields = new ArrayList<Field>();
         Class<?> clazz = incoming.getClass();
 
         do {
-            Field[] f = clazz.getDeclaredFields();
+            final Field[] f = clazz.getDeclaredFields();
             fields.addAll(Arrays.asList(f));
             clazz = clazz.getSuperclass();
         } while (clazz != null);
@@ -120,33 +120,33 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
     @SuppressWarnings("unchecked")
     @Override
-    public T fromJson(Class<?> kind, String json) {
-        T obj = (T) new Gson().fromJson(json, kind);
+    public T fromJson(final Class<?> kind, final String json) {
+        final T obj = (T) new Gson().fromJson(json, kind);
         return obj;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public EntityBase autocreate(EntityBase target) throws Exception {
+    public EntityBase autocreate(final EntityBase target) throws Exception {
 
         T existing = null;
         if (target.getId() != null) {
             existing = get(new Key(target.getClass(), target.getId()));
         }
 
-        Field[] fields = target.getClass().getDeclaredFields();
-        for (Field f : fields) {
+        final Field[] fields = target.getClass().getDeclaredFields();
+        for (final Field f : fields) {
             f.setAccessible(true);
-            Autocreate autocreate = f.getAnnotation(Autocreate.class);
+            final Autocreate autocreate = f.getAnnotation(Autocreate.class);
             if (autocreate != null) {
                 try {
-                    Object value = f.get(target);
+                    final Object value = f.get(target);
                     if (value != null) {
                         if (EntityBase.class.isAssignableFrom(value.getClass())) {
-                            EntityBase entity = (EntityBase) value;
+                            final EntityBase entity = (EntityBase) value;
                             f.set(target, createOrUpdate(entity, autocreate));
                         } else if (Collection.class.isAssignableFrom(value.getClass())) {
-                            List<Object> list = new ArrayList<Object>((Collection<Object>) value);
+                            final List<Object> list = new ArrayList<Object>((Collection<Object>) value);
 
                             List<Object> removeThese = null;
                             if (existing != null) {
@@ -156,30 +156,32 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
                                 }
                             }
 
-                            ListIterator<Object> iterator = list.listIterator();
+                            final ListIterator<Object> iterator = list.listIterator();
                             while(iterator.hasNext()) {
-                                Object o = iterator.next();
-                                if (o == null) continue;
+                                final Object o = iterator.next();
+                                if (o == null) {
+                                    continue;
+                                }
                                 if (EntityBase.class.isAssignableFrom(o.getClass())) {
-                                    EntityBase entity = (EntityBase) o;
+                                    final EntityBase entity = (EntityBase) o;
                                     iterator.set(createOrUpdate(entity, autocreate));
                                 }
                             }
 
                             if (removeThese != null && !removeThese.isEmpty()) {
                                 removeThese.removeAll(list);
-                                for (Object object : removeThese) {
+                                for (final Object object : removeThese) {
                                     delete(object, autocreate);
                                 }
                             }
                         }
                     } else {
                         if (existing != null) {
-                            Object object = f.get(existing);
+                            final Object object = f.get(existing);
                             delete(object, autocreate);
                         }
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -188,20 +190,22 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         return target;
     }
 
-    public T autodelete(Key key) {
+    public T autodelete(final Key key) throws Exception {
 
-        T target = get(key);
-        if (target == null) return null;
+        final T target = get(key);
+        if (target == null) {
+            return null;
+        }
 
-        Field[] fields = target.getClass().getDeclaredFields();
-        for (Field f : fields) {
+        final Field[] fields = target.getClass().getDeclaredFields();
+        for (final Field f : fields) {
             f.setAccessible(true);
-            Autocreate autocreate = f.getAnnotation(Autocreate.class);
+            final Autocreate autocreate = f.getAnnotation(Autocreate.class);
             if (autocreate != null) {
                 try {
-                    Object object = f.get(target);
+                    final Object object = f.get(target);
                     delete(object, autocreate);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -211,28 +215,30 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     }
 
     @Override
-    public Long getId(Object object) {
+    public Long getId(final Object object) {
         if (object != null && EntityBase.class.isAssignableFrom(object.getClass())) {
-            EntityBase entity = (EntityBase) object;
+            final EntityBase entity = (EntityBase) object;
             return entity.getId();
         }
         return null;
     }
 
     @SuppressWarnings("unchecked")
-    private EntityBase createOrUpdate(EntityBase target, Autocreate fieldAutocreate) throws Exception {
-        if (target == null) return target;
+    private EntityBase createOrUpdate(EntityBase target, final Autocreate fieldAutocreate) throws Exception {
+        if (target == null) {
+            return target;
+        }
 
-        Autocreate classAutocreate = getAutocreate(target);
+        final Autocreate classAutocreate = getAutocreate(target);
 
         if (target.getId() == null) {
             if ((classAutocreate == null || (classAutocreate.create()  && !classAutocreate.readonly())) && fieldAutocreate.create()) {
-                DataProvider<EntityBase> dataProvider = (DataProvider<EntityBase>) DataProviderFactory.instance().getDataProvider(target.getClass());
+                final DataProvider<EntityBase> dataProvider = (DataProvider<EntityBase>) DataProviderFactory.instance().getDataProvider(target.getClass());
                 target = dataProvider.post(target);
             }
         } else {
             if ((classAutocreate == null || (classAutocreate.update()  && !classAutocreate.readonly())) && fieldAutocreate.update()) {
-                DataProvider<EntityBase> dataProvider = (DataProvider<EntityBase>) DataProviderFactory.instance().getDataProvider(target.getClass());
+                final DataProvider<EntityBase> dataProvider = (DataProvider<EntityBase>) DataProviderFactory.instance().getDataProvider(target.getClass());
                 target = dataProvider.put(target);
             }
         }
@@ -241,20 +247,22 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     }
 
     @SuppressWarnings("unchecked")
-    private void delete(Object target, Autocreate fieldAutocreate) throws Exception {
-        if (target == null) return;
+    private void delete(final Object target, final Autocreate fieldAutocreate) throws Exception {
+        if (target == null) {
+            return;
+        }
 
-        Autocreate classAutocreate = getAutocreate(target);
+        final Autocreate classAutocreate = getAutocreate(target);
 
         if ((classAutocreate == null || (classAutocreate.delete() && !classAutocreate.readonly())) && fieldAutocreate.delete()) {
             log.debug("deleting: " + target.getClass().getSimpleName());
             if (Collection.class.isAssignableFrom(target.getClass())) {
-                List<Object> list = new ArrayList<Object>((Collection<Object>) target);
-                for (Object o : list) {
+                final List<Object> list = new ArrayList<Object>((Collection<Object>) target);
+                for (final Object o : list) {
                     delete(o, fieldAutocreate);
                 }
             } else {
-                Long id = getId(target);
+                final Long id = getId(target);
                 if (id != null) {
                     DataProviderFactory.instance().getDataProvider(target.getClass()).delete(new Key(target.getClass(), id));
                 }
@@ -262,9 +270,9 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         }
     }
 
-    private Autocreate getAutocreate(Object object) {
-        Class<? extends Object> class1 = object.getClass();
-        Autocreate classAutocreate = class1.getAnnotation(Autocreate.class);
+    private Autocreate getAutocreate(final Object object) {
+        final Class<? extends Object> class1 = object.getClass();
+        final Autocreate classAutocreate = class1.getAnnotation(Autocreate.class);
         return classAutocreate;
     }
 }

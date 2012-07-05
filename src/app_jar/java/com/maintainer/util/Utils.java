@@ -10,6 +10,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -590,6 +591,13 @@ public class Utils {
             sdfs.put(format, sdf);
         }
         return sdf;
+    }
+
+    public static BigDecimal toBigDecimal(final String string) {
+        if (string == null || string.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        return new BigDecimal(string);
     }
 
     public static Double toDouble(final String string) {
