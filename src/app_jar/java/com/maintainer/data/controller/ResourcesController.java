@@ -48,10 +48,11 @@ public abstract class ResourcesController<T> extends ServerResource {
     private static final long ID_NOT_PROVIDED = 0;
     private static final String NO_ID_PROVIDED = "no id provided";
 
+    private int maxRows = MAX_ROWS;
+    private boolean checkFields = true;
+
     protected abstract DataProvider<T> getDataProvider() throws DefaultDataProviderInitializationException;
-
     protected abstract Class<?> getControllerClass(String resource);
-
     protected abstract String getResourceMapping(Class<?> clazz);
 
     public Representation getHead() throws Exception {
@@ -66,6 +67,14 @@ public abstract class ResourcesController<T> extends ServerResource {
         response.setMediaType(MediaType.APPLICATION_JSON);
         setStatus(Status.SUCCESS_OK);
         return response;
+    }
+
+    protected void setMaxRows(final int maxRows) {
+        this.maxRows = maxRows;
+    }
+
+    protected void setCheckFields(final boolean checkFields) {
+        this.checkFields = checkFields;
     }
 
     @SuppressWarnings("unchecked")
@@ -152,8 +161,8 @@ public abstract class ResourcesController<T> extends ServerResource {
                     }
                 }
 
-                if (query.getLimit() == 0 || query.getLimit() > MAX_ROWS) {
-                    query.setLimit(MAX_ROWS);
+                if (query.getLimit() == 0 || query.getLimit() > maxRows) {
+                    query.setLimit(maxRows);
                 }
 
                 final Collection<?> list = dataProvider.find(query);
@@ -329,13 +338,22 @@ public abstract class ResourcesController<T> extends ServerResource {
     }
 
     protected Query addFilterToQuery(final Resource resource, final String key, final String fieldName, final Object value, final Query query) throws Exception {
+        if (checkFields) {
+            final Field field = getField(resource, fieldName);
+            query.filter(key, Utils.convert(value, field.getType()));
+        } else {
+            query.filter(key, value);
+        }
+        return query;
+    }
+
+    protected Field getField(final Resource resource, final String fieldName) throws Exception, InvalidResourceException {
         final Class<?> clazz = getResourceClass(resource);
         final Field field = Utils.getField(clazz, fieldName);
         if (field == null) {
             throw new InvalidResourceException();
         }
-        query.filter(key, Utils.convert(value, field.getType()));
-        return query;
+        return field;
     }
 
     private boolean isLastResource(final ArrayList<Resource> resources, final int i) {
