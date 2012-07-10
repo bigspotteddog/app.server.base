@@ -63,8 +63,8 @@ public class MyCookieAuthenticator extends CookieAuthenticator {
             } else if (!annotation.secured()) {
                 final ChallengeResponse cr = new ChallengeResponse(
                         getScheme(),
-                        "unsecured",
-                        "unsecured"
+                        "guest",
+                        "guest"
                 );
                 request.setChallengeResponse(cr);
                 authenticated = true;

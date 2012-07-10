@@ -11,34 +11,36 @@ import org.restlet.security.User;
 import com.google.gson.Gson;
 
 public class PingController extends ServerResource {
+    private static final String LOGGED_IN_AS_GUEST = "Logged in as guest";
+
     @Post(":html")
     @Get(":html")
-    public Representation ping(Form form) {
+    public Representation ping(final Form form) {
         return ping();
     }
 
     @Post("json")
     @Get("json")
-    public Representation ping(Representation rep) throws Exception {
+    public Representation ping(final Representation rep) throws Exception {
         return ping();
     }
 
     public Representation ping() {
-        String identifier = "unknown";
-        User user = getRequest().getClientInfo().getUser();
+        String identifier = LOGGED_IN_AS_GUEST;
+        final User user = getRequest().getClientInfo().getUser();
         if (user != null) {
             identifier = user.getIdentifier();
         }
-        Gson gson = new Gson();
-        Ping welcome = new Ping(identifier);
-        String json = gson.toJson(welcome);
+        final Gson gson = new Gson();
+        final Ping welcome = new Ping(identifier);
+        final String json = gson.toJson(welcome);
         return new JsonRepresentation(json);
     }
 
     public class Ping {
         private String ping = null;
 
-        public Ping(String identifier) {
+        public Ping(final String identifier) {
             this.ping = identifier;
         }
 
