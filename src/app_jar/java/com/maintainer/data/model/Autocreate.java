@@ -10,4 +10,5 @@ public @interface Autocreate {
     boolean delete() default true;
     boolean readonly() default false;
     boolean remote() default false;
+    boolean skip() default false;
 }

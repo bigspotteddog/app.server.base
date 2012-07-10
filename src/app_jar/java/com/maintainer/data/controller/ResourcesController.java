@@ -171,13 +171,20 @@ public abstract class ResourcesController<T> extends ServerResource {
                     throw new NotFoundException();
                 }
 
+                final Class<?> type = getType();
+                final Autocreate annotation = type.getAnnotation(Autocreate.class);
+                final boolean autocreate = annotation == null || (annotation != null && !annotation.skip());
                 if (resource.isId() && !list.isEmpty()) {
                     obj = list.iterator().next();
-                    autocreate(obj);
+                    if (autocreate) {
+                        autocreate(obj);
+                    }
                 } else {
                     obj = list;
-                    for (final Object o : list) {
-                        autocreate(o);
+                    if (autocreate) {
+                        for (final Object o : list) {
+                            autocreate(o);
+                        }
                     }
                 }
             }
