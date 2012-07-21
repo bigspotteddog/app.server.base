@@ -78,7 +78,7 @@ public abstract class ResourcesController<T> extends ServerResource {
     }
 
     @SuppressWarnings("unchecked")
-    private Object get(final Request request) throws Exception {
+    protected Object get(final Request request) throws Exception {
         final ArrayList<Resource> resources = Utils.getResources(request);
 
         Object parent = null;
