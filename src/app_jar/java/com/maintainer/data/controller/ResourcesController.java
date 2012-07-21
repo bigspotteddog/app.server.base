@@ -141,9 +141,9 @@ public abstract class ResourcesController<T> extends ServerResource {
                     query.filter(parentResource.getResource(), parentResource.getId());
                 }
 
-                if (resource.isId()) {
-                    query.filter(ID, resource.getId());
-                    query.setKey(new Key(query.getKind(), resource.getId()));
+                if (resource.getProperty() != null && i == resources.size() - 1) {
+                    query.filter(ID, resource.getProperty());
+                    query.setKey(new Key(query.getKind(), resource.getProperty()));
                 }
 
                 if (isLastResource(resources, i)) {
@@ -403,8 +403,8 @@ public abstract class ResourcesController<T> extends ServerResource {
         String json = null;
         try {
             final Object obj = get(request);
-            if (Collection.class.isAssignableFrom(obj.getClass())) {
-                json = toJson((Collection<T>) obj);
+            if (List.class.isAssignableFrom(obj.getClass())) {
+                json = toJson((List<T>) obj);
             } else {
                 json = toJson((T) obj);
             }
@@ -420,8 +420,8 @@ public abstract class ResourcesController<T> extends ServerResource {
         return response;
     }
 
-    protected String toJson(final Collection<T> collection) {
-        return getGson().toJson(collection);
+    protected String toJson(final List<T> list) {
+        return getGson().toJson(list);
     }
 
     protected String toJson(final T entity) {
