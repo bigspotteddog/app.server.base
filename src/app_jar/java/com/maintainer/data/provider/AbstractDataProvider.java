@@ -37,7 +37,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     public abstract Key delete(Key key) throws Exception;
 
     @Override
-    public abstract Collection<T> find(Query query) throws Exception;
+    public abstract List<T> find(Query query) throws Exception;
 
     protected void preMerge(final T incoming, final T existing) {}
 

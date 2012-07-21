@@ -115,7 +115,7 @@ public class Utils {
     }
 
     public static Type getItemsType() {
-        return new TypeToken<Collection<Map<String, Object>>>() {
+        return new TypeToken<List<Map<String, Object>>>() {
         }.getType();
     }
 
@@ -456,6 +456,15 @@ public class Utils {
         return properties;
     }
 
+    public static File getLoggingConfigurationFile() {
+        final String path = System.getProperty(SYSPROP_CONFIG_PATH, "etc/log4j.properties");
+        return new File(path);
+    }
+
+    public static Properties getLoggingConfigurationProperties() {
+        return getProperties(getLoggingConfigurationFile());
+    }
+
     public static File getDatabaseConfigurationFile() {
         final String path = System.getProperty(SYSPROP_CONFIG_PATH, "etc/database.properties");
         return new File(path);
@@ -562,9 +571,9 @@ public class Utils {
         return map;
     }
 
-    public static Collection<Map<String, Object>> asMap(final Collection<?> collection) {
+    public static List<Map<String, Object>> asMap(final Collection<?> collection) {
         final String json = gson.toJson(collection);
-        final Collection<Map<String, Object>> map = gson.fromJson(json, Utils.getItemsType());
+        final List<Map<String, Object>> map = gson.fromJson(json, Utils.getItemsType());
         return map;
     }
 

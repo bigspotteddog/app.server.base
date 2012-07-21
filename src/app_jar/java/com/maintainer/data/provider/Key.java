@@ -1,28 +1,31 @@
 package com.maintainer.data.provider;
 
 public class Key {
+    transient private Class<?> kind;
     private Key parent;
-    private Class<?> kind;
+    private String kindName;
     private Long id;
     private String name;
 
-    public Key(Class<?> kind, Long id) {
-        this.kind = kind;
+    protected Key() {}
+
+    public Key(final Class<?> kind, final Long id) {
+        setKind(kind);
         this.id = id;
     }
 
-    public Key(Class<?> kind, String name) {
-        this.kind = kind;
+    public Key(final Class<?> kind, final String name) {
+        setKind(kind);
         this.name = name;
     }
 
-    public Key(Class<?> kind, Long id, Key parent) {
-        this.kind = kind;
+    public Key(final Class<?> kind, final Long id, final Key parent) {
+        setKind(kind);
         this.id = id;
     }
 
-    public Key(Class<?> kind, String name, Key parent) {
-        this.kind = kind;
+    public Key(final Class<?> kind, final String name, final Key parent) {
+        setKind(kind);
         this.name = name;
     }
 
@@ -30,7 +33,7 @@ public class Key {
         return parent;
     }
 
-    public void setParent(Key parent) {
+    public void setParent(final Key parent) {
         this.parent = parent;
     }
 
@@ -38,15 +41,19 @@ public class Key {
         return kind;
     }
 
-    public void setKind(Class<?> kind) {
+    public void setKind(final Class<?> kind) {
         this.kind = kind;
+        if (kind == null) {
+            this.setKindName(null);
+        }
+        this.setKindName(kind.getName());
     }
 
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(final Long id) {
         this.id = id;
     }
 
@@ -54,15 +61,19 @@ public class Key {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
     public String getKindName() {
-        return getKindName(kind);
+        return kindName;
     }
 
-    public static String getKindName(Class<?> clazz) {
-        return clazz.getName();
+    public void setKindName(final String kindName) {
+        this.kindName = kindName;
+    }
+
+    public static String getKindName(final Class<?> kind) {
+        return kind.getName();
     }
 }

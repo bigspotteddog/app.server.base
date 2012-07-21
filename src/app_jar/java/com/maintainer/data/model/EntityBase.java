@@ -11,5 +11,6 @@ public interface EntityBase {
     void setModified(Date date);
     Date getModified();
     Key getKey();
+    void setKey(Key key);
     EntityBase accept(AutoCreateVisitor visitor) throws Exception;
 }

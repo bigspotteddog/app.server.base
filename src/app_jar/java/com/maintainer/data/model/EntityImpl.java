@@ -19,8 +19,10 @@ public class EntityImpl implements EntityBase {
 
     private Date modified;
 
+    private Key key;
+
     @Override
-    public void setId(Long id) {
+    public void setId(final Long id) {
         this.id = id;
     }
 
@@ -30,25 +32,35 @@ public class EntityImpl implements EntityBase {
     }
 
     @Override
-    public EntityBase accept(AutoCreateVisitor visitor) throws Exception {
+    public EntityBase accept(final AutoCreateVisitor visitor) throws Exception {
         return visitor.autocreate(this);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        EntityImpl other = (EntityImpl) obj;
+    public boolean equals(final Object obj) {
+        final EntityImpl other = (EntityImpl) obj;
         return this.getId().equals(other.getId());
     }
 
     @Override
     public int hashCode() {
-        if (getId() == null) return 0;
+        if (getId() == null) {
+            return 0;
+        }
         return getId().hashCode();
     }
 
     @Override
     public Key getKey() {
-        return new Key(getClass(), getId());
+        if (key == null) {
+            return new Key(getClass(), getId());
+        }
+        return key;
+    }
+
+    @Override
+    public void setKey(final Key key) {
+        this.key = key;
     }
 
      @Override
@@ -57,7 +69,7 @@ public class EntityImpl implements EntityBase {
     }
 
     @Override
-    public void setModified(Date modified) {
+    public void setModified(final Date modified) {
         this.modified = modified;
     }
 }

@@ -46,18 +46,18 @@ public class WebSwitch extends Application {
         this(true);
     }
 
-    public WebSwitch(boolean isSecured) {
+    public WebSwitch(final boolean isSecured) {
         initializeAppServerLogging();
 
         this.isSecured = isSecured;
         this.isTransactional = true;
-        Properties properties = Utils.getApplicationServerProperties();
-        String secured = (String) properties.get("appserver.application.secured");
+        final Properties properties = Utils.getApplicationServerProperties();
+        final String secured = (String) properties.get("appserver.application.secured");
         if (secured != null) {
             this.isSecured = Boolean.parseBoolean(secured);
         }
 
-        String transactional = (String) properties.get("appserver.application.transactional");
+        final String transactional = (String) properties.get("appserver.application.transactional");
         if (transactional != null) {
             this.isTransactional = Boolean.parseBoolean(transactional);
         }
@@ -67,58 +67,62 @@ public class WebSwitch extends Application {
 
         try {
             start();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
-    public static void initializeAppServerLogging() {
+    public void initializeAppServerLogging() {
         PropertyConfigurator.configure("etc/log4j.properties");
         log.info("Logging re-initialized.");
     }
 
     protected String getApplicationName() {
-        Properties properties = Utils.getApplicationServerProperties();
-        String name = (String) properties.get("appserver.application.name");
-        if (name != null) return name;
+        final Properties properties = Utils.getApplicationServerProperties();
+        final String name = (String) properties.get("appserver.application.name");
+        if (name != null) {
+            return name;
+        }
         return "unknown";
     }
 
     protected int getMaxCookieAge() {
-        Properties properties = Utils.getApplicationServerProperties();
-        String age = (String) properties.get("appserver.application.max.cookie.age");
-        if (age == null) return FIVE_MINUTES;
+        final Properties properties = Utils.getApplicationServerProperties();
+        final String age = (String) properties.get("appserver.application.max.cookie.age");
+        if (age == null) {
+            return FIVE_MINUTES;
+        }
         return Integer.parseInt(age);
     }
 
-    public void attachAdditionalRoutes(Router router) {}
+    public void attachAdditionalRoutes(final Router router) {}
     protected DataProvider<?> registerDefaultDataProvider() { return null; }
-    protected void registerDataProviders(Map<Class<?>, DataProvider<?>> dataProviders) {}
-    protected void registerControllerClasses(Map<String, Class<?>> controllerClasses) {}
+    protected void registerDataProviders(final Map<Class<?>, DataProvider<?>> dataProviders) {}
+    protected void registerControllerClasses(final Map<String, Class<?>> controllerClasses) {}
 
     protected void initializeDefaultDataProvider() {
-        DataProviderFactory factory = DataProviderFactory.instance();
+        final DataProviderFactory factory = DataProviderFactory.instance();
 
-        DataProvider<?> dataProvider = registerDefaultDataProvider();
+        final DataProvider<?> dataProvider = registerDefaultDataProvider();
         if (dataProvider != null) {
             factory.setDefaultDataProvider(dataProvider);
         }
     }
 
     protected void initializeControllerClasses() {
-        Map<String, Class<?>> map = new LinkedHashMap<String, Class<?>>();
+        final Map<String, Class<?>> map = new LinkedHashMap<String, Class<?>>();
         registerControllerClasses(map);
-        for (Entry<String, Class<?>> e : map.entrySet()) {
+        for (final Entry<String, Class<?>> e : map.entrySet()) {
             GenericController.register(e.getKey(), e.getValue());
         }
     }
 
     protected void initializeDataProviders() {
-        Map<Class<?>, DataProvider<?>> map = new LinkedHashMap<Class<?>, DataProvider<?>>();
+        final Map<Class<?>, DataProvider<?>> map = new LinkedHashMap<Class<?>, DataProvider<?>>();
         registerDataProviders(map);
-        DataProviderFactory factory = DataProviderFactory.instance();
-        for (Entry<Class<?>, DataProvider<?>> e : map.entrySet()) {
+        final DataProviderFactory factory = DataProviderFactory.instance();
+        for (final Entry<Class<?>, DataProvider<?>> e : map.entrySet()) {
             factory.register(e.getKey(), e.getValue());
         }
     }
@@ -127,18 +131,18 @@ public class WebSwitch extends Application {
     public Restlet createInboundRoot() {
         initializeControllerClasses();
 
-        Router router = new Router(getContext());
+        final Router router = new Router(getContext());
         securedRouter = router;
 
         attachRoutes(router);
 
         if (isSecured) {
-            CookieAuthenticator co = new MyCookieAuthenticator(getContext(), false, "My cookie realm", "MyExtraSecretKey".getBytes());
+            final CookieAuthenticator co = new MyCookieAuthenticator(getContext(), false, "My cookie realm", "MyExtraSecretKey".getBytes());
             co.setLoginFormPath("/");
             co.setVerifier(getVerifier());
             co.setEnroler(getEnroler(getApplicationName()));
 
-            int maxCookieAge = getMaxCookieAge();
+            final int maxCookieAge = getMaxCookieAge();
             co.setMaxCookieAge(maxCookieAge);
             log.info("Set max cookie age: " + maxCookieAge);
 
@@ -152,18 +156,18 @@ public class WebSwitch extends Application {
         return router;
     }
 
-    protected MyEnroler getEnroler(String applicationName) {
+    protected MyEnroler getEnroler(final String applicationName) {
         return new MyEnroler(applicationName);
     }
 
     protected MyVerifier getVerifier() {
-        MyVerifier verifier = new MyVerifier();
+        final MyVerifier verifier = new MyVerifier();
         verifier.setApplication(this);
         return verifier;
     }
 
-    protected void attachRoutes(Router router) {
-        RouteMap routes = new RouteMap(router);
+    protected void attachRoutes(final Router router) {
+        final RouteMap routes = new RouteMap(router);
         routes.put("/ping", PingController.class);
         routes.put("/check", CheckPermissionController.class, Template.MODE_STARTS_WITH);
         routes.put("/login", LoginController.class);
@@ -173,44 +177,44 @@ public class WebSwitch extends Application {
 
         fillRoutes(routes);
 
-        TemplateRoute generic = routes.remove(GENERIC);
+        final TemplateRoute generic = routes.remove(GENERIC);
         routes.put(GENERIC, generic);
 
-        for(Entry<String, TemplateRoute> e : routes.entrySet()) {
-            TemplateRoute route = e.getValue();
+        for(final Entry<String, TemplateRoute> e : routes.entrySet()) {
+            final TemplateRoute route = e.getValue();
             addRoute(route);
         }
     }
 
-    protected void addRoute(TemplateRoute route) {
+    protected void addRoute(final TemplateRoute route) {
         securedRouter.getRoutes().add(route);
     }
 
-    protected void fillRoutes(RouteMap routes) {}
+    protected void fillRoutes(final RouteMap routes) {}
 
     public Router getSecuredRouter() {
         return securedRouter;
     }
 
     @Override
-    public void handle(Request request, Response response) {
+    public void handle(final Request request, final Response response) {
         try {
             begin(request);
             super.handle(request, response);
             commit(request);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             response.setStatus(Status.SERVER_ERROR_INTERNAL, e, e.getMessage());
             response.setEntity(new StringRepresentation(e.getMessage(), MediaType.TEXT_PLAIN));
         }
     }
 
-    private void commit(Request request) {
+    private void commit(final Request request) {
         if (isTransactional  && !Utils.isInternalRequest(request)) {
             DataProviderFactory.instance().getDefaultDataProvider().commitTransaction();
         }
     }
 
-    private void begin(Request request) {
+    private void begin(final Request request) {
         if (isTransactional && !Utils.isInternalRequest(request)) {
             DataProviderFactory.instance().getDefaultDataProvider().beginTransaction();
         }
@@ -228,11 +232,11 @@ public class WebSwitch extends Application {
         return isTransactional;
     }
 
-    public void setTransactional(boolean isTransactional) {
+    public void setTransactional(final boolean isTransactional) {
         this.isTransactional = isTransactional;
     }
 
-    public void setSecured(boolean isSecured) {
+    public void setSecured(final boolean isSecured) {
         this.isSecured = isSecured;
     }
 }
