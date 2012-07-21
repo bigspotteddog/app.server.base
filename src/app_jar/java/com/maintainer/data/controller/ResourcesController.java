@@ -141,7 +141,8 @@ public abstract class ResourcesController<T> extends ServerResource {
                     query.filter(parentResource.getResource(), parentResource.getId());
                 }
 
-                if (resource.getProperty() != null && i == resources.size() - 1) {
+                final boolean isId = resource.getProperty() != null && i == resources.size() - 1;
+                if (isId) {
                     query.filter(ID, resource.getProperty());
                     query.setKey(new Key(query.getKind(), resource.getProperty()));
                 }
@@ -174,7 +175,7 @@ public abstract class ResourcesController<T> extends ServerResource {
                 final Class<?> type = getType();
                 final Autocreate annotation = type.getAnnotation(Autocreate.class);
                 final boolean autocreate = annotation == null || (annotation != null && !annotation.skip());
-                if (resource.isId() && !list.isEmpty()) {
+                if (isId && !list.isEmpty()) {
                     obj = list.iterator().next();
                     if (autocreate) {
                         autocreate(obj);
@@ -526,9 +527,9 @@ public abstract class ResourcesController<T> extends ServerResource {
         final Class<?> kind = getType();
         checkReadOnly(kind);
 
-        final long id = getId();
+        final Object id = getId();
 
-        if (id == ID_NOT_PROVIDED) {
+        if (id == null) {
             throw new Exception(NO_ID_PROVIDED);
         }
 
@@ -540,7 +541,7 @@ public abstract class ResourcesController<T> extends ServerResource {
 
         key = service.delete(key);
 
-        final Representation response = new StringRepresentation("{\"" + ID + "\":" + key.getId() + "}");
+        final Representation response = new StringRepresentation("{\"" + ID + "\":\"" + key.getId() + "\"}");
         response.setMediaType(MediaType.APPLICATION_JSON);
         setStatus(Status.SUCCESS_OK);
         return response;
@@ -557,19 +558,19 @@ public abstract class ResourcesController<T> extends ServerResource {
         return null;
     }
 
-    protected long getId() {
+    protected Object getId() {
         final ArrayList<Resource> resources = Utils.getResources(getRequest());
         if (resources.size() < 1) {
             return ID_NOT_PROVIDED;
         }
 
         final Resource resource = resources.get(0);
-        final boolean isId = resource.isId();
-        if (!isId) {
+        final Object id = resource.getProperty();
+        if (id == null) {
             return ID_NOT_PROVIDED;
         }
 
-        return resource.getId();
+        return resource.getProperty();
     }
 
     protected String getResource2() {
