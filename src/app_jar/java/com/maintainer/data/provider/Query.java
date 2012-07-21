@@ -28,16 +28,16 @@ public class Query extends LinkedHashMap<String, Object> {
 
     private Key key;
 
-    public Query(Class<?> kind) {
+    public Query(final Class<?> kind) {
         this.kind = kind;
     }
 
-    public Query filter(String condition, Object value) {
+    public Query filter(final String condition, final Object value) {
         this.put(condition, value);
         return this;
     }
 
-    public Query setOrder(String order) {
+    public Query setOrder(final String order) {
         this.order = order;
         return this;
     }
@@ -46,7 +46,7 @@ public class Query extends LinkedHashMap<String, Object> {
         return kind;
     }
 
-    public void setKind(Class<?> kind) {
+    public void setKind(final Class<?> kind) {
         this.kind = kind;
     }
 
@@ -54,7 +54,7 @@ public class Query extends LinkedHashMap<String, Object> {
         return order;
     }
 
-    public Query setOffset(int offset) {
+    public Query setOffset(final int offset) {
         this.offset = offset;
         return this;
     }
@@ -63,7 +63,7 @@ public class Query extends LinkedHashMap<String, Object> {
         return offset;
     }
 
-    public Query setLimit(int limit) {
+    public Query setLimit(final int limit) {
         this.limit = limit;
         return this;
     }
@@ -80,7 +80,7 @@ public class Query extends LinkedHashMap<String, Object> {
         return getKind().getSimpleName();
     }
 
-    public void setKey(Key key) {
+    public void setKey(final Key key) {
         this.key = key;
     }
 
@@ -88,8 +88,10 @@ public class Query extends LinkedHashMap<String, Object> {
         return key;
     }
 
-    public Long getId() {
-        if (getKey() == null) return null;
+    public Object getId() {
+        if (getKey() == null) {
+            return null;
+        }
         return getKey().getId();
     }
 }

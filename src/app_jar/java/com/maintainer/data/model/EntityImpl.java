@@ -13,21 +13,23 @@ import com.maintainer.data.provider.Key;
 public class EntityImpl implements EntityBase {
 
     @javax.persistence.Id
-    @com.google.code.morphia.annotations.Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Object id;
 
     private Date modified;
 
     private Key key;
 
     @Override
-    public void setId(final Long id) {
+    public void setId(final Object id) {
         this.id = id;
     }
 
     @Override
-    public Long getId() {
+    public Object getId() {
+        if (key != null) {
+            return key.getId();
+        }
         return id;
     }
 
@@ -61,6 +63,7 @@ public class EntityImpl implements EntityBase {
     @Override
     public void setKey(final Key key) {
         this.key = key;
+        this.id = key.getId();
     }
 
      @Override

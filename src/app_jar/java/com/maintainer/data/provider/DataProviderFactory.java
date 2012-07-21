@@ -25,11 +25,11 @@ public class DataProviderFactory {
         return DataProviderFactoryHolder.INSTANCE;
     }
 
-    public void register(Class<?> clazz, DataProvider<?> dataProvider) {
+    public void register(final Class<?> clazz, final DataProvider<?> dataProvider) {
         map.put(clazz, dataProvider);
     }
 
-    public DataProvider<?> getDataProvider(Class<?> clazz) throws DefaultDataProviderInitializationException {
+    public DataProvider<?> getDataProvider(final Class<?> clazz) throws DefaultDataProviderInitializationException {
         DataProvider<?> dataProvider = map.get(clazz);
 
         if (dataProvider == null) {
@@ -39,17 +39,15 @@ public class DataProviderFactory {
         return dataProvider;
     }
 
-    public void setDefaultDataProvider(DataProvider<?> dataProvider) {
+    public void setDefaultDataProvider(final DataProvider<?> dataProvider) {
         this.defaultDataProvider = dataProvider;
     }
 
     public DataProvider<?> getDefaultDataProvider() throws DefaultDataProviderInitializationException {
         if (defaultDataProvider == null) {
-            Properties properties = Utils.getDatabaseConfigurationProperties();
-            String driver = (String) properties.get("hibernate.connection.driver_class");
-            if ("com.google.code.morphia.Morhia".equals(driver)) {
-                defaultDataProvider = new MongoDataProvider<EntityBase>();
-            } else if ("com.maintainer.data.provider.datastore.DatastoreDataProvider".equals(driver)) {
+            final Properties properties = Utils.getDatabaseConfigurationProperties();
+            final String driver = (String) properties.get("hibernate.connection.driver_class");
+            if ("com.maintainer.data.provider.datastore.DatastoreDataProvider".equals(driver)) {
                 defaultDataProvider = new DatastoreDataProvider<EntityBase>();
             } else {
                 defaultDataProvider = new HibernateDataProvider<EntityBase>();

@@ -1,6 +1,7 @@
 package com.maintainer.data.provider.datastore;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -57,7 +58,7 @@ public class MapDatastoreDataProvider extends AbstractDataProvider<Map<String, O
     }
 
     @Override
-    public Long getId(final Object object) {
+    public Object getId(final Object object) {
         if (object != null && Key.class.isAssignableFrom(object.getClass())) {
             final Key key = (Key) object;
             return key.getId();
@@ -139,8 +140,19 @@ public class MapDatastoreDataProvider extends AbstractDataProvider<Map<String, O
         return obj;
     }
 
-    private Key createKey(final String kind, final long id) {
-        final Key key = KeyFactory.createKey(kind, id);
+    private Key createKey(final String kind, final Object id) {
+        Key key = null;
+
+        if (Utils.isNumeric(id.toString())) {
+            key = KeyFactory.createKey(kind, new BigDecimal(id.toString()).longValue());
+        } else if (Long.class.isAssignableFrom(id.getClass())) {
+            key = KeyFactory.createKey(kind, (Long) id);
+        } else if (Double.class.isAssignableFrom(id.getClass())){
+            key = KeyFactory.createKey(kind, ((Double) id).longValue());
+        } else {
+            key = KeyFactory.createKey(kind, (String) id);
+        }
+
         return key;
     }
 
@@ -227,7 +239,7 @@ public class MapDatastoreDataProvider extends AbstractDataProvider<Map<String, O
                     if (value != null) {
                         if (EntityBase.class.isAssignableFrom(value.getClass())) {
                             final EntityBase base = (EntityBase) value;
-                            value = KeyFactory.createKey(getKindName(base.getClass()), base.getId());
+                            value = createKey(getKindName(base.getClass()), base.getId());
                         } else if (Collection.class.isAssignableFrom(value.getClass())) {
                             final List<Object> list = new ArrayList<Object>((Collection<Object>) value);
                             value = list;
@@ -237,7 +249,7 @@ public class MapDatastoreDataProvider extends AbstractDataProvider<Map<String, O
                                 final Object o = iterator.next();
                                 if (EntityBase.class.isAssignableFrom(o.getClass())) {
                                     final EntityBase base = (EntityBase) o;
-                                    final Key key = KeyFactory.createKey(getKindName(base.getClass()), base.getId());
+                                    final Key key = createKey(getKindName(base.getClass()), base.getId());
                                     iterator.set(key);
                                 }
                             }

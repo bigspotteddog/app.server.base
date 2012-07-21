@@ -4,8 +4,7 @@ public class Key {
     transient private Class<?> kind;
     private Key parent;
     private String kindName;
-    private Long id;
-    private String name;
+    private Object id;
 
     protected Key() {}
 
@@ -16,7 +15,12 @@ public class Key {
 
     public Key(final Class<?> kind, final String name) {
         setKind(kind);
-        this.name = name;
+        this.id = name;
+    }
+
+    public Key(final Class<?> kind, final Object id) {
+        setKind(kind);
+        this.id = id;
     }
 
     public Key(final Class<?> kind, final Long id, final Key parent) {
@@ -26,7 +30,7 @@ public class Key {
 
     public Key(final Class<?> kind, final String name, final Key parent) {
         setKind(kind);
-        this.name = name;
+        this.id = name;
     }
 
     public Key getParent() {
@@ -49,20 +53,12 @@ public class Key {
         this.setKindName(kind.getName());
     }
 
-    public Long getId() {
+    public Object getId() {
         return id;
     }
 
     public void setId(final Long id) {
         this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(final String name) {
-        this.name = name;
     }
 
     public String getKindName() {

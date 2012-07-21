@@ -118,8 +118,8 @@ public abstract class ResourcesController<T> extends ServerResource {
                             }
                             if (EntityBase.class.isAssignableFrom(o.getClass())) {
                                 final EntityBase e = (EntityBase) o;
-                                final Long id = e.getId();
-                                if (id.longValue() == resource.getId().longValue()) {
+                                final Object id = e.getId();
+                                if (id.equals(resource.getId())) {
                                     obj = o;
                                     break;
                                 }
@@ -208,6 +208,9 @@ public abstract class ResourcesController<T> extends ServerResource {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public Object autocreate(final Object target) throws Exception {
+        if (target == null) {
+            return null;
+        }
 
         final Field[] fields = target.getClass().getDeclaredFields();
         for (final Field f : fields) {
@@ -500,7 +503,7 @@ public abstract class ResourcesController<T> extends ServerResource {
         final DataProvider<T> service = getDataProvider();
         final T obj = service.fromJson(getType(), incomingJson);
 
-        if (((EntityImpl) obj).getId() == -1) {
+        if (((EntityImpl) obj).getId() == null) {
             throw new Exception(NO_ID_PROVIDED);
         }
 

@@ -6,8 +6,8 @@ import com.maintainer.data.provider.AutoCreateVisitor;
 import com.maintainer.data.provider.Key;
 
 public interface EntityBase {
-    void setId(Long id);
-    Long getId();
+    void setId(Object id);
+    Object getId();
     void setModified(Date date);
     Date getModified();
     Key getKey();
