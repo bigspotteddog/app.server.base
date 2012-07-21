@@ -241,7 +241,7 @@ public class Utils {
 
     public static ArrayList<Resource> getResources(final Request request) {
         final Reference resourceRef = request.getResourceRef();
-        String path = resourceRef.getPath(true);
+        String path = resourceRef.getPath();
         final Reference rootRef = request.getRootRef();
         String root = null;
         if (rootRef != null) {
