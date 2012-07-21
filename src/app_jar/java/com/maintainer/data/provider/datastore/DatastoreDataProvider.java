@@ -2,6 +2,7 @@ package com.maintainer.data.provider.datastore;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,7 +59,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     }
 
     @Override
-    public Long getId(final Object object) {
+    public Object getId(final Object object) {
         if (object != null && Key.class.isAssignableFrom(object.getClass())) {
             final Key key = (Key) object;
             return key.getId();
@@ -68,7 +69,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
     @SuppressWarnings("unchecked")
     @Override
-    public T get(final com.maintainer.data.provider.Key key) {
+    public T get(final com.maintainer.data.provider.Key key) throws Exception {
         final T cached = (T) cache.getIfPresent(key);
         if (cached != null) {
             log.debug(key + " returned from cache.");
@@ -147,8 +148,19 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return obj;
     }
 
-    private Key createKey(final String kind, final long id) {
-        final Key key = KeyFactory.createKey(kind, id);
+    protected Key createKey(final String kind, final Object id) {
+        Key key = null;
+
+        if (Utils.isNumeric(id.toString())) {
+            key = KeyFactory.createKey(kind, new BigDecimal(id.toString()).longValue());
+        } else if (Long.class.isAssignableFrom(id.getClass())) {
+            key = KeyFactory.createKey(kind, (Long) id);
+        } else if (Double.class.isAssignableFrom(id.getClass())){
+            key = KeyFactory.createKey(kind, ((Double) id).longValue());
+        } else {
+            key = KeyFactory.createKey(kind, (String) id);
+        }
+
         return key;
     }
 
@@ -211,7 +223,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
         target.setModified(new Date());
 
-        Entity entity = getEntity(KeyFactory.createKey(getKindName(target.getClass()), target.getId()));
+        Entity entity = getEntity(createKey(getKindName(target.getClass()), target.getId()));
         entity = toEntity(entity, target);
 
         final DatastoreService datastore = getDatastore();
@@ -239,7 +251,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                     if (value != null) {
                         if (EntityBase.class.isAssignableFrom(value.getClass())) {
                             final EntityBase base = (EntityBase) value;
-                            value = KeyFactory.createKey(getKindName(base.getClass()), base.getId());
+                            value = createKey(getKindName(base.getClass()), base.getId());
                         } else if (Collection.class.isAssignableFrom(value.getClass())) {
                             final List<Object> list = new ArrayList<Object>((Collection<Object>) value);
                             value = list;
@@ -249,7 +261,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                                 final Object o = iterator.next();
                                 if (EntityBase.class.isAssignableFrom(o.getClass())) {
                                     final EntityBase base = (EntityBase) o;
-                                    final Key key = KeyFactory.createKey(getKindName(base.getClass()), base.getId());
+                                    final Key key = createKey(getKindName(base.getClass()), base.getId());
                                     iterator.set(key);
                                 }
                             }
@@ -307,7 +319,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     }
 
     @Override
-    public List<T> find(final Query query) {
+    public List<T> find(final Query query) throws Exception {
         final DatastoreService datastore = getDatastore();
 
         if (query.getKey() != null) {

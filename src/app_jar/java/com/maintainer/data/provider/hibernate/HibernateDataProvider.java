@@ -72,7 +72,7 @@ public class HibernateDataProvider<T extends EntityBase> extends AbstractDataPro
     @SuppressWarnings("unchecked")
     @Override
     public T get(final Key key) {
-        final T obj = (T) getDatastore().get(key.getKind(), key.getId());
+        final T obj = (T) getDatastore().get(key.getKind(), (Long) key.getId());
         return obj;
     }
 

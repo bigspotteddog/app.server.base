@@ -43,9 +43,9 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
     @Override
     public T merge(final T incoming) throws Exception {
-        final long id = ((EntityImpl) incoming).getId();
+        final Object id = ((EntityImpl) incoming).getId();
 
-        if (id == 0) {
+        if (id == null) {
             throw new Exception("no id specified");
         }
 
@@ -215,7 +215,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     }
 
     @Override
-    public Long getId(final Object object) {
+    public Object getId(final Object object) {
         if (object != null && EntityBase.class.isAssignableFrom(object.getClass())) {
             final EntityBase entity = (EntityBase) object;
             return entity.getId();
@@ -262,7 +262,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
                     delete(o, fieldAutocreate);
                 }
             } else {
-                final Long id = getId(target);
+                final Object id = getId(target);
                 if (id != null) {
                     DataProviderFactory.instance().getDataProvider(target.getClass()).delete(new Key(target.getClass(), id));
                 }
