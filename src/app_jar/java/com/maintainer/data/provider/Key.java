@@ -72,4 +72,9 @@ public class Key {
     public static String getKindName(final Class<?> kind) {
         return kind.getName();
     }
+
+    @Override
+    public String toString() {
+        return kindName + '(' + id + ')';
+    }
 }
