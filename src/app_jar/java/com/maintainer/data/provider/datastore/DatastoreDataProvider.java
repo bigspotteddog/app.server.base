@@ -40,7 +40,7 @@ import com.maintainer.util.Utils;
 
 public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataProvider<T> {
     private static final Logger log = Logger.getLogger(DatastoreDataProvider.class.getName());
-    private static final Cache<com.maintainer.data.provider.Key, Object> cache = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.SECONDS).build();
+    private static final Cache<String, Object> cache = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.MINUTES).build();
 
     private static final Map<String, FilterOperator> ops = new HashMap<String, FilterOperator>();
 
@@ -70,7 +70,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     @SuppressWarnings("unchecked")
     @Override
     public T get(final com.maintainer.data.provider.Key key) throws Exception {
-        final T cached = (T) cache.getIfPresent(key);
+        final T cached = (T) cache.getIfPresent(key.toString());
         if (cached != null) {
             log.debug(key + " returned from cache.");
             return cached;
@@ -80,7 +80,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         try {
             final Entity entity = getEntity(k);
             final T fetched = fromEntity(key.getKind(), entity);
-            cache.put(key, fetched);
+            cache.put(key.toString(), fetched);
             return fetched;
         } catch (final EntityNotFoundException e) {
             //ignore, it will just be null
@@ -173,17 +173,27 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return com.maintainer.data.provider.Key.getKindName(clazz);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public List<T> getAll(final Class<?> kind) throws Exception {
-        final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(getKindName(kind));
-        final DatastoreService datastore = getDatastore();
-        final PreparedQuery p = datastore.prepare(q);
-        final List<T> list = new ArrayList<T>();
-        final List<Entity> entities = p.asList(FetchOptions.Builder.withDefaults());
-        for (final Entity e : entities) {
-            final T obj = fromEntity(kind, e);
-            list.add(obj);
+        final String kindName = getKindName(kind);
+
+        List<T> list = (List<T>) cache.getIfPresent(kindName);
+
+        if (list == null) {
+            final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(kindName);
+            final DatastoreService datastore = getDatastore();
+            final PreparedQuery p = datastore.prepare(q);
+            list = new ArrayList<T>();
+            final List<Entity> entities = p.asList(FetchOptions.Builder.withDefaults());
+            for (final Entity e : entities) {
+                final T obj = fromEntity(kind, e);
+                list.add(obj);
+                cache.put(obj.getKey().toString(), obj);
+            }
+            cache.put(kindName, list);
         }
+
         return list;
     }
 
@@ -193,12 +203,17 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
         target.setModified(new Date());
 
-        Entity entity = new Entity(getKindName(target.getClass()));
+        final String kindName = getKindName(target.getClass());
+        cache.invalidate(kindName);
+
+        Entity entity = new Entity(kindName);
         entity = toEntity(entity, target);
 
         final DatastoreService datastore = getDatastore();
         final Key posted = datastore.put(entity);
         target.setId(posted.getId());
+
+        cache.put(posted.toString(), target);
         return target;
     }
 
@@ -229,6 +244,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         final DatastoreService datastore = getDatastore();
         final Key posted = datastore.put(entity);
         target.setId(posted.getId());
+        cache.put(posted.toString(), target);
         return target;
     }
 
@@ -300,6 +316,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
         final DatastoreService datastore = getDatastore();
         datastore.delete(createKey(key.getKindName(), key.getId()));
+        cache.invalidate(key.toString());
         return key;
     }
 
