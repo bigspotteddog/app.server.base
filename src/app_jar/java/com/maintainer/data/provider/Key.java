@@ -1,6 +1,9 @@
 package com.maintainer.data.provider;
 
-public class Key {
+import java.io.Serializable;
+
+public class Key implements Serializable {
+    private static final long serialVersionUID = -6778571338817109631L;
     transient private Class<?> kind;
     private Key parent;
     private String kindName;
@@ -57,7 +60,7 @@ public class Key {
         return id;
     }
 
-    public void setId(final Long id) {
+    public void setId(final Object id) {
         this.id = id;
     }
 
@@ -71,6 +74,19 @@ public class Key {
 
     public static String getKindName(final Class<?> kind) {
         return kind.getName();
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        return this.toString().equals(obj.toString());
+    }
+
+    @Override
+    public int hashCode() {
+        return this.toString().hashCode();
     }
 
     @Override
