@@ -462,8 +462,11 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         }
 
         final ArrayList<T> list = new ArrayList<T>(map.size());
-        for (final Object o : map.values()) {
-            list.add((T) o);
+        for (final Entity e : entities) {
+            final Key k = e.getKey();
+            final com.maintainer.data.provider.Key key = createNobodyelsesKey(k);
+            final T o = (T) map.get(key);
+            list.add(o);
         }
         return list;
     }
