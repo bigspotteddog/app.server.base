@@ -2,7 +2,7 @@ package com.maintainer.data.provider;
 
 import java.io.Serializable;
 
-public class Key implements Serializable {
+public class Key implements Comparable<Key>, Serializable {
     private static final long serialVersionUID = -6778571338817109631L;
     transient private Class<?> kind;
     private Key parent;
@@ -77,11 +77,11 @@ public class Key implements Serializable {
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (obj == null) {
+    public boolean equals(final Object other) {
+        if (other == null) {
             return false;
         }
-        return this.toString().equals(obj.toString());
+        return this.toString().equals(other.toString());
     }
 
     @Override
@@ -92,5 +92,10 @@ public class Key implements Serializable {
     @Override
     public String toString() {
         return kindName + '(' + id + ')';
+    }
+
+    @Override
+    public int compareTo(final Key other) {
+        return toString().compareTo(other.toString());
     }
 }

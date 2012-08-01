@@ -443,9 +443,9 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             map.putAll(map2);
         }
 
-        final boolean isChanged = map2.isEmpty() || keysNeeded.removeAll(map2.keySet());
+        keysNeeded.removeAll(map2.keySet());
 
-        if (isChanged) {
+        if (!keysNeeded.isEmpty()) {
             final List<Key> keys = new ArrayList<Key>();
             for (final com.maintainer.data.provider.Key key : keysNeeded) {
                 keys.add(createDatastoreKey(key));
