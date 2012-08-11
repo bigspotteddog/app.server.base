@@ -6,7 +6,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import org.apache.log4j.PropertyConfigurator;
 import org.restlet.Application;
 import org.restlet.Request;
 import org.restlet.Response;
@@ -47,6 +46,8 @@ public class WebSwitch extends Application {
     }
 
     public WebSwitch(final boolean isSecured) {
+        log.fine("Initialize WebSwitch");
+
         initializeAppServerLogging();
 
         this.isSecured = isSecured;
@@ -74,8 +75,6 @@ public class WebSwitch extends Application {
     }
 
     public void initializeAppServerLogging() {
-        PropertyConfigurator.configure("etc/log4j.properties");
-        log.info("Logging re-initialized.");
     }
 
     protected String getApplicationName() {
@@ -129,6 +128,8 @@ public class WebSwitch extends Application {
 
     @Override
     public Restlet createInboundRoot() {
+        log.fine("createInboundRoot");
+
         initializeControllerClasses();
 
         final Router router = new Router(getContext());

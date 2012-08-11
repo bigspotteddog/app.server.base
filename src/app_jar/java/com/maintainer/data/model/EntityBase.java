@@ -7,6 +7,7 @@ import com.maintainer.data.provider.AutoCreateVisitor;
 import com.maintainer.data.provider.Key;
 
 public interface EntityBase extends Serializable {
+    boolean isNew();
     void setId(Object id);
     Object getId();
     void setModified(Date date);

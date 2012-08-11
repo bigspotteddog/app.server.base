@@ -130,8 +130,8 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     public EntityBase autocreate(final EntityBase target) throws Exception {
 
         T existing = null;
-        if (target.getId() != null) {
-            existing = get(new Key(target.getClass(), target.getId()));
+        if (!target.isNew()) {
+                existing = get(new Key(target.getClass(), target.getId()));
         }
 
         final Field[] fields = target.getClass().getDeclaredFields();
@@ -231,7 +231,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
         final Autocreate classAutocreate = getAutocreate(target);
 
-        if (target.getId() == null) {
+        if (target.isNew()) {
             if ((classAutocreate == null || (classAutocreate.create()  && !classAutocreate.readonly())) && fieldAutocreate.create()) {
                 final DataProvider<EntityBase> dataProvider = (DataProvider<EntityBase>) DataProviderFactory.instance().getDataProvider(target.getClass());
                 target = dataProvider.post(target);

@@ -152,7 +152,11 @@ public class Utils {
      */
     private static Map<Class<?>, Class<?>> primitiveMap = new HashMap<Class<?>, Class<?>>();
 
-    private static Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private static Gson gson = new GsonBuilder().setDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz").setPrettyPrinting().create();
+
+    public static Gson getGson() {
+        return gson;
+    }
 
     static {
         primitiveMap.put(boolean.class, Boolean.class);

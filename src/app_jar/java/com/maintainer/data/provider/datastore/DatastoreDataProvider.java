@@ -50,6 +50,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     private static final AsyncMemcacheService memcache = MemcacheServiceFactory.getAsyncMemcacheService();
 
     private static final Map<String, FilterOperator> ops = new HashMap<String, FilterOperator>();
+    private boolean local;
 
     public DatastoreDataProvider() {
         ops.put("ge", FilterOperator.GREATER_THAN_OR_EQUAL);
@@ -178,17 +179,21 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
         target.setModified(new Date());
 
-        final String kindName = getKindName(target.getClass());
+        final Entity entity = toEntity(null, target);
 
-        Entity entity = new Entity(kindName);
-        entity = toEntity(entity, target);
 
         final DatastoreService datastore = getDatastore();
         final Key posted = datastore.put(entity);
-        target.setId(posted.getId());
 
-        final com.maintainer.data.provider.Key key = createNobodyelsesKey(posted);
-        putCache(key, target);
+        if (posted.getId() == 0) {
+            target.setId(posted.getName());
+        } else {
+            target.setId(posted.getId());
+        }
+
+        final com.maintainer.data.provider.Key cacheKey = createNobodyelsesKey(posted);
+        putCache(cacheKey, target);
+
         return target;
     }
 
@@ -218,7 +223,12 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
         final DatastoreService datastore = getDatastore();
         final Key posted = datastore.put(entity);
-        target.setId(posted.getId());
+
+        if (posted.getId() == 0) {
+            target.setId(posted.getName());
+        } else {
+            target.setId(posted.getId());
+        }
 
         putCache(key, target);
         return target;
@@ -229,7 +239,43 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     }
 
     @SuppressWarnings("unchecked")
-    private Entity toEntity(final Entity entity, final T target) throws Exception {
+    private Entity toEntity(Entity entity, final T target) throws Exception {
+
+        if (entity == null) {
+            final Class<? extends EntityBase> clazz = target.getClass();
+            final String kindName = getKindName(clazz);
+
+            final Autocreate annotation = clazz.getAnnotation(Autocreate.class);
+
+            if (annotation != null && annotation.id() != Autocreate.EMPTY) {
+
+                Field field = null;
+                try {
+                    final String id = annotation.id();
+                    field = clazz.getDeclaredField(id);
+                    field.setAccessible(true);
+                } catch (final NoSuchFieldException e) {}
+
+                if (field != null) {
+                    final Object value = field.get(target);
+                    Key key = null;
+                    if (value != null) {
+                        key = createDatastoreKey(kindName, value);
+                        target.setId(value);
+                    }
+
+                    if (key != null) {
+                        entity = new Entity(key);
+                    } else {
+                        entity = new Entity(kindName);
+                    }
+                } else {
+                    entity = new Entity(kindName);
+                }
+            } else {
+                entity = new Entity(kindName);
+            }
+        }
 
         final ArrayList<Field> fields = getFields(target);
 
@@ -270,8 +316,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                     value = new Text(string);
                 }
             }
+
             entity.setProperty(f.getName(), value);
         }
+
         return entity;
     }
 
@@ -309,7 +357,15 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
     private com.maintainer.data.provider.Key createNobodyelsesKey(final Key k) throws ClassNotFoundException {
         final Class<?> class1 = getClazz(k);
-        final com.maintainer.data.provider.Key key = new com.maintainer.data.provider.Key(class1, k.getId());
+
+        Object id = null;
+        if (k.getId() == 0) {
+            id = k.getName();
+        } else {
+            id = k.getId();
+        }
+
+        final com.maintainer.data.provider.Key key = new com.maintainer.data.provider.Key(class1, id);
         return key;
     }
 
@@ -505,10 +561,16 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     }
 
     private void putLocalCache(final com.maintainer.data.provider.Key key, final Object o) {
-        cache.put(key, o);
+        if (!local) {
+            cache.put(key, o);
+        }
     }
 
     private Object getLocalCache(final com.maintainer.data.provider.Key key) {
+        if (!local) {
+            return null;
+        }
+
         final Object o = cache.getIfPresent(key);
         return o;
     }
