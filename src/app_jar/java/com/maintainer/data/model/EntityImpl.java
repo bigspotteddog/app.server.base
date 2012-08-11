@@ -21,6 +21,11 @@ public class EntityImpl implements EntityBase {
     private Key key;
 
     @Override
+    public boolean isNew() {
+        return id == null;
+    }
+
+    @Override
     public void setId(final Object id) {
         this.id = id;
     }

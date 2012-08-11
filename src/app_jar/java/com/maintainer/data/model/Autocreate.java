@@ -5,6 +5,9 @@ import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Autocreate {
+    public static final String EMPTY = "";
+
+    String id() default EMPTY;
     boolean create() default true;
     boolean update() default true;
     boolean delete() default true;
