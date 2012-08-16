@@ -9,14 +9,13 @@ import java.util.ListIterator;
 
 import org.apache.log4j.Logger;
 
-import com.google.gson.Gson;
 import com.maintainer.data.model.Autocreate;
 import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
+import com.maintainer.util.Utils;
 
 public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCreateVisitor {
     private static final Logger log = Logger.getLogger(AbstractDataProvider.class.getName());
-    private static final Gson gson = new Gson();
 
     @Override
     public void beginTransaction() {}
@@ -73,8 +72,8 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         boolean equals = false;
 
         if (incoming != null && existing != null) {
-            final String incomingJson = gson.toJson(incoming);
-            final String existingJson = gson.toJson(existing);
+            final String incomingJson = Utils.toJson(incoming);
+            final String existingJson = Utils.toJson(existing);
 
             equals = incomingJson.equals(existingJson);
         } else if (incoming == null && existing == null) {
@@ -121,7 +120,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     @SuppressWarnings("unchecked")
     @Override
     public T fromJson(final Class<?> kind, final String json) {
-        final T obj = (T) new Gson().fromJson(json, kind);
+        final T obj = (T) Utils.getGson().fromJson(json, kind);
         return obj;
     }
 

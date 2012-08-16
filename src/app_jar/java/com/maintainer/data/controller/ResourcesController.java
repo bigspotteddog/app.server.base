@@ -24,7 +24,6 @@ import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.maintainer.data.model.Autocreate;
 import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
@@ -41,7 +40,7 @@ import com.maintainer.util.Utils;
 public abstract class ResourcesController<T> extends ServerResource {
     private static final Logger log = Logger.getLogger(ResourcesController.class.getName());
 
-    private static final int MAX_ROWS = 1000;
+    private static final int MAX_ROWS = 10000;
     private static final String _ID = "_id";
     private static final String ID = "id";
     private static final String ID2 = "id2";
@@ -433,7 +432,7 @@ public abstract class ResourcesController<T> extends ServerResource {
     }
 
     protected Gson getGson() {
-        return new GsonBuilder().setPrettyPrinting().create();
+        return Utils.getGson();
     }
 
     // Return the first value as a string. Later, convert the string
