@@ -3,6 +3,9 @@ package com.maintainer.data.provider;
 import java.util.LinkedHashMap;
 
 public class Query extends LinkedHashMap<String, Object> {
+    public static final String NEXT = "NEXT";
+    public static final String PREVIOUS = "PREVIOUS";
+
     private static final long serialVersionUID = -8095776860044348098L;
 
     public static final String NE = ":ne";
@@ -25,8 +28,11 @@ public class Query extends LinkedHashMap<String, Object> {
     private String order;
     private int offset;
     private int limit;
-
     private Key key;
+
+    private String previousCursor;
+    private String nextCursor;
+    private String pageDirection;
 
     public Query(final Class<?> kind) {
         this.kind = kind;
@@ -93,5 +99,33 @@ public class Query extends LinkedHashMap<String, Object> {
             return null;
         }
         return getKey().getId();
+    }
+
+    public void setPreviousCursor(final String cursor) {
+        this.previousCursor = cursor;
+    }
+
+    public String getPreviousCursor() {
+        return previousCursor;
+    }
+
+    public void setNextCursor(final String cursor) {
+        this.nextCursor = cursor;
+    }
+
+    public String getNextCursor() {
+        return nextCursor;
+    }
+
+    public void previous() {
+        pageDirection = PREVIOUS;
+    }
+
+    public void next() {
+        pageDirection = NEXT;
+    }
+
+    public String getPageDirection() {
+        return pageDirection;
     }
 }

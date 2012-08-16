@@ -9,6 +9,7 @@ import org.restlet.security.User;
 import org.restlet.util.Series;
 
 import com.google.gson.Gson;
+import com.maintainer.util.Utils;
 
 public class LogoutController extends ServerResource {
     @SuppressWarnings("unused")
@@ -24,7 +25,7 @@ public class LogoutController extends ServerResource {
         if (user != null) {
             identifier = user.getIdentifier();
         }
-        final Gson gson = new Gson();
+        final Gson gson = Utils.getGson();
         final Goodbye welcome = new Goodbye(identifier);
         final String json = gson.toJson(welcome);
         return new JsonRepresentation(json);

@@ -9,6 +9,7 @@ import org.restlet.resource.ServerResource;
 import org.restlet.security.User;
 
 import com.google.gson.Gson;
+import com.maintainer.util.Utils;
 
 public class PingController extends ServerResource {
     private static final String LOGGED_IN_AS_GUEST = "Logged in as guest";
@@ -31,7 +32,7 @@ public class PingController extends ServerResource {
         if (user != null) {
             identifier = user.getIdentifier();
         }
-        final Gson gson = new Gson();
+        final Gson gson = Utils.getGson();
         final Ping welcome = new Ping(identifier);
         final String json = gson.toJson(welcome);
         return new JsonRepresentation(json);

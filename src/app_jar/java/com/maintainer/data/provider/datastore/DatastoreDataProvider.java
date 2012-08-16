@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
+import com.google.appengine.api.datastore.Cursor;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
@@ -30,9 +31,11 @@ import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.SortDirection;
+import com.google.appengine.api.datastore.QueryResultIterator;
 import com.google.appengine.api.datastore.Text;
 import com.google.appengine.api.memcache.AsyncMemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
+import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
@@ -125,6 +128,8 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                         value = get(createNobodyelsesKey(k));
                     } else if (Text.class.isAssignableFrom(value.getClass())) {
                         value = ((Text) value).getValue();
+                    } else if (Double.class.isAssignableFrom(value.getClass()) && BigDecimal.class.isAssignableFrom(f.getType())) {
+                        value = new BigDecimal(value.toString());
                     } else if (Collection.class.isAssignableFrom(value.getClass())) {
                         final List<Object> list = new ArrayList<Object>((Collection<? extends Object>) value);
 
@@ -133,8 +138,8 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                             Object o = iterator.next();
                             if (Key.class.isAssignableFrom(o.getClass())) {
                                 final Key k = (Key) o;
-                                final Class<?> class1 = getClazz(k);
-                                o = get(new com.maintainer.data.provider.Key(class1, k.getId()));
+                                final com.maintainer.data.provider.Key key2 = createNobodyelsesKey(k);
+                                o = get(key2);
                                 iterator.set(o);
                             }
                         }
@@ -144,7 +149,9 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                 }
             }
 
-            obj.setId(entity.getKey().getId());
+            final Key key = entity.getKey();
+            final com.maintainer.data.provider.Key key2 = createNobodyelsesKey(key);
+            obj.setId(key2.getId());
 
         } catch (final Exception e) {
             throw new RuntimeException(e);
@@ -310,10 +317,15 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                 }
             }
 
-            if (value != null && String.class.isAssignableFrom(value.getClass())) {
-                final String string = (String) value;
-                if (string.length() > 500) {
-                    value = new Text(string);
+            if (value != null) {
+                if (String.class.isAssignableFrom(value.getClass())) {
+                    final String string = (String) value;
+                    if (string.length() > 500) {
+                        value = new Text(string);
+                    }
+                } else if (BigDecimal.class.isAssignableFrom(value.getClass())) {
+                    final BigDecimal decimal = (BigDecimal) value;
+                    value = decimal.doubleValue();
                 }
             }
 
@@ -395,6 +407,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return key;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public List<T> find(final Query query) throws Exception {
         final DatastoreService datastore = getDatastore();
@@ -403,14 +416,14 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             try {
                 final Entity entity = datastore.get(createDatastoreKey(query.getKey()));
                 final T fromEntity = fromEntity(query.getKind(), entity);
-                final ArrayList<T> list = new ArrayList<T>();
+                final ResultList<T> list = new ResultList<T>();
                 list.add(fromEntity);
                 putCache(fromEntity.getKey(), fromEntity);
                 return list;
             } catch (final EntityNotFoundException e1) {
                 e1.printStackTrace();
             }
-            return Collections.emptyList();
+            return ResultList.emptyList();
         }
 
         final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(getKindName(query.getKind()));
@@ -439,30 +452,49 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             addFilter(q, key, op, value);
         }
 
+        final String pageDirection = query.getPageDirection();
+
         if (query.getOrder() != null) {
             final String[] fields = StringUtils.split(query.getOrder(), ',');
             for (String field : fields) {
-
-
                 if (field.startsWith("-")) {
+                    SortDirection sortDirection = SortDirection.DESCENDING;
+                    if (Query.PREVIOUS.equals(pageDirection)) {
+                        sortDirection = SortDirection.ASCENDING;
+                    }
+
                     field = field.substring(1);
                     if (!"id".equals(field.toLowerCase())) {
-                        q.addSort(field, SortDirection.DESCENDING);
+                        q.addSort(field, sortDirection);
                     } else {
-                        q.addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.DESCENDING);
+                        q.addSort(Entity.KEY_RESERVED_PROPERTY, sortDirection);
                     }
                 } else {
                     if (!"id".equals(field.toLowerCase())) {
+                        SortDirection sortDirection = SortDirection.ASCENDING;
+                        if (Query.PREVIOUS.equals(pageDirection)) {
+                            sortDirection = SortDirection.DESCENDING;
+                        }
+
                         if (field.startsWith("+")) {
                             field = field.substring(1);
                         }
-                        q.addSort(field);
+                        q.addSort(field, sortDirection);
                     }
                 }
             }
         }
 
         final FetchOptions options = FetchOptions.Builder.withDefaults();
+
+        if (Query.PREVIOUS.equals(pageDirection)) {
+            final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getPreviousCursor());
+            options.startCursor(fromWebSafeString);
+        } else if (Query.NEXT.equals(pageDirection)) {
+            final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getNextCursor());
+            options.startCursor(fromWebSafeString);
+        }
+
         if (query.getOffset() > 0) {
             options.offset(query.getOffset());
         }
@@ -471,26 +503,41 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             options.limit(query.getLimit());
         }
 
-        final List<T> list = getEntities(q, options);
+        final ResultList<T> list = getEntities(q, options);
 
+        if (Query.PREVIOUS.equals(pageDirection)) {
+            Collections.reverse(list);
+            final Cursor startCursor = list.getStartCursor();
+            final Cursor endCursor = list.getEndCursor();
+            list.setStartCursor(endCursor);
+            list.setEndCursor(startCursor);
+        }
         return list;
     }
 
     @SuppressWarnings("unchecked")
-    private List<T> getEntities(final com.google.appengine.api.datastore.Query q, final FetchOptions options) throws Exception {
+    private ResultList<T> getEntities(final com.google.appengine.api.datastore.Query q, final FetchOptions options) throws Exception {
         q.setKeysOnly();
 
         final DatastoreService datastore = getDatastore();
         final PreparedQuery p = datastore.prepare(q);
 
+        final List<Entity> entities = new ArrayList<Entity>();
         final List<com.maintainer.data.provider.Key> keysNeeded = new ArrayList<com.maintainer.data.provider.Key>();
 
-        final List<Entity> entities = p.asList(options);
-        for (final Entity e : entities) {
+        final QueryResultIterator<Entity> iterator = p.asQueryResultIterator(options);
+        Cursor start = null; //iterator.getCursor();
+        while (iterator.hasNext()) {
+            final Entity e = iterator.next();
+            if (start == null || Strings.isNullOrEmpty(start.toString())) {
+                start = iterator.getCursor();
+            }
             final Key k = e.getKey();
             final com.maintainer.data.provider.Key key = createNobodyelsesKey(k);
             keysNeeded.add(key);
+            entities.add(e);
         }
+        final Cursor end = iterator.getCursor();
 
         final Map<com.maintainer.data.provider.Key, Object> map = new LinkedHashMap<com.maintainer.data.provider.Key, Object>();
         final Map<com.maintainer.data.provider.Key, Object> map2 = getAllCache(keysNeeded);
@@ -517,13 +564,22 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             putAllCache(needsToBeCachedMap);
         }
 
-        final ArrayList<T> list = new ArrayList<T>(map.size());
+        final ResultList<T> list = new ResultList<T>(map.size());
         for (final Entity e : entities) {
             final Key k = e.getKey();
             final com.maintainer.data.provider.Key key = createNobodyelsesKey(k);
             final T o = (T) map.get(key);
             list.add(o);
         }
+
+        if (start != null) {
+            list.setStartCursor(start);
+        }
+
+        if (end != null) {
+            list.setEndCursor(end);
+        }
+
         return list;
     }
 

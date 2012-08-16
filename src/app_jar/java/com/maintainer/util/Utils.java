@@ -152,7 +152,7 @@ public class Utils {
      */
     private static Map<Class<?>, Class<?>> primitiveMap = new HashMap<Class<?>, Class<?>>();
 
-    private static Gson gson = new GsonBuilder().setDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz").setPrettyPrinting().create();
+    private static Gson gson = new GsonBuilder().setDateFormat("EEE, dd MMM yyyy HH:mm:ss z").create();
 
     public static Gson getGson() {
         return gson;
@@ -522,7 +522,7 @@ public class Utils {
 
                 final Representation representation = response2.getEntity();
                 if (representation != null) {
-                    final Gson gson = new Gson();
+                    final Gson gson = getGson();
 
                     final ArrayList<Resource> resources = Utils.getResources(request2);
                     if (resources != null) {
