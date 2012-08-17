@@ -20,6 +20,8 @@ public class EntityImpl implements EntityBase {
 
     private Key key;
 
+    private String cursor;
+
     @Override
     public boolean isNew() {
         return id == null;
@@ -79,5 +81,15 @@ public class EntityImpl implements EntityBase {
     @Override
     public void setModified(final Date modified) {
         this.modified = modified;
+    }
+
+    @Override
+    public void setCursor(final String cursor) {
+        this.cursor = cursor;
+    }
+
+    @Override
+    public String getCursor() {
+        return cursor;
     }
 }

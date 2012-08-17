@@ -33,11 +33,14 @@ import com.maintainer.data.provider.DataProviderFactory;
 import com.maintainer.data.provider.DefaultDataProviderInitializationException;
 import com.maintainer.data.provider.Key;
 import com.maintainer.data.provider.Query;
+import com.maintainer.data.provider.datastore.ResultList;
 import com.maintainer.data.router.WebSwitch;
 import com.maintainer.util.Utils;
 
 @SuppressWarnings("unused")
 public abstract class ResourcesController<T> extends ServerResource {
+    private static final String MINUS = "-";
+
     private static final Logger log = Logger.getLogger(ResourcesController.class.getName());
 
     private static final int MAX_ROWS = 10000;
@@ -83,6 +86,8 @@ public abstract class ResourcesController<T> extends ServerResource {
         Object parent = null;
         Object obj = null;
 
+        ResultList<?> list = null;
+
         for (int i = 0; i < resources.size(); i++) {
             Resource parentResource = null;
             if (i > 0) {
@@ -110,8 +115,8 @@ public abstract class ResourcesController<T> extends ServerResource {
                             throw new InvalidResourceException("Identifier for a collection must be numeric.");
                         }
 
-                        final ArrayList<Object> list = new ArrayList<Object>((Collection<?>) obj);
-                        for (final Object o : list) {
+                        final ArrayList<Object> list2 = new ArrayList<Object>((Collection<?>) obj);
+                        for (final Object o : list2) {
                             if (o == null) {
                                 continue;
                             }
@@ -165,7 +170,7 @@ public abstract class ResourcesController<T> extends ServerResource {
                     query.setLimit(maxRows);
                 }
 
-                final Collection<?> list = dataProvider.find(query);
+                list = (ResultList<?>) dataProvider.find(query);
 
                 if (list == null) {
                     throw new NotFoundException();
@@ -194,7 +199,18 @@ public abstract class ResourcesController<T> extends ServerResource {
             throw new NotFoundException();
         }
 
-        if (Collection.class.isAssignableFrom(obj.getClass())) {
+        if (List.class.isAssignableFrom(obj.getClass())) {
+
+            final EntityImpl first = list.first();
+            if (first != null) {
+                first.setCursor(list.previous());
+            }
+
+            final EntityImpl last = list.last();
+            if (last != null) {
+                last.setCursor(list.next());
+            }
+
             postGet((Collection<T>) obj);
         } else {
             postGet((T) obj);
@@ -322,7 +338,7 @@ public abstract class ResourcesController<T> extends ServerResource {
 
         for (final Entry<String, String> e : map.entrySet()) {
             final String key = e.getKey();
-            final String value = e.getValue();
+            String value = e.getValue();
 
             log.debug("key = " + key + ", value = " + value);
 
@@ -332,6 +348,15 @@ public abstract class ResourcesController<T> extends ServerResource {
                 query.setLimit(Integer.parseInt(value));
             } else if (Query.ORDER.equals(key)) {
                 query.setOrder(value);
+            } else if (Query.POS.equals(key)) {
+                if (value.startsWith(MINUS)) {
+                    value = value.substring(1);
+                    query.setPreviousCursor(value);
+                    query.previous();
+                } else {
+                    query.setNextCursor(value);
+                    query.next();
+                }
             } else {
                 if (key.startsWith(":")) {
                     continue;
