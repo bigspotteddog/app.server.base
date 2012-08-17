@@ -35,7 +35,6 @@ import com.google.appengine.api.datastore.QueryResultIterator;
 import com.google.appengine.api.datastore.Text;
 import com.google.appengine.api.memcache.AsyncMemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
-import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
@@ -416,14 +415,14 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             try {
                 final Entity entity = datastore.get(createDatastoreKey(query.getKey()));
                 final T fromEntity = fromEntity(query.getKind(), entity);
-                final ResultList<T> list = new ResultList<T>();
+                final ResultListImpl<T> list = new ResultListImpl<T>();
                 list.add(fromEntity);
                 putCache(fromEntity.getKey(), fromEntity);
                 return list;
             } catch (final EntityNotFoundException e1) {
                 e1.printStackTrace();
             }
-            return ResultList.emptyList();
+            return ResultListImpl.emptyList();
         }
 
         final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(getKindName(query.getKind()));
@@ -499,24 +498,47 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             options.offset(query.getOffset());
         }
 
-        if (query.getLimit() > 0) {
-            options.limit(query.getLimit());
+        final int limit = query.getLimit();
+        if (limit > 0) {
+            options.limit(limit + 1);
         }
 
-        final ResultList<T> list = getEntities(q, options);
+        final ResultListImpl<T> list = getEntities(q, options);
 
-        if (Query.PREVIOUS.equals(pageDirection)) {
-            Collections.reverse(list);
-            final Cursor startCursor = list.getStartCursor();
-            final Cursor endCursor = list.getEndCursor();
-            list.setStartCursor(endCursor);
-            list.setEndCursor(startCursor);
+        if (!list.isEmpty()) {
+            final boolean hasMoreRecords = list.size() > limit;
+
+            if (hasMoreRecords) {
+                list.remove(list.size() - 1);
+            }
+
+            if (Query.PREVIOUS.equals(pageDirection)) {
+                Collections.reverse(list);
+            }
+
+            final String previous = list.get(0).getCursor();
+            final String next = list.get(list.size() - 1).getCursor();
+
+            if (Query.PREVIOUS.equals(pageDirection)) {
+                if (hasMoreRecords) {
+                    list.setStartCursor(previous == null ? null : Cursor.fromWebSafeString(previous));
+                }
+                list.setEndCursor(next == null? null : Cursor.fromWebSafeString(next));
+            } else if (Query.NEXT.equals(pageDirection)) {
+                list.setStartCursor(previous == null ? null : Cursor.fromWebSafeString(previous));
+                if (hasMoreRecords) {
+                    list.setEndCursor(next == null? null : Cursor.fromWebSafeString(next));
+                }
+            } else {
+                list.setEndCursor(next == null? null : Cursor.fromWebSafeString(next));
+            }
         }
+
         return list;
     }
 
     @SuppressWarnings("unchecked")
-    private ResultList<T> getEntities(final com.google.appengine.api.datastore.Query q, final FetchOptions options) throws Exception {
+    private ResultListImpl<T> getEntities(final com.google.appengine.api.datastore.Query q, final FetchOptions options) throws Exception {
         q.setKeysOnly();
 
         final DatastoreService datastore = getDatastore();
@@ -526,18 +548,22 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         final List<com.maintainer.data.provider.Key> keysNeeded = new ArrayList<com.maintainer.data.provider.Key>();
 
         final QueryResultIterator<Entity> iterator = p.asQueryResultIterator(options);
-        Cursor start = null; //iterator.getCursor();
+
+        final Map<Key, String> cursors = new LinkedHashMap<Key, String>();
         while (iterator.hasNext()) {
             final Entity e = iterator.next();
-            if (start == null || Strings.isNullOrEmpty(start.toString())) {
-                start = iterator.getCursor();
-            }
+
             final Key k = e.getKey();
+
+            final Cursor cursor = iterator.getCursor();
+            if (cursor != null) {
+                cursors.put(k, cursor.toWebSafeString());
+            }
+
             final com.maintainer.data.provider.Key key = createNobodyelsesKey(k);
             keysNeeded.add(key);
             entities.add(e);
         }
-        final Cursor end = iterator.getCursor();
 
         final Map<com.maintainer.data.provider.Key, Object> map = new LinkedHashMap<com.maintainer.data.provider.Key, Object>();
         final Map<com.maintainer.data.provider.Key, Object> map2 = getAllCache(keysNeeded);
@@ -557,27 +583,27 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             final Map<com.maintainer.data.provider.Key, Object> needsToBeCachedMap = new LinkedHashMap<com.maintainer.data.provider.Key, Object>();
             final Map<Key, Entity> map3 = datastore.get(keys);
             for (final Entry<Key, Entity> e : map3.entrySet()) {
-                final T target = fromEntity(getClazz(e.getKey()), e.getValue());
+                final Key key = e.getKey();
+                final Entity entity = e.getValue();
+
+                final String cursor = cursors.get(key);
+                if (cursor != null) {
+                    entity.setProperty("cursor", cursor);
+                }
+
+                final T target = fromEntity(getClazz(key), entity);
                 map.put(target.getKey(), target);
                 needsToBeCachedMap.put(target.getKey(), target);
             }
             putAllCache(needsToBeCachedMap);
         }
 
-        final ResultList<T> list = new ResultList<T>(map.size());
+        final ResultListImpl<T> list = new ResultListImpl<T>(map.size());
         for (final Entity e : entities) {
             final Key k = e.getKey();
             final com.maintainer.data.provider.Key key = createNobodyelsesKey(k);
             final T o = (T) map.get(key);
             list.add(o);
-        }
-
-        if (start != null) {
-            list.setStartCursor(start);
-        }
-
-        if (end != null) {
-            list.setEndCursor(end);
         }
 
         return list;

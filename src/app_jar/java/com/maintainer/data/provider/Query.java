@@ -22,6 +22,7 @@ public class Query extends LinkedHashMap<String, Object> {
     public static final String ORDER = ":order";
     public static final String OFFSET = ":offset";
     public static final String LIMIT = ":limit";
+    public static final String POS = ":pos";
 
 
     private Class<?> kind;

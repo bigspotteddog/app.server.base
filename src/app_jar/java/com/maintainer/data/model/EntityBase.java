@@ -8,11 +8,18 @@ import com.maintainer.data.provider.Key;
 
 public interface EntityBase extends Serializable {
     boolean isNew();
+
     void setId(Object id);
     Object getId();
+
     void setModified(Date date);
     Date getModified();
+
     Key getKey();
     void setKey(Key key);
+
     EntityBase accept(AutoCreateVisitor visitor) throws Exception;
+
+    void setCursor(String cursor);
+    String getCursor();
 }
