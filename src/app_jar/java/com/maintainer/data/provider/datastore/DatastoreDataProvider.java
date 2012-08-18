@@ -175,7 +175,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(kindName);
         final FetchOptions options = FetchOptions.Builder.withDefaults();
 
-        final List<T> list = getEntities(q, options);
+        final List<T> list = getEntities(q, options, 0);
         return list;
     }
 
@@ -503,7 +503,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             options.limit(limit + 1);
         }
 
-        final ResultListImpl<T> list = getEntities(q, options);
+        final ResultListImpl<T> list = getEntities(q, options, limit);
 
         if (!list.isEmpty()) {
             final boolean hasMoreRecords = list.size() > limit;
@@ -514,23 +514,20 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
             if (Query.PREVIOUS.equals(pageDirection)) {
                 Collections.reverse(list);
-            }
+                final Cursor start = list.getStartCursor();
+                final Cursor end = list.getEndCursor();
+                list.setStartCursor(end);
+                list.setEndCursor(start);
 
-            final String previous = list.get(0).getCursor();
-            final String next = list.get(list.size() - 1).getCursor();
-
-            if (Query.PREVIOUS.equals(pageDirection)) {
-                if (hasMoreRecords) {
-                    list.setStartCursor(previous == null ? null : Cursor.fromWebSafeString(previous));
+                if (!hasMoreRecords) {
+                    list.setStartCursor(null);
                 }
-                list.setEndCursor(next == null? null : Cursor.fromWebSafeString(next));
             } else if (Query.NEXT.equals(pageDirection)) {
-                list.setStartCursor(previous == null ? null : Cursor.fromWebSafeString(previous));
-                if (hasMoreRecords) {
-                    list.setEndCursor(next == null? null : Cursor.fromWebSafeString(next));
+                if (!hasMoreRecords) {
+                    list.setEndCursor(null);
                 }
             } else {
-                list.setEndCursor(next == null? null : Cursor.fromWebSafeString(next));
+                list.setStartCursor(null);
             }
         }
 
@@ -538,7 +535,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     }
 
     @SuppressWarnings("unchecked")
-    private ResultListImpl<T> getEntities(final com.google.appengine.api.datastore.Query q, final FetchOptions options) throws Exception {
+    private ResultListImpl<T> getEntities(final com.google.appengine.api.datastore.Query q, final FetchOptions options, final int limit) throws Exception {
         q.setKeysOnly();
 
         final DatastoreService datastore = getDatastore();
@@ -550,19 +547,21 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         final QueryResultIterator<Entity> iterator = p.asQueryResultIterator(options);
 
         final Map<Key, String> cursors = new LinkedHashMap<Key, String>();
+        Cursor start = null;
+        Cursor end = null;
         while (iterator.hasNext()) {
             final Entity e = iterator.next();
-
-            final Key k = e.getKey();
-
-            final Cursor cursor = iterator.getCursor();
-            if (cursor != null) {
-                cursors.put(k, cursor.toWebSafeString());
+            if (start == null) {
+                start = iterator.getCursor();
             }
-
+            final Key k = e.getKey();
             final com.maintainer.data.provider.Key key = createNobodyelsesKey(k);
             keysNeeded.add(key);
             entities.add(e);
+
+            if (limit > 0 && entities.size() >= limit && end == null) {
+                end = iterator.getCursor();
+            }
         }
 
         final Map<com.maintainer.data.provider.Key, Object> map = new LinkedHashMap<com.maintainer.data.provider.Key, Object>();
@@ -605,6 +604,9 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             final T o = (T) map.get(key);
             list.add(o);
         }
+
+        list.setStartCursor(start);
+        list.setEndCursor(end);
 
         return list;
     }
