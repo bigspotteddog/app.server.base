@@ -43,7 +43,7 @@ public abstract class ResourcesController<T> extends ServerResource {
 
     private static final Logger log = Logger.getLogger(ResourcesController.class.getName());
 
-    private static final int MAX_ROWS = 10000;
+    private static final int MAX_ROWS = 1000;
     private static final String _ID = "_id";
     private static final String ID = "id";
     private static final String ID2 = "id2";
@@ -52,6 +52,7 @@ public abstract class ResourcesController<T> extends ServerResource {
 
     private int maxRows = MAX_ROWS;
     private boolean checkFields = true;
+    private boolean ignoreInvalidFields = false;
 
     protected abstract DataProvider<T> getDataProvider() throws DefaultDataProviderInitializationException;
     protected abstract Class<?> getControllerClass(String resource);
@@ -77,6 +78,10 @@ public abstract class ResourcesController<T> extends ServerResource {
 
     protected void setCheckFields(final boolean checkFields) {
         this.checkFields = checkFields;
+    }
+
+    protected void setIgnoreInvalidFields(final boolean ignoreInvalidFields) {
+        this.ignoreInvalidFields = ignoreInvalidFields;
     }
 
     @SuppressWarnings("unchecked")
@@ -377,7 +382,9 @@ public abstract class ResourcesController<T> extends ServerResource {
     protected Query addFilterToQuery(final Resource resource, final String key, final String fieldName, final Object value, final Query query) throws Exception {
         if (checkFields) {
             final Field field = getField(resource, fieldName);
-            query.filter(key, Utils.convert(value, field.getType()));
+            if (field != null) {
+                query.filter(key, Utils.convert(value, field.getType()));
+            }
         } else {
             query.filter(key, value);
         }
@@ -387,7 +394,7 @@ public abstract class ResourcesController<T> extends ServerResource {
     protected Field getField(final Resource resource, final String fieldName) throws Exception, InvalidResourceException {
         final Class<?> clazz = getResourceClass(resource);
         final Field field = Utils.getField(clazz, fieldName);
-        if (field == null) {
+        if (!ignoreInvalidFields && field == null) {
             throw new InvalidResourceException();
         }
         return field;

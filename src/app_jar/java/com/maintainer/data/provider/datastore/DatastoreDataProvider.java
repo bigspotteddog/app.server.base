@@ -486,12 +486,16 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
         final FetchOptions options = FetchOptions.Builder.withDefaults();
 
-        if (Query.PREVIOUS.equals(pageDirection)) {
-            final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getPreviousCursor());
-            options.startCursor(fromWebSafeString);
-        } else if (Query.NEXT.equals(pageDirection)) {
-            final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getNextCursor());
-            options.startCursor(fromWebSafeString);
+        try {
+            if (Query.PREVIOUS.equals(pageDirection)) {
+                final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getPreviousCursor());
+                options.startCursor(fromWebSafeString);
+            } else if (Query.NEXT.equals(pageDirection)) {
+                final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getNextCursor());
+                options.startCursor(fromWebSafeString);
+            }
+        } catch (final Exception e) {
+            e.printStackTrace();
         }
 
         if (query.getOffset() > 0) {
