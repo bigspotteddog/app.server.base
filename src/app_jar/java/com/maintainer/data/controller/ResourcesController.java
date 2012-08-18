@@ -86,7 +86,7 @@ public abstract class ResourcesController<T> extends ServerResource {
         Object parent = null;
         Object obj = null;
 
-        ResultList<?> list = null;
+        List<?> list = null;
 
         for (int i = 0; i < resources.size(); i++) {
             Resource parentResource = null;
@@ -170,7 +170,7 @@ public abstract class ResourcesController<T> extends ServerResource {
                     query.setLimit(maxRows);
                 }
 
-                list = (ResultList<?>) dataProvider.find(query);
+                list = dataProvider.find(query);
 
                 if (list == null) {
                     throw new NotFoundException();
@@ -199,16 +199,18 @@ public abstract class ResourcesController<T> extends ServerResource {
             throw new NotFoundException();
         }
 
-        if (List.class.isAssignableFrom(obj.getClass())) {
+        if (ResultList.class.isAssignableFrom(obj.getClass())) {
 
-            final EntityImpl first = list.first();
+            final ResultList<?> list2 = (ResultList<?>) obj;
+
+            final EntityImpl first = list2.first();
             if (first != null) {
-                first.setCursor(list.previous());
+                first.setCursor(list2.previous());
             }
 
-            final EntityImpl last = list.last();
+            final EntityImpl last = list2.last();
             if (last != null) {
-                last.setCursor(list.next());
+                last.setCursor(list2.next());
             }
 
             postGet((Collection<T>) obj);

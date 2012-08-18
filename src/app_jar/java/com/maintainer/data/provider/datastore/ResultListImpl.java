@@ -12,6 +12,7 @@ public class ResultListImpl<T> extends ArrayList<T> implements ResultList<T> {
     private static final long serialVersionUID = -7574470429331801599L;
     private Cursor startCursor;
     private Cursor endCursor;
+    private boolean removedCursors;
 
     public ResultListImpl() {
         super();
@@ -75,5 +76,13 @@ public class ResultListImpl<T> extends ArrayList<T> implements ResultList<T> {
             return null;
         }
         return (EntityImpl) get(size() - 1);
+    }
+
+    public void setRemovedCursors(final boolean removedCursors) {
+        this.removedCursors = removedCursors;
+    }
+
+    public boolean isRemovedCursors() {
+        return removedCursors;
     }
 }
