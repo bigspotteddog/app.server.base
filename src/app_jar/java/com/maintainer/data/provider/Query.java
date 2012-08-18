@@ -129,4 +129,14 @@ public class Query extends LinkedHashMap<String, Object> {
     public String getPageDirection() {
         return pageDirection;
     }
+
+    public void resetPagination() {
+        previousCursor = null;
+        nextCursor = null;
+        pageDirection = null;
+    }
+
+    public Query reverse() {
+        return null;
+    }
 }

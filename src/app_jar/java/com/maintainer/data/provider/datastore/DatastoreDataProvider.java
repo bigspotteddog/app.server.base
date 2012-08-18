@@ -425,6 +425,84 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             return ResultListImpl.emptyList();
         }
 
+        final String pageDirection = query.getPageDirection();
+
+        final com.google.appengine.api.datastore.Query q = getQuery(query);
+
+        FetchOptions options = FetchOptions.Builder.withDefaults();
+
+        try {
+            if (Query.PREVIOUS.equals(pageDirection)) {
+                final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getPreviousCursor());
+                options.startCursor(fromWebSafeString);
+            } else if (Query.NEXT.equals(pageDirection)) {
+                final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getNextCursor());
+                options.startCursor(fromWebSafeString);
+            }
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+
+        if (query.getOffset() > 0) {
+            options.offset(query.getOffset());
+        }
+
+        final int limit = query.getLimit();
+        if (limit > 0) {
+            options.limit(limit + 1);
+        }
+
+        final ResultListImpl<T> list = getEntities(q, options, limit);
+
+        if (!list.isEmpty()) {
+            final boolean hasMoreRecords = list.size() > limit;
+
+            if (hasMoreRecords) {
+                list.remove(list.size() - 1);
+            }
+
+            if (Query.PREVIOUS.equals(pageDirection)) {
+                Collections.reverse(list);
+                final Cursor end = list.getStartCursor();
+                final Cursor start = list.getEndCursor();
+                list.setStartCursor(start);
+                list.setEndCursor(end);
+
+                if (!hasMoreRecords) {
+                    list.setStartCursor(null);
+                }
+
+                options = cloneOptionsWithoutCursors(options);
+                options.endCursor(end);
+
+                final List<Entity> entities = testBoundary(q, options);
+                if (entities.isEmpty()) {
+                    list.setEndCursor(null);
+                }
+            } else {
+                if (!hasMoreRecords) {
+                    list.setEndCursor(null);
+                }
+
+                final Cursor start = list.getStartCursor();
+                options = cloneOptionsWithoutCursors(options);
+                options.startCursor(start);
+
+                final List<Entity> entities = testBoundary(q, options);
+                if (entities.isEmpty()) {
+                    list.setStartCursor(null);
+                }
+            }
+
+            if (list.isRemovedCursors()) {
+                list.setStartCursor(null);
+            }
+        }
+
+        return list;
+    }
+
+    private com.google.appengine.api.datastore.Query getQuery(final Query query) {
         final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(getKindName(query.getKind()));
 
         for (final Entry<String, Object> e : query.entrySet()) {
@@ -465,8 +543,6 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                     field = field.substring(1);
                     if (!"id".equals(field.toLowerCase())) {
                         q.addSort(field, sortDirection);
-                    } else {
-                        q.addSort(Entity.KEY_RESERVED_PROPERTY, sortDirection);
                     }
                 } else {
                     if (!"id".equals(field.toLowerCase())) {
@@ -484,60 +560,23 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             }
         }
 
-        final FetchOptions options = FetchOptions.Builder.withDefaults();
-
-        try {
-            if (Query.PREVIOUS.equals(pageDirection)) {
-                final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getPreviousCursor());
-                options.startCursor(fromWebSafeString);
-            } else if (Query.NEXT.equals(pageDirection)) {
-                final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getNextCursor());
-                options.startCursor(fromWebSafeString);
-            }
-        } catch (final Exception e) {
-            e.printStackTrace();
+        if (Query.PREVIOUS.equals(pageDirection)) {
+            q.addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.DESCENDING);
+        } else {
+            q.addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.ASCENDING);
         }
+        return q;
+    }
 
-        if (query.getOffset() > 0) {
-            options.offset(query.getOffset());
-        }
+    private List<Entity> testBoundary(com.google.appengine.api.datastore.Query q, final FetchOptions options) throws Exception {
+        options.limit(1);
+        q = q.reverse();
+        q.setKeysOnly();
 
-        final int limit = query.getLimit();
-        if (limit > 0) {
-            options.limit(limit + 1);
-        }
+        final DatastoreService datastore = getDatastore();
+        final PreparedQuery p = datastore.prepare(q);
 
-        final ResultListImpl<T> list = getEntities(q, options, limit);
-
-        if (!list.isEmpty()) {
-            final boolean hasMoreRecords = list.size() > limit;
-
-            if (hasMoreRecords) {
-                list.remove(list.size() - 1);
-            }
-
-            if (Query.PREVIOUS.equals(pageDirection)) {
-                Collections.reverse(list);
-                final Cursor start = list.getStartCursor();
-                final Cursor end = list.getEndCursor();
-                list.setStartCursor(end);
-                list.setEndCursor(start);
-
-                if (!hasMoreRecords) {
-                    list.setStartCursor(null);
-                }
-            } else if (Query.NEXT.equals(pageDirection)) {
-                if (!hasMoreRecords) {
-                    list.setEndCursor(null);
-                }
-            } else {
-                list.setStartCursor(null);
-            }
-
-            if (list.isRemovedCursors()) {
-                list.setStartCursor(null);
-            }
-        }
+        final List<Entity> list = p.asList(options);
 
         return list;
     }
@@ -580,20 +619,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                 if (options != null && (options.getStartCursor() != null || options.getEndCursor() != null)) {
                     System.out.println("Cursor may not be relevant for query. Trying again without cursors.");
                     removedCursors = true;
-                    final FetchOptions options2 = FetchOptions.Builder.withDefaults();
-                    if (options.getLimit() != null) {
-                        options2.limit(options.getLimit());
-                    }
-                    if (options.getOffset() != null) {
-                        options2.offset(options.getOffset());
-                    }
-                    if (options.getChunkSize() != null) {
-                        options2.chunkSize(options.getChunkSize());
-                    }
-                    if (options.getPrefetchSize() != null) {
-                        options2.prefetchSize(options.getPrefetchSize());
-                    }
-                    options = options2;
+                    options = cloneOptionsWithoutCursors(options);
                 } else {
                     e.printStackTrace();
                     break;
@@ -650,6 +676,23 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         list.setRemovedCursors(removedCursors);
 
         return list;
+    }
+
+    private FetchOptions cloneOptionsWithoutCursors(final FetchOptions options) {
+        final FetchOptions options2 = FetchOptions.Builder.withDefaults();
+        if (options.getLimit() != null) {
+            options2.limit(options.getLimit());
+        }
+        if (options.getOffset() != null) {
+            options2.offset(options.getOffset());
+        }
+        if (options.getChunkSize() != null) {
+            options2.chunkSize(options.getChunkSize());
+        }
+        if (options.getPrefetchSize() != null) {
+            options2.prefetchSize(options.getPrefetchSize());
+        }
+        return options2;
     }
 
     private void putAllCache(final Map<com.maintainer.data.provider.Key, Object> map) {
