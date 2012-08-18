@@ -529,13 +529,17 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             } else {
                 list.setStartCursor(null);
             }
+
+            if (list.isRemovedCursors()) {
+                list.setStartCursor(null);
+            }
         }
 
         return list;
     }
 
     @SuppressWarnings("unchecked")
-    private ResultListImpl<T> getEntities(final com.google.appengine.api.datastore.Query q, final FetchOptions options, final int limit) throws Exception {
+    private ResultListImpl<T> getEntities(final com.google.appengine.api.datastore.Query q, FetchOptions options, final int limit) throws Exception {
         q.setKeysOnly();
 
         final DatastoreService datastore = getDatastore();
@@ -544,23 +548,55 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         final List<Entity> entities = new ArrayList<Entity>();
         final List<com.maintainer.data.provider.Key> keysNeeded = new ArrayList<com.maintainer.data.provider.Key>();
 
-        final QueryResultIterator<Entity> iterator = p.asQueryResultIterator(options);
-
         final Map<Key, String> cursors = new LinkedHashMap<Key, String>();
         Cursor start = null;
         Cursor end = null;
-        while (iterator.hasNext()) {
-            final Entity e = iterator.next();
-            if (start == null) {
-                start = iterator.getCursor();
-            }
-            final Key k = e.getKey();
-            final com.maintainer.data.provider.Key key = createNobodyelsesKey(k);
-            keysNeeded.add(key);
-            entities.add(e);
+        boolean removedCursors = false;
 
-            if (limit > 0 && entities.size() >= limit && end == null) {
-                end = iterator.getCursor();
+        for (int i = 0; i < 2; i++) {
+            final QueryResultIterator<Entity> iterator = p.asQueryResultIterator(options);
+
+            try {
+                while (iterator.hasNext()) {
+                    final Entity e = iterator.next();
+                    if (start == null) {
+                        start = iterator.getCursor();
+                    }
+                    final Key k = e.getKey();
+                    final com.maintainer.data.provider.Key key = createNobodyelsesKey(k);
+                    keysNeeded.add(key);
+                    entities.add(e);
+
+                    if (limit > 0 && entities.size() >= limit && end == null) {
+                        end = iterator.getCursor();
+                    }
+                }
+                break;
+            } catch (final IllegalArgumentException e) {
+                if (options != null && (options.getStartCursor() != null || options.getEndCursor() != null)) {
+                    System.out.println("Cursor may not be relevant for query. Trying again without cursors.");
+                    removedCursors = true;
+                    final FetchOptions options2 = FetchOptions.Builder.withDefaults();
+                    if (options.getLimit() != null) {
+                        options2.limit(options.getLimit());
+                    }
+                    if (options.getOffset() != null) {
+                        options2.offset(options.getOffset());
+                    }
+                    if (options.getChunkSize() != null) {
+                        options2.chunkSize(options.getChunkSize());
+                    }
+                    if (options.getPrefetchSize() != null) {
+                        options2.prefetchSize(options.getPrefetchSize());
+                    }
+                    options = options2;
+                } else {
+                    e.printStackTrace();
+                    break;
+                }
+            } catch (final Exception e) {
+                e.printStackTrace();
+                break;
             }
         }
 
@@ -607,6 +643,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
         list.setStartCursor(start);
         list.setEndCursor(end);
+        list.setRemovedCursors(removedCursors);
 
         return list;
     }
