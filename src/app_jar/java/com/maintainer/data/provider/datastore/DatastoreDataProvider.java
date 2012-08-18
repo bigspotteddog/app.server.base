@@ -30,7 +30,9 @@ import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query.FilterOperator;
+import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.appengine.api.datastore.Query.SortDirection;
+import com.google.appengine.api.datastore.Query.SortPredicate;
 import com.google.appengine.api.datastore.QueryResultIterator;
 import com.google.appengine.api.datastore.Text;
 import com.google.appengine.api.memcache.AsyncMemcacheService;
@@ -53,6 +55,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
     private static final Map<String, FilterOperator> ops = new HashMap<String, FilterOperator>();
     private boolean local;
+    private DatastoreService datastore;
 
     public DatastoreDataProvider() {
         ops.put("ge", FilterOperator.GREATER_THAN_OR_EQUAL);
@@ -160,7 +163,9 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     }
 
     private DatastoreService getDatastore() {
-        final DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        if (datastore == null) {
+            datastore = DatastoreServiceFactory.getDatastoreService();
+        }
         return datastore;
     }
 
@@ -471,35 +476,42 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                 if (!hasMoreRecords) {
                     list.setStartCursor(null);
                 }
-
-                options = cloneOptionsWithoutCursors(options);
-                options.endCursor(end);
-
-                final List<Entity> entities = testBoundary(q, options);
-                if (entities.isEmpty()) {
-                    list.setEndCursor(null);
-                }
-            } else {
+            } else if (Query.NEXT.equals(pageDirection)) {
                 if (!hasMoreRecords) {
                     list.setEndCursor(null);
                 }
-
-                final Cursor start = list.getStartCursor();
-                options = cloneOptionsWithoutCursors(options);
-                options.startCursor(start);
-
-                final List<Entity> entities = testBoundary(q, options);
-                if (entities.isEmpty()) {
+            } else {
+                if (containsEqualOrIn(q)) {
                     list.setStartCursor(null);
-                }
-            }
+                    list.setEndCursor(null);
+                } else {
+                    if (!hasMoreRecords) {
+                        list.setEndCursor(null);
+                    }
 
-            if (list.isRemovedCursors()) {
-                list.setStartCursor(null);
+                    final Cursor start = list.getStartCursor();
+                    options = cloneOptionsWithoutCursors(options);
+                    options.startCursor(start);
+
+                    final boolean empty = testBoundary(q, options);
+                    if (empty) {
+                        list.setStartCursor(null);
+                    }
+                }
             }
         }
 
         return list;
+    }
+
+    private boolean containsEqualOrIn(final com.google.appengine.api.datastore.Query q) {
+        for (final FilterPredicate f : q.getFilterPredicates()) {
+            final FilterOperator operator = f.getOperator();
+            if (FilterOperator.IN == operator || FilterOperator.EQUAL == operator) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private com.google.appengine.api.datastore.Query getQuery(final Query query) {
@@ -568,17 +580,57 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return q;
     }
 
-    private List<Entity> testBoundary(com.google.appengine.api.datastore.Query q, final FetchOptions options) throws Exception {
-        options.limit(1);
-        q = q.reverse();
+    private boolean testBoundary(com.google.appengine.api.datastore.Query q, final FetchOptions options) throws Exception {
+        q = reverse(q);
         q.setKeysOnly();
+        options.limit(1);
 
         final DatastoreService datastore = getDatastore();
-        final PreparedQuery p = datastore.prepare(q);
 
-        final List<Entity> list = p.asList(options);
+        try {
+            final PreparedQuery p = datastore.prepare(q);
+            final List<Entity> list = p.asList(options);
+            if (!list.isEmpty()) {
+                return false;
+            }
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
 
-        return list;
+    private com.google.appengine.api.datastore.Query reverse(final com.google.appengine.api.datastore.Query q) {
+        final com.google.appengine.api.datastore.Query q2 = new com.google.appengine.api.datastore.Query(q.getKind());
+
+        for (final FilterPredicate f : q.getFilterPredicates()) {
+            final FilterOperator operator = f.getOperator();
+            if (FilterOperator.GREATER_THAN == operator) {
+                q2.addFilter(f.getPropertyName(), FilterOperator.LESS_THAN, f.getValue());
+            } else if (FilterOperator.GREATER_THAN_OR_EQUAL == operator) {
+                q2.addFilter(f.getPropertyName(), FilterOperator.LESS_THAN_OR_EQUAL, f.getValue());
+            } else if (FilterOperator.LESS_THAN == operator) {
+                q2.addFilter(f.getPropertyName(), FilterOperator.GREATER_THAN, f.getValue());
+            } else if (FilterOperator.LESS_THAN_OR_EQUAL == operator) {
+                q2.addFilter(f.getPropertyName(), FilterOperator.GREATER_THAN_OR_EQUAL, f.getValue());
+            } else {
+                q2.addFilter(f.getPropertyName(), operator, f.getValue());
+            }
+        }
+
+        for (final SortPredicate s : q.getSortPredicates()) {
+            final SortPredicate reverse = s.reverse();
+            q2.addSort(reverse.getPropertyName(), reverse.getDirection());
+        }
+
+        if (q.getAncestor() != null) {
+            q2.setAncestor(q.getAncestor());
+        }
+
+        if (q.isKeysOnly()) {
+            q2.setKeysOnly();
+        }
+
+        return q2;
     }
 
     @SuppressWarnings("unchecked")

@@ -135,8 +135,4 @@ public class Query extends LinkedHashMap<String, Object> {
         nextCursor = null;
         pageDirection = null;
     }
-
-    public Query reverse() {
-        return null;
-    }
 }
