@@ -12,7 +12,6 @@ import org.restlet.Response;
 import org.restlet.Restlet;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
-import org.restlet.ext.crypto.CookieAuthenticator;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.routing.Router;
 import org.restlet.routing.Template;
@@ -40,6 +39,7 @@ public class WebSwitch extends Application {
     private Router securedRouter = null;
     private PermissionsRoleAuthorizer roleAuthorizer;
     private boolean isTransactional;
+    private MyCookieAuthenticator co;
 
     public WebSwitch() {
         this(true);
@@ -138,7 +138,7 @@ public class WebSwitch extends Application {
         attachRoutes(router);
 
         if (isSecured) {
-            final CookieAuthenticator co = new MyCookieAuthenticator(getContext(), false, "My cookie realm", "MyExtraSecretKey".getBytes());
+            co = new MyCookieAuthenticator(getContext(), false, "My cookie realm", "MyExtraSecretKey".getBytes());
             co.setLoginFormPath("/");
             co.setVerifier(getVerifier());
             co.setEnroler(getEnroler(getApplicationName()));
@@ -155,6 +155,10 @@ public class WebSwitch extends Application {
         }
 
         return router;
+    }
+
+    public String getCrentialsCookieName() {
+        return co.getCookieName();
     }
 
     protected MyEnroler getEnroler(final String applicationName) {
