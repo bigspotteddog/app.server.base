@@ -203,7 +203,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         }
 
         final com.maintainer.data.provider.Key cacheKey = createNobodyelsesKey(posted);
-        putCache(cacheKey, target);
+        invalidateCached(cacheKey);
 
         return target;
     }
@@ -241,7 +241,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             target.setId(posted.getId());
         }
 
-        putCache(key, target);
+        invalidateCached(key);
         return target;
     }
 
