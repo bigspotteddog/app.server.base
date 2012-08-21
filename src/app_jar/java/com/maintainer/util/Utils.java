@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -51,9 +52,15 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.maintainer.data.controller.GenericController;
 import com.maintainer.data.controller.Resource;
+import com.maintainer.data.model.EntityImpl;
+import com.maintainer.data.provider.Key;
 import com.maintainer.data.router.WebSwitch;
 
 public class Utils {
+    private static final Object[] NO_PARAMS = new Object[0];
+
+    private static final Class<?>[] NO_ARGS = new Class<?>[0];
+
     private static final String HTTP = "http";
 
     private static final Logger log = Logger.getLogger(Utils.class.getName());
@@ -152,7 +159,7 @@ public class Utils {
      */
     private static Map<Class<?>, Class<?>> primitiveMap = new HashMap<Class<?>, Class<?>>();
 
-    private static Gson gson = new GsonBuilder().setDateFormat("EEE, dd MMM yyyy HH:mm:ss z").create();
+    private static Gson gson = new GsonBuilder().setDateFormat("MM.dd.yy HH:mm z").create();
 
     public static Gson getGson() {
         return gson;
@@ -619,4 +626,14 @@ public class Utils {
         }
         return (Double) convert(string, Double.class);
     }
+
+    public static EntityImpl getKeyedOnly(final Key key) throws Exception {
+        final Class<?> forName = Class.forName(key.getKindName());
+        final Constructor<?> constructor = forName.getDeclaredConstructor(NO_ARGS);
+        constructor.setAccessible(true);
+        final EntityImpl entity = (EntityImpl) constructor.newInstance(NO_PARAMS);
+        entity.setId(key.getId());
+        return entity;
+    }
+
 }

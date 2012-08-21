@@ -14,4 +14,5 @@ public @interface Autocreate {
     boolean readonly() default false;
     boolean remote() default false;
     boolean skip() default false;
+    boolean keysOnly() default false;
 }

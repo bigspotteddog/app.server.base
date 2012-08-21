@@ -121,6 +121,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             for (final Field f : fields) {
                 f.setAccessible(true);
 
+                final Autocreate autocreate = f.getAnnotation(Autocreate.class);
                 final String key = f.getName();
                 Object value = properties.get(key);
 
@@ -141,7 +142,11 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                             if (Key.class.isAssignableFrom(o.getClass())) {
                                 final Key k = (Key) o;
                                 final com.maintainer.data.provider.Key key2 = createNobodyelsesKey(k);
-                                o = get(key2);
+                                if (autocreate != null && autocreate.keysOnly()) {
+                                    o = Utils.getKeyedOnly(key2);
+                                } else {
+                                    o = get(key2);
+                                }
                                 iterator.set(o);
                             }
                         }
