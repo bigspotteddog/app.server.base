@@ -513,7 +513,7 @@ public abstract class ResourcesController<T> extends ServerResource {
     }
 
     private void convertIdToLong(final EntityImpl obj) {
-        if (!String.class.isAssignableFrom(obj.getId().getClass())) {
+        if (obj.getId() != null && !String.class.isAssignableFrom(obj.getId().getClass())) {
             obj.setId(new BigDecimal(obj.getId().toString()).longValue());
         }
     }
