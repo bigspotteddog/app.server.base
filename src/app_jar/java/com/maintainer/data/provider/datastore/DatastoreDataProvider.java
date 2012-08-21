@@ -460,7 +460,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         final ResultListImpl<T> list = getEntities(q, options, limit);
 
         if (!list.isEmpty()) {
-            final boolean hasMoreRecords = list.size() > limit;
+            boolean hasMoreRecords = false;
+            if (limit > 0) {
+                hasMoreRecords = list.size() > limit;
+            }
 
             if (hasMoreRecords) {
                 list.remove(list.size() - 1);
@@ -753,6 +756,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     }
 
     private void putAllLocalCache(final Map<com.maintainer.data.provider.Key, Object> map) {
+        if (!local) {
+            return;
+        }
+
         for (final Entry<com.maintainer.data.provider.Key, Object> e : map.entrySet()) {
             putLocalCache(e.getKey(), e.getValue());
         }
@@ -781,7 +788,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     }
 
     private void putLocalCache(final com.maintainer.data.provider.Key key, final Object o) {
-        if (!local) {
+        if (local) {
             cache.put(key, o);
         }
     }
@@ -814,11 +821,17 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     }
 
     private Map<com.maintainer.data.provider.Key, Object> getAllLocalCache(final List<com.maintainer.data.provider.Key> keys) {
+        if (!local) {
+            return Collections.emptyMap();
+        }
+
         final ImmutableMap<com.maintainer.data.provider.Key, Object> allPresent = cache.getAllPresent(keys);
         return allPresent;
     }
 
     private void invalidateLocalCache(final com.maintainer.data.provider.Key key) {
-        cache.invalidate(key);
+        if (local) {
+            cache.invalidate(key);
+        }
     }
 }

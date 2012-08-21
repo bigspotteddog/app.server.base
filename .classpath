@@ -27,7 +27,7 @@
 	<classpathentry kind="lib" path="lib/runtime/org.restlet.ext.crypto.jar" sourcepath="/Users/josephc/Documents/workspace/tools/restlet-gae-2.1rc1/src"/>
 	<classpathentry kind="lib" path="lib/runtime/org.restlet.ext.json.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/org.restlet.ext.servlet.jar"/>
-	<classpathentry kind="lib" path="lib/runtime/org.restlet.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/org.restlet.jar" sourcepath="/Users/josephc/Documents/workspace/tools/restlet-2.1rc1/modules"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="build/app.server.base.jar.build"/>
 </classpath>

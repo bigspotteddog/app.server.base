@@ -1,6 +1,7 @@
 package com.maintainer.data.controller;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -48,7 +49,8 @@ public abstract class ResourcesController<T> extends ServerResource {
     private static final String ID = "id";
     private static final String ID2 = "id2";
     private static final long ID_NOT_PROVIDED = 0;
-    private static final String NO_ID_PROVIDED = "no id provided";
+    private static final String ID_PROVIDED = "id provided with post";
+    private static final String NO_ID_PROVIDED = "no id provided with put";
 
     private int maxRows = MAX_ROWS;
     private boolean checkFields = true;
@@ -66,10 +68,7 @@ public abstract class ResourcesController<T> extends ServerResource {
 
         final String json = getGson().toJson(item, Utils.getItemType());
 
-        final Representation response = new StringRepresentation(json);
-        response.setMediaType(MediaType.APPLICATION_JSON);
-        setStatus(Status.SUCCESS_OK);
-        return response;
+        return getJsonResponse(json);
     }
 
     protected void setMaxRows(final int maxRows) {
@@ -249,7 +248,7 @@ public abstract class ResourcesController<T> extends ServerResource {
                     } else if (Collection.class.isAssignableFrom(f.getType())) {
                         final Collection collection = (Collection) f.get(target);
                         for (final Object value : collection) {
-                            if (EntityBase.class.isAssignableFrom(value.getClass())) {
+                            if (value != null && EntityBase.class.isAssignableFrom(value.getClass())) {
                                 autocreate(value);
                             }
                         }
@@ -497,15 +496,26 @@ public abstract class ResourcesController<T> extends ServerResource {
         final DataProvider<T> service = getDataProvider();
 
         T obj = service.fromJson(kind, incomingJson);
+
+        final EntityImpl obj2 = (EntityImpl) obj;
+        if (obj2.getId() != null) {
+            throw new Exception(ID_PROVIDED);
+        } else {
+            convertIdToLong(obj2);
+        }
+
         prePost(obj);
         obj = service.post(obj);
 
         final String json = getGson().toJson(obj);
 
-        final Representation response = new StringRepresentation(json);
-        response.setMediaType(MediaType.APPLICATION_JSON);
-        setStatus(Status.SUCCESS_OK);
-        return response;
+        return getJsonResponse(json);
+    }
+
+    private void convertIdToLong(final EntityImpl obj) {
+        if (!String.class.isAssignableFrom(obj.getId().getClass())) {
+            obj.setId(new BigDecimal(obj.getId().toString()).longValue());
+        }
     }
 
     private void checkReadOnly(final Class<?> kind) {
@@ -537,8 +547,11 @@ public abstract class ResourcesController<T> extends ServerResource {
         final DataProvider<T> service = getDataProvider();
         final T obj = service.fromJson(getType(), incomingJson);
 
-        if (((EntityImpl) obj).getId() == null) {
+        final EntityImpl obj2 = (EntityImpl) obj;
+        if (obj2.getId() == null) {
             throw new Exception(NO_ID_PROVIDED);
+        } else {
+            convertIdToLong(obj2);
         }
 
         prePut(obj);
@@ -546,6 +559,10 @@ public abstract class ResourcesController<T> extends ServerResource {
 
         final String json = getGson().toJson(merged);
 
+        return getJsonResponse(json);
+    }
+
+    protected Representation getJsonResponse(final String json) {
         final Representation response = new StringRepresentation(json);
         response.setMediaType(MediaType.APPLICATION_JSON);
         setStatus(Status.SUCCESS_OK);
