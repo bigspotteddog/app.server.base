@@ -49,6 +49,13 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import com.maintainer.data.controller.GenericController;
 import com.maintainer.data.controller.Resource;
@@ -159,9 +166,74 @@ public class Utils {
      */
     private static Map<Class<?>, Class<?>> primitiveMap = new HashMap<Class<?>, Class<?>>();
 
-    private static Gson gson = new GsonBuilder().setDateFormat("MM.dd.yy HH:mm z").create();
+    private static Gson gson = null;
 
     public static Gson getGson() {
+        if (gson == null) {
+            final SimpleDateFormat sdf = new SimpleDateFormat("MM.dd.yy HH:mm z");
+
+            // from stackoverflow: http://stackoverflow.com/a/6875295/591203
+            final JsonSerializer<Date> dateSerializer = new JsonSerializer<Date>() {
+                @Override
+                public JsonElement serialize(final Date src, final Type typeOfSrc, final JsonSerializationContext context) {
+                    return src == null ? null : new JsonPrimitive(sdf.format(src));
+                }
+            };
+
+            final JsonDeserializer<Date> dateDeserializer = new JsonDeserializer<Date>() {
+                @Override
+                public Date deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+                    Date date = null;
+                    try {
+                        date = sdf.parse(json.getAsString());
+                    } catch (final ParseException e) {
+                        e.printStackTrace();
+                    }
+                    return json == null ? null : date;
+                }
+            };
+
+            final JsonSerializer<BigDecimal> bigDecimalSerializer = new JsonSerializer<BigDecimal>() {
+                @Override
+                public JsonElement serialize(final BigDecimal src, final Type typeOfSrc, final JsonSerializationContext context) {
+                    if (src == null) {
+                        return null;
+                    }
+
+                    Number number = null;
+                    if (src.scale() == 0) {
+                        number = src.intValue();
+                    } else {
+                        number = src.doubleValue();
+                    }
+
+                    return new JsonPrimitive(number);
+                }
+
+            };
+
+            final JsonDeserializer<BigDecimal> bigDecimalDeserializer = new JsonDeserializer<BigDecimal>() {
+                @Override
+                public BigDecimal deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+                    BigDecimal number = null;
+                    try {
+                        number = new BigDecimal(json.getAsString());
+                    } catch (final Exception e) {
+                        number = BigDecimal.ZERO;
+                        e.printStackTrace();
+                    }
+                    return number;
+                }
+            };
+
+            gson = new GsonBuilder()
+                .registerTypeAdapter(Date.class, dateSerializer)
+                .registerTypeAdapter(Date.class, dateDeserializer)
+                .registerTypeAdapter(BigDecimal.class, bigDecimalSerializer)
+                .registerTypeAdapter(BigDecimal.class, bigDecimalDeserializer)
+                .create();
+        }
+
         return gson;
     }
 

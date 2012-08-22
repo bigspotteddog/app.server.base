@@ -499,7 +499,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
                     final Cursor start = list.getStartCursor();
                     options = cloneOptionsWithoutCursors(options);
-                    options.startCursor(start);
+                    //options.startCursor(start);
 
                     final boolean empty = testBoundary(q, options);
                     if (empty) {
@@ -613,13 +613,13 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         for (final FilterPredicate f : q.getFilterPredicates()) {
             final FilterOperator operator = f.getOperator();
             if (FilterOperator.GREATER_THAN == operator) {
-                q2.addFilter(f.getPropertyName(), FilterOperator.LESS_THAN, f.getValue());
-            } else if (FilterOperator.GREATER_THAN_OR_EQUAL == operator) {
                 q2.addFilter(f.getPropertyName(), FilterOperator.LESS_THAN_OR_EQUAL, f.getValue());
+            } else if (FilterOperator.GREATER_THAN_OR_EQUAL == operator) {
+                q2.addFilter(f.getPropertyName(), FilterOperator.LESS_THAN, f.getValue());
             } else if (FilterOperator.LESS_THAN == operator) {
-                q2.addFilter(f.getPropertyName(), FilterOperator.GREATER_THAN, f.getValue());
-            } else if (FilterOperator.LESS_THAN_OR_EQUAL == operator) {
                 q2.addFilter(f.getPropertyName(), FilterOperator.GREATER_THAN_OR_EQUAL, f.getValue());
+            } else if (FilterOperator.LESS_THAN_OR_EQUAL == operator) {
+                q2.addFilter(f.getPropertyName(), FilterOperator.GREATER_THAN, f.getValue());
             } else {
                 q2.addFilter(f.getPropertyName(), operator, f.getValue());
             }

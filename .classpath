@@ -8,7 +8,6 @@
 	<classpathentry kind="lib" path="lib/runtime/commons-collections-3.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/commons-lang3-3.1.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/dom4j-1.6.1.jar"/>
-	<classpathentry kind="lib" path="lib/runtime/gson-2.0.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/guava-11.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/hibernate-c3p0-4.0.1.Final.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/hibernate-commons-annotations-4.0.1.Final.jar"/>
@@ -28,6 +27,7 @@
 	<classpathentry kind="lib" path="lib/runtime/org.restlet.ext.json.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/org.restlet.ext.servlet.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/org.restlet.jar" sourcepath="/Users/josephc/Documents/workspace/tools/restlet-2.1rc1/modules"/>
+	<classpathentry kind="lib" path="lib/runtime/gson-2.2.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="build/app.server.base.jar.build"/>
 </classpath>
