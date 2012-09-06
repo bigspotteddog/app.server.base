@@ -34,6 +34,7 @@ import com.maintainer.data.model.Autocreate;
 import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
 import com.maintainer.data.provider.AbstractDataProvider;
+import com.maintainer.data.provider.Filter;
 import com.maintainer.data.provider.Query;
 import com.maintainer.util.Utils;
 
@@ -325,8 +326,8 @@ public class MapDatastoreDataProvider extends AbstractDataProvider<Map<String, O
 
         final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(getKindName(query.getKind()));
 
-        for (final Entry<String, Object> e : query.entrySet()) {
-            String key = e.getKey();
+        for (final Filter e : query.getFilters()) {
+            String key = e.getCondition();
 
             final String[] split = key.split("(\\s|:)");
             key = split[0];

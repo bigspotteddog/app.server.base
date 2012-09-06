@@ -47,6 +47,7 @@ import com.maintainer.data.model.EntityImpl;
 import com.maintainer.data.model.NotIndexed;
 import com.maintainer.data.model.NotStored;
 import com.maintainer.data.provider.AbstractDataProvider;
+import com.maintainer.data.provider.Filter;
 import com.maintainer.data.provider.Query;
 import com.maintainer.util.Utils;
 
@@ -91,7 +92,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             return cached;
         }
 
-        final Key k = createDatastoreKey(key.getKindName(), key.getId());
+        final Key k = createDatastoreKey(key);
         try {
             final Entity entity = getEntity(k);
             final T fetched = fromEntity(key.getKind(), entity);
@@ -246,7 +247,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
         target.setModified(new Date());
 
-        Entity entity = getEntity(createDatastoreKey(getKindName(target.getClass()), target.getId()));
+        Entity entity = getEntity(createDatastoreKey(target));
         entity = toEntity(entity, target);
 
         final DatastoreService datastore = getDatastore();
@@ -266,14 +267,22 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return isEqual(target, existing);
     }
 
+    private Entity newEntity(final EntityBase parent, final String kind) {
+        if (parent != null) {
+            return new Entity(kind, createDatastoreKey(parent.getKey()));
+        }
+        return new Entity(kind);
+    }
+
     @SuppressWarnings("unchecked")
     private Entity toEntity(Entity entity, final T target) throws Exception {
 
         if (entity == null) {
             final Class<? extends EntityBase> clazz = target.getClass();
-            final String kindName = getKindName(clazz);
-
             final Autocreate annotation = clazz.getAnnotation(Autocreate.class);
+
+            final EntityBase parent = target.getParent();
+            final String kindName = getKindName(clazz);
 
             if (annotation != null && annotation.id() != Autocreate.EMPTY) {
 
@@ -288,20 +297,20 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                     final Object value = field.get(target);
                     Key key = null;
                     if (value != null) {
-                        key = createDatastoreKey(kindName, value);
+                        key = createDatastoreKey(parent, kindName, value);
                         target.setId(value);
                     }
 
                     if (key != null) {
-                        entity = new Entity(key);
+                        entity = newEntity(key);
                     } else {
-                        entity = new Entity(kindName);
+                        entity = newEntity(parent, kindName);
                     }
                 } else {
-                    entity = new Entity(kindName);
+                    entity = newEntity(parent, kindName);
                 }
             } else {
-                entity = new Entity(kindName);
+                entity = newEntity(parent, kindName);
             }
         }
 
@@ -323,7 +332,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                     if (value != null) {
                         if (EntityBase.class.isAssignableFrom(value.getClass())) {
                             final EntityBase base = (EntityBase) value;
-                            value = createDatastoreKey(getKindName(base.getClass()), base.getId());
+                            value = createDatastoreKey(base.getParent(), getKindName(base.getClass()), base.getId());
                         } else if (Collection.class.isAssignableFrom(value.getClass())) {
                             final List<Object> list = new ArrayList<Object>((Collection<Object>) value);
                             value = list;
@@ -333,7 +342,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                                 final Object o = iterator.next();
                                 if (EntityBase.class.isAssignableFrom(o.getClass())) {
                                     final EntityBase base = (EntityBase) o;
-                                    final Key key = createDatastoreKey(getKindName(base.getClass()), base.getId());
+                                    final Key key = createDatastoreKey(base.getParent(), getKindName(base.getClass()), base.getId());
                                     iterator.set(key);
                                 }
                             }
@@ -367,6 +376,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return entity;
     }
 
+    private Entity newEntity(final Key key) {
+        return new Entity(key);
+    }
+
     private ArrayList<Field> getFields(final T target) {
         final ArrayList<Field> fields = new ArrayList<Field>();
         Class<?> clazz = target.getClass();
@@ -383,7 +396,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         autodelete(key);
 
         final DatastoreService datastore = getDatastore();
-        datastore.delete(createDatastoreKey(key.getKindName(), key.getId()));
+        datastore.delete(createDatastoreKey(key));
         invalidateCached(key);
         return key;
     }
@@ -410,6 +423,11 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         }
 
         final com.maintainer.data.provider.Key key = new com.maintainer.data.provider.Key(class1, id);
+
+        if (k.getParent() != null) {
+            key.setParent(createNobodyelsesKey(k.getParent()));
+        }
+
         return key;
     }
 
@@ -419,11 +437,31 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return class1;
     }
 
-    private Key createDatastoreKey(final com.maintainer.data.provider.Key k) {
-        return createDatastoreKey(k.getKindName(), k.getId());
+    private Key createDatastoreKey(final T target) {
+        com.maintainer.data.provider.Key parentKey = null;
+        final String kind = getKindName(target.getClass());
+        final Object id = target.getId();
+
+        if (target.getParent() != null) {
+            parentKey = target.getParent().getKey();
+        }
+
+        if (parentKey == null) {
+            return createDatastoreKey(kind, id);
+        } else {
+            return createDatastoreKey(parentKey = null, kind, id);
+        }
     }
 
-    protected Key createDatastoreKey(final String kind, final Object id) {
+    private Key createDatastoreKey(final com.maintainer.data.provider.Key k) {
+        if (k.getParent() == null) {
+            return createDatastoreKey(k.getKindName(), k.getId());
+        } else {
+            return createDatastoreKey(k.getParent(), k.getKindName(), k.getId());
+        }
+    }
+
+    private Key createDatastoreKey(final String kind, final Object id) {
         Key key = null;
 
         if (Utils.isNumeric(id.toString())) {
@@ -434,6 +472,31 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             key = KeyFactory.createKey(kind, ((Double) id).longValue());
         } else {
             key = KeyFactory.createKey(kind, (String) id);
+        }
+
+        return key;
+    }
+
+    private Key createDatastoreKey(final EntityBase parent, final String kind, final Object id) {
+        if (parent == null) {
+            return createDatastoreKey(kind, id);
+        }
+        return createDatastoreKey(parent.getKey(), kind, id);
+    }
+
+    private Key createDatastoreKey(final com.maintainer.data.provider.Key parent, final String kind, final Object id) {
+        Key key = null;
+
+        final Key parentKey = createDatastoreKey(parent);
+
+        if (Utils.isNumeric(id.toString())) {
+            key = KeyFactory.createKey(parentKey, kind, new BigDecimal(id.toString()).longValue());
+        } else if (Long.class.isAssignableFrom(id.getClass())) {
+            key = KeyFactory.createKey(parentKey, kind, (Long) id);
+        } else if (Double.class.isAssignableFrom(id.getClass())){
+            key = KeyFactory.createKey(parentKey, kind, ((Double) id).longValue());
+        } else {
+            key = KeyFactory.createKey(parentKey, kind, (String) id);
         }
 
         return key;
@@ -548,8 +611,8 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     private com.google.appengine.api.datastore.Query getQuery(final Query query) {
         final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(getKindName(query.getKind()));
 
-        for (final Entry<String, Object> e : query.entrySet()) {
-            String key = e.getKey();
+        for (final Filter e : query.getFilters()) {
+            String key = e.getCondition();
 
             final String[] split = key.split("(\\s|:)");
             key = split[0];

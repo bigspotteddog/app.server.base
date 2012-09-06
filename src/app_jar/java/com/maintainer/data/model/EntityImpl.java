@@ -14,6 +14,10 @@ public class EntityImpl implements EntityBase {
 
     @javax.persistence.Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @NotIndexed @NotStored
+    private EntityBase parent;
+
     @NotIndexed @NotStored
     private Object id;
 
@@ -32,6 +36,16 @@ public class EntityImpl implements EntityBase {
     @Override
     public boolean isNew() {
         return id == null;
+    }
+
+    @Override
+    public void setParent(final EntityBase parent) {
+        this.parent = parent;
+    }
+
+    @Override
+    public EntityBase getParent() {
+        return parent;
     }
 
     @Override

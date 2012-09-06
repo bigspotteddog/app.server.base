@@ -9,6 +9,9 @@ import com.maintainer.data.provider.Key;
 public interface EntityBase extends Serializable {
     boolean isNew();
 
+    void setParent(EntityBase parent);
+    EntityBase getParent();
+
     void setId(Object id);
     Object getId();
 

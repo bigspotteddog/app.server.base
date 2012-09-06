@@ -1,8 +1,11 @@
 package com.maintainer.data.provider;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Query extends LinkedHashMap<String, Object> {
+
+public class Query {
+    private static final String ID = "id";
     public static final String NEXT = "NEXT";
     public static final String PREVIOUS = "PREVIOUS";
 
@@ -26,6 +29,7 @@ public class Query extends LinkedHashMap<String, Object> {
 
 
     private Class<?> kind;
+    private final List<Filter> filters = new ArrayList<Filter>();
     private String order;
     private int offset;
     private int limit;
@@ -40,8 +44,18 @@ public class Query extends LinkedHashMap<String, Object> {
     }
 
     public Query filter(final String condition, final Object value) {
-        this.put(condition, value);
+        if (ID.equals(condition)) {
+            final Key key = new Key(kind, value);
+            setKey(key);
+        } else {
+            final Filter filter = new Filter(condition, value);
+            filters.add(filter);
+        }
         return this;
+    }
+
+    public List<Filter> getFilters() {
+        return filters;
     }
 
     public Query setOrder(final String order) {
@@ -134,5 +148,9 @@ public class Query extends LinkedHashMap<String, Object> {
         previousCursor = null;
         nextCursor = null;
         pageDirection = null;
+    }
+
+    public boolean isEmpty() {
+        return filters.isEmpty();
     }
 }
