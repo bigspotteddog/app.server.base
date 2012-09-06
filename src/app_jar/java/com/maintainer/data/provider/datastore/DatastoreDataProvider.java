@@ -263,7 +263,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
         target.setModified(new Date());
 
-        Entity entity = getEntity(createDatastoreKey(target));
+        Entity entity = getEntity(createDatastoreKey(key));
         entity = toEntity(entity, target);
 
         final DatastoreService datastore = getDatastore();

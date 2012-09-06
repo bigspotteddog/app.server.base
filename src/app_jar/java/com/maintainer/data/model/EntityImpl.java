@@ -1,5 +1,6 @@
 package com.maintainer.data.model;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 import javax.persistence.GeneratedValue;
@@ -83,6 +84,11 @@ public class EntityImpl implements EntityBase {
     @Override
     public Key getKey() {
         if (key == null) {
+
+            if (getId() != null && !String.class.isAssignableFrom(getId().getClass())) {
+                setId(new BigDecimal(getId().toString()).longValue());
+            }
+
             return new Key(getClass(), getId());
         }
         return key;
