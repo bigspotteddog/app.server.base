@@ -163,7 +163,7 @@ public abstract class ResourcesController<T> extends ServerResource {
                     if (query.isEmpty()) {
                         query.setOrder(ID);
                     } else {
-                        String key = query.entrySet().iterator().next().getKey();
+                        String key = query.getFilters().iterator().next().getCondition();
                         final String[] split = key.split(":");
                         key = split[0];
                         query.setOrder(key);

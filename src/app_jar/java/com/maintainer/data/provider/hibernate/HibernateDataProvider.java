@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -18,6 +17,7 @@ import org.hibernate.criterion.SimpleExpression;
 
 import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.provider.AbstractDataProvider;
+import com.maintainer.data.provider.Filter;
 import com.maintainer.data.provider.Key;
 import com.maintainer.data.provider.Query;
 import com.maintainer.util.Utils;
@@ -114,8 +114,8 @@ public class HibernateDataProvider<T extends EntityBase> extends AbstractDataPro
         final Session datastore = getDatastore();
         final Criteria q = datastore.createCriteria(query.getKind(),
                 query.getKindName());
-        for (final Entry<String, Object> e : query.entrySet()) {
-            String key = e.getKey();
+        for (final Filter e : query.getFilters()) {
+            String key = e.getCondition();
 
             final String[] split = key.split("(\\s|:)");
             key = split[0];
