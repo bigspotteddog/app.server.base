@@ -230,16 +230,21 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
         final Autocreate classAutocreate = getAutocreate(target);
 
-        if (target.isNew()) {
-            if ((classAutocreate == null || (classAutocreate.create()  && !classAutocreate.readonly())) && fieldAutocreate.create()) {
-                final DataProvider<EntityBase> dataProvider = (DataProvider<EntityBase>) DataProviderFactory.instance().getDataProvider(target.getClass());
-                target = dataProvider.post(target);
-            }
-        } else {
-            if ((classAutocreate == null || (classAutocreate.update()  && !classAutocreate.readonly())) && fieldAutocreate.update()) {
-                final DataProvider<EntityBase> dataProvider = (DataProvider<EntityBase>) DataProviderFactory.instance().getDataProvider(target.getClass());
-                target = dataProvider.put(target);
-            }
+        final boolean readonly = fieldAutocreate.readonly() || (classAutocreate != null && classAutocreate.readonly());
+
+        if (readonly) {
+            return target;
+        }
+
+        final boolean create = fieldAutocreate.create() || (classAutocreate != null && classAutocreate.create());
+        final boolean update = fieldAutocreate.update() || (classAutocreate != null && classAutocreate.update());
+
+        if (target.isNew() && create) {
+            final DataProvider<EntityBase> dataProvider = (DataProvider<EntityBase>) DataProviderFactory.instance().getDataProvider(target.getClass());
+            target = dataProvider.post(target);
+        } else if (update) {
+            final DataProvider<EntityBase> dataProvider = (DataProvider<EntityBase>) DataProviderFactory.instance().getDataProvider(target.getClass());
+            target = dataProvider.put(target);
         }
 
         return target;

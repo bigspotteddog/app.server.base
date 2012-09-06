@@ -12,6 +12,9 @@ public interface EntityBase extends Serializable {
     void setId(Object id);
     Object getId();
 
+    void setCreated(Date date);
+    Date getCreated();
+
     void setModified(Date date);
     Date getModified();
 
