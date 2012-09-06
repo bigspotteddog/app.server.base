@@ -12,12 +12,12 @@ import com.maintainer.data.provider.Key;
 @MappedSuperclass
 public class EntityImpl implements EntityBase {
 
-    @javax.persistence.Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
 
     @NotIndexed @NotStored
     private EntityBase parent;
 
+    @javax.persistence.Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @NotIndexed @NotStored
     private Object id;
 

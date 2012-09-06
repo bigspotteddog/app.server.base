@@ -173,6 +173,22 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             final com.maintainer.data.provider.Key key2 = createNobodyelsesKey(key);
             obj.setId(key2.getId());
 
+            if (key.getParent() != null) {
+                final Autocreate autocreate = obj.getClass().getAnnotation(Autocreate.class);
+                if (autocreate != null && !Autocreate.EMPTY.equals(autocreate.parent())) {
+                    final Field field = Utils.getField(obj, autocreate.parent());
+                    field.setAccessible(true);
+
+                    final Autocreate fieldAutocreate = field.getAnnotation(Autocreate.class);
+                    if (fieldAutocreate != null && fieldAutocreate.keysOnly()) {
+                        field.set(obj, Utils.getKeyedOnly(key2.getParent()));
+                    } else {
+                        final Object parent = get(key2.getParent());
+                        field.set(obj, parent);
+                    }
+                }
+            }
+
         } catch (final Exception e) {
             throw new RuntimeException(e);
         }
@@ -229,7 +245,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
     @Override
     public T put(T target) throws Exception {
-        final com.maintainer.data.provider.Key key = new com.maintainer.data.provider.Key(target.getClass(), target.getId());
+        final com.maintainer.data.provider.Key key = getKey(target);
         final T existing = get(key);
 
         if (checkEqual(target, existing)) {
@@ -281,31 +297,22 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             final Class<? extends EntityBase> clazz = target.getClass();
             final Autocreate annotation = clazz.getAnnotation(Autocreate.class);
 
-            final EntityBase parent = target.getParent();
+            EntityBase parent = target.getParent();
+            if (annotation != null && !Autocreate.EMPTY.equals(annotation.parent())) {
+                parent = (EntityBase) Utils.getFieldValue(target, annotation.parent());
+            }
+
             final String kindName = getKindName(clazz);
 
-            if (annotation != null && annotation.id() != Autocreate.EMPTY) {
+            if (annotation != null && !Autocreate.EMPTY.equals(annotation.id())) {
 
-                Field field = null;
-                try {
-                    final String id = annotation.id();
-                    field = clazz.getDeclaredField(id);
-                    field.setAccessible(true);
-                } catch (final NoSuchFieldException e) {}
+                final Object id = Utils.getFieldValue(target, annotation.id());
 
-                if (field != null) {
-                    final Object value = field.get(target);
+                if (id != null) {
                     Key key = null;
-                    if (value != null) {
-                        key = createDatastoreKey(parent, kindName, value);
-                        target.setId(value);
-                    }
-
-                    if (key != null) {
-                        entity = newEntity(key);
-                    } else {
-                        entity = newEntity(parent, kindName);
-                    }
+                    key = createDatastoreKey(parent, kindName, id);
+                    target.setId(id);
+                    entity = newEntity(key);
                 } else {
                     entity = newEntity(parent, kindName);
                 }

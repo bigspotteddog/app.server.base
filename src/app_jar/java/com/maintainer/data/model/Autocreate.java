@@ -7,6 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 public @interface Autocreate {
     public static final String EMPTY = "";
 
+    String parent() default EMPTY;
     String id() default EMPTY;
     boolean create() default true;
     boolean update() default true;
