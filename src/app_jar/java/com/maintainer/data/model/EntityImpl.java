@@ -14,12 +14,19 @@ public class EntityImpl implements EntityBase {
 
     @javax.persistence.Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NotIndexed @NotStored
     private Object id;
 
+    @NotIndexed
+    private Date created;
+
+    @NotIndexed
     private Date modified;
 
+    @NotIndexed @NotStored
     private Key key;
 
+    @NotIndexed @NotStored
     private String cursor;
 
     @Override
@@ -72,6 +79,16 @@ public class EntityImpl implements EntityBase {
         this.key = key;
         this.id = key.getId();
     }
+
+    @Override
+   public Date getCreated() {
+       return created;
+   }
+
+   @Override
+   public void setCreated(final Date created) {
+       this.created = created;
+   }
 
      @Override
     public Date getModified() {

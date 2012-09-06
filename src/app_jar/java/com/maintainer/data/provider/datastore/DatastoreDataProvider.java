@@ -44,6 +44,8 @@ import com.google.common.collect.Lists;
 import com.maintainer.data.model.Autocreate;
 import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
+import com.maintainer.data.model.NotIndexed;
+import com.maintainer.data.model.NotStored;
 import com.maintainer.data.provider.AbstractDataProvider;
 import com.maintainer.data.provider.Query;
 import com.maintainer.util.Utils;
@@ -119,6 +121,11 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             final Map<String, Object> properties = entity.getProperties();
             final ArrayList<Field> fields = getFields(obj);
             for (final Field f : fields) {
+                final NotStored notStored = f.getAnnotation(NotStored.class);
+                if (notStored != null) {
+                    continue;
+                }
+
                 f.setAccessible(true);
 
                 final Autocreate autocreate = f.getAnnotation(Autocreate.class);
@@ -128,7 +135,12 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                 if (value != null) {
                     if (Key.class.isAssignableFrom(value.getClass())) {
                         final Key k = (Key) value;
-                        value = get(createNobodyelsesKey(k));
+                        final com.maintainer.data.provider.Key key2 = createNobodyelsesKey(k);
+                        if (autocreate != null && autocreate.keysOnly()) {
+                            value = Utils.getKeyedOnly(key2);
+                        } else {
+                            value = get(key2);
+                        }
                     } else if (Text.class.isAssignableFrom(value.getClass())) {
                         value = ((Text) value).getValue();
                     } else if (Double.class.isAssignableFrom(value.getClass()) && BigDecimal.class.isAssignableFrom(f.getType())) {
@@ -193,7 +205,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     public T post(final T target) throws Exception {
         autocreate(target);
 
-        target.setModified(new Date());
+        target.setCreated(new Date());
 
         final Entity entity = toEntity(null, target);
 
@@ -296,11 +308,17 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         final ArrayList<Field> fields = getFields(target);
 
         for (final Field f : fields) {
+            final NotStored notStored = f.getAnnotation(NotStored.class);
+            if (notStored != null) {
+                continue;
+            }
+
             f.setAccessible(true);
             Object value = f.get(target);
 
-            final Autocreate annotation = f.getAnnotation(Autocreate.class);
-            if (annotation != null) {
+            final Autocreate autocreate = f.getAnnotation(Autocreate.class);
+
+            if (autocreate != null) {
                 try {
                     if (value != null) {
                         if (EntityBase.class.isAssignableFrom(value.getClass())) {
@@ -338,7 +356,12 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                 }
             }
 
-            entity.setProperty(f.getName(), value);
+            final NotIndexed notIndexed = f.getAnnotation(NotIndexed.class);
+            if (notIndexed == null) {
+                entity.setProperty(f.getName(), value);
+            } else {
+                entity.setUnindexedProperty(f.getName(), value);
+            }
         }
 
         return entity;
