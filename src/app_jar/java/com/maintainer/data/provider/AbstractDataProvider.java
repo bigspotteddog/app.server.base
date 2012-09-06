@@ -11,7 +11,6 @@ import org.apache.log4j.Logger;
 
 import com.maintainer.data.model.Autocreate;
 import com.maintainer.data.model.EntityBase;
-import com.maintainer.data.model.EntityImpl;
 import com.maintainer.util.Utils;
 
 public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCreateVisitor {
@@ -42,13 +41,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
     @Override
     public T merge(final T incoming) throws Exception {
-        final Object id = ((EntityImpl) incoming).getId();
-
-        if (id == null) {
-            throw new Exception("no id specified");
-        }
-
-        final Key key = new Key(incoming.getClass(), id);
+        final Key key = getKey((EntityBase) incoming);
         final T existing = get(key);
 
         if (existing == null) {
@@ -62,6 +55,24 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         put(existing);
 
         return existing;
+    }
+
+    protected Key getKey(final EntityBase incoming) throws Exception {
+        final Object id = incoming.getId();
+
+        if (id == null) {
+            throw new Exception("no id specified");
+        }
+
+        Key parentKey = null;
+        final Autocreate autocreate = incoming.getClass().getAnnotation(Autocreate.class);
+        if (autocreate != null && !Autocreate.EMPTY.equals(autocreate.parent())) {
+            final EntityBase parent = (EntityBase) Utils.getFieldValue(incoming, autocreate.parent());
+            parentKey = parent.getKey();
+        }
+
+        final Key key = new Key(incoming.getClass(), id, parentKey);
+        return key;
     }
 
     protected void merge(final T incoming, final T existing) throws Exception {
@@ -130,7 +141,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
         T existing = null;
         if (!target.isNew()) {
-                existing = get(new Key(target.getClass(), target.getId()));
+                existing = get(getKey(target));
         }
 
         final Field[] fields = target.getClass().getDeclaredFields();
@@ -268,7 +279,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
             } else {
                 final Object id = getId(target);
                 if (id != null) {
-                    DataProviderFactory.instance().getDataProvider(target.getClass()).delete(new Key(target.getClass(), id));
+                    DataProviderFactory.instance().getDataProvider(target.getClass()).delete(getKey((EntityBase) target));
                 }
             }
         }

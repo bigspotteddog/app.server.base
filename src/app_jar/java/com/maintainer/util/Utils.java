@@ -59,6 +59,7 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import com.maintainer.data.controller.GenericController;
 import com.maintainer.data.controller.Resource;
+import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
 import com.maintainer.data.provider.Key;
 import com.maintainer.data.router.WebSwitch;
@@ -377,6 +378,13 @@ public class Utils {
         return clazz;
     }
 
+    public static Object getFieldValue(final EntityBase target, final String f) throws Exception {
+        final Field field = getField(target, f);
+        field.setAccessible(true);
+        final Object value = field.get(target);
+        return value;
+    }
+
     public static Field getField(final Object obj, final String fieldName) {
         final Class<?> clazz = obj.getClass();
         final Field field = getField(clazz, fieldName);
@@ -614,10 +622,10 @@ public class Utils {
                                 text = text.trim();
                                 if (text.startsWith("[")) {
                                     final ParameterizedTypeImpl type = getParameterizedListType(resourceClass);
-                                    return gson.fromJson(text, type);
+                                    return getGson().fromJson(text, type);
                                 } else {
                                     if (text.startsWith("{")) {
-                                        return gson.fromJson(text, resourceClass);
+                                        return getGson().fromJson(text, resourceClass);
                                     }
                                 }
                             }
@@ -645,18 +653,18 @@ public class Utils {
     }
 
     public static String toJson(final Object obj) {
-        return gson.toJson(obj);
+        return getGson().toJson(obj);
     }
 
     public static Map<String, Object> asMap(final Object object) {
-        final String json = gson.toJson(object);
-        final Map<String, Object> map = gson.fromJson(json, Utils.getItemType());
+        final String json = getGson().toJson(object);
+        final Map<String, Object> map = getGson().fromJson(json, Utils.getItemType());
         return map;
     }
 
     public static List<Map<String, Object>> asMap(final Collection<?> collection) {
-        final String json = gson.toJson(collection);
-        final List<Map<String, Object>> map = gson.fromJson(json, Utils.getItemsType());
+        final String json = getGson().toJson(collection);
+        final List<Map<String, Object>> map = getGson().fromJson(json, Utils.getItemsType());
         return map;
     }
 

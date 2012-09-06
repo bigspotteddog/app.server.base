@@ -247,9 +247,11 @@ public abstract class ResourcesController<T> extends ServerResource {
                         }
                     } else if (Collection.class.isAssignableFrom(f.getType())) {
                         final Collection collection = (Collection) f.get(target);
-                        for (final Object value : collection) {
-                            if (value != null && EntityBase.class.isAssignableFrom(value.getClass())) {
-                                autocreate(value);
+                        if (collection != null) {
+                            for (final Object value : collection) {
+                                if (value != null && EntityBase.class.isAssignableFrom(value.getClass())) {
+                                    autocreate(value);
+                                }
                             }
                         }
                     }

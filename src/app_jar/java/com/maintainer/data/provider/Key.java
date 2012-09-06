@@ -26,13 +26,21 @@ public class Key implements Comparable<Key>, Serializable {
         this.id = id;
     }
 
+    public Key(final Class<?> kind, final Object id, final Key parent) {
+        setKind(kind);
+        this.parent = parent;
+        this.id = id;
+    }
+
     public Key(final Class<?> kind, final Long id, final Key parent) {
         setKind(kind);
+        this.parent = parent;
         this.id = id;
     }
 
     public Key(final Class<?> kind, final String name, final Key parent) {
         setKind(kind);
+        this.parent = parent;
         this.id = name;
     }
 
