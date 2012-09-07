@@ -3,6 +3,9 @@ package com.maintainer.data.provider;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.maintainer.data.model.Autocreate;
+import com.maintainer.util.Utils;
+
 
 public class Query {
     private static final String ID = "id";
@@ -43,11 +46,16 @@ public class Query {
         this.kind = kind;
     }
 
-    public Query filter(final String condition, final Object value) {
-        if (ID.equals(condition)) {
+    public Query filter(final String condition, Object value) {
+        final Class<?> kind = getKind();
+        final Autocreate annotation = kind.getAnnotation(Autocreate.class);
+        if (ID.equals(condition) && (annotation == null || Autocreate.EMPTY.equals(annotation.parent()))) {
             final Key key = new Key(kind, value);
             setKey(key);
         } else {
+            if (ID.equals(condition)) {
+                value = Utils.convert(value, Long.class);
+            }
             final Filter filter = new Filter(condition, value);
             filters.add(filter);
         }
