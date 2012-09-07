@@ -12,8 +12,6 @@ import com.maintainer.data.provider.Key;
 
 @MappedSuperclass
 public class EntityImpl implements EntityBase {
-
-
     @NotIndexed @NotStored
     private EntityBase parent;
 

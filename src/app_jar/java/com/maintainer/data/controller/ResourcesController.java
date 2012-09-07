@@ -152,7 +152,6 @@ public abstract class ResourcesController<T> extends ServerResource {
                 final boolean isId = resource.getProperty() != null && i == resources.size() - 1;
                 if (isId) {
                     query.filter(ID, resource.getProperty());
-                    query.setKey(new Key(query.getKind(), resource.getProperty()));
                 }
 
                 if (isLastResource(resources, i)) {
