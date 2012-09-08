@@ -99,11 +99,29 @@ public class Key implements Comparable<Key>, Serializable {
 
     @Override
     public String toString() {
-        return kindName + '(' + id + ')';
+        final StringBuilder buf = new StringBuilder();
+
+        if (parent != null) {
+            buf
+            .append(parent.toString())
+            .append('/');
+        }
+
+        return buf
+            .append(kindName)
+            .append('(')
+            .append(id)
+            .append(')')
+            .toString();
+
     }
 
     @Override
     public int compareTo(final Key other) {
         return toString().compareTo(other.toString());
+    }
+
+    public static Key fromString(final String string) {
+        return null;
     }
 }
