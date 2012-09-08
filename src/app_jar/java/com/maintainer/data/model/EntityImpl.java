@@ -1,6 +1,5 @@
 package com.maintainer.data.model;
 
-import java.math.BigDecimal;
 import java.util.Date;
 
 import javax.persistence.GeneratedValue;
@@ -9,11 +8,12 @@ import javax.persistence.MappedSuperclass;
 
 import com.maintainer.data.provider.AutoCreateVisitor;
 import com.maintainer.data.provider.Key;
+import com.maintainer.util.Base64;
 
 @MappedSuperclass
 public class EntityImpl implements EntityBase {
     @NotIndexed @NotStored
-    private EntityBase parent;
+    transient private EntityBase parent;
 
     @javax.persistence.Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,16 +21,19 @@ public class EntityImpl implements EntityBase {
     private Object id;
 
     @NotIndexed
-    private Date created;
+    transient private Date created;
 
     @NotIndexed
-    private Date modified;
+    transient private Date modified;
 
     @NotIndexed @NotStored
-    private Key key;
+    transient private Key key;
 
     @NotIndexed @NotStored
     private String cursor;
+
+    @NotIndexed @NotStored
+    private String keyString;
 
     @Override
     public boolean isNew() {
@@ -40,6 +43,8 @@ public class EntityImpl implements EntityBase {
     @Override
     public void setParent(final EntityBase parent) {
         this.parent = parent;
+        clearKey();
+        getWebSafeKey();
     }
 
     @Override
@@ -50,6 +55,20 @@ public class EntityImpl implements EntityBase {
     @Override
     public void setId(final Object id) {
         this.id = id;
+        clearKey();
+        getWebSafeKey();
+    }
+
+    private void clearKey() {
+        key = null;
+        keyString = null;
+    }
+
+    public String getWebSafeKey() {
+        if (keyString == null) {
+            keyString = Base64.encodeToString(getKey().toString().getBytes(), false);
+        }
+        return keyString;
     }
 
     @Override
@@ -82,12 +101,11 @@ public class EntityImpl implements EntityBase {
     @Override
     public Key getKey() {
         if (key == null) {
-
-            if (getId() != null && !String.class.isAssignableFrom(getId().getClass())) {
-                setId(new BigDecimal(getId().toString()).longValue());
+            final Key key2 = new Key(getClass(), getId());
+            if (getParent() != null) {
+                key2.setParent(getParent().getKey());
             }
-
-            return new Key(getClass(), getId());
+            key = key2;
         }
         return key;
     }

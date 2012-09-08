@@ -179,13 +179,15 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                     final Field field = Utils.getField(obj, autocreate.parent());
                     field.setAccessible(true);
 
+                    EntityImpl parent = null;
                     final Autocreate fieldAutocreate = field.getAnnotation(Autocreate.class);
                     if (fieldAutocreate != null && fieldAutocreate.keysOnly()) {
-                        field.set(obj, Utils.getKeyedOnly(key2.getParent()));
+                        parent = Utils.getKeyedOnly(key2.getParent());
                     } else {
-                        final Object parent = get(key2.getParent());
-                        field.set(obj, parent);
+                        parent = (EntityImpl) get(key2.getParent());
                     }
+                    field.set(obj, parent);
+                    obj.setParent(parent);
                 }
             }
 
