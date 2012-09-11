@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src/app_jar/java"/>
+	<classpathentry kind="src" path="test/java"/>
 	<classpathentry kind="lib" path="build/dist/app.server.base-1.0.0.UNSTABLE.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/antlr-2.7.7.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/appengine-api.jar"/>
@@ -27,5 +28,6 @@
 	<classpathentry kind="lib" path="lib/runtime/org.restlet.jar" sourcepath="/Users/josephc/Documents/workspace/tools/restlet-2.1rc1/modules"/>
 	<classpathentry kind="lib" path="lib/runtime/gson-2.2.3-SNAPSHOT.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="build/app.server.base.jar.build"/>
 </classpath>

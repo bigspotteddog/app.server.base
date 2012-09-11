@@ -2,6 +2,8 @@ package com.maintainer.data.provider;
 
 import java.io.Serializable;
 
+import com.maintainer.util.Utils;
+
 public class Key implements Comparable<Key>, Serializable {
     private static final long serialVersionUID = -6778571338817109631L;
     transient private Class<?> kind;
@@ -107,8 +109,11 @@ public class Key implements Comparable<Key>, Serializable {
             .append('/');
         }
 
+        final String[] path = kindName.split("\\.");
+        final String k = path[path.length - 1];
+
         return buf
-            .append(kindName)
+            .append(k)
             .append('(')
             .append(id)
             .append(')')
@@ -121,7 +126,28 @@ public class Key implements Comparable<Key>, Serializable {
         return toString().compareTo(other.toString());
     }
 
-    public static Key fromString(final String string) {
-        return null;
+    public static Key fromString(final String string) throws Exception {
+        final String[] keys = string.split("/");
+
+        Key parent = null;
+        Key key = null;
+        for (final String k : keys) {
+            final String[] split = k.split("[\\(\\)]");
+
+            final String kindName = split[0];
+            String className = kindName;
+            if (className.indexOf('.') == -1) {
+                className = Utils.getModelPackageName() + '.' + className;
+            }
+            final Class<?> kind = Class.forName(className);
+            final String id = split[1];
+            key = new Key(kind, id);
+            if (parent != null) {
+                key.setParent(parent);
+            }
+            parent = key;
+        }
+
+        return key;
     }
 }

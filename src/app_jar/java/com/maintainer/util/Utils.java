@@ -22,11 +22,13 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -65,6 +67,13 @@ import com.maintainer.data.provider.Key;
 import com.maintainer.data.router.WebSwitch;
 
 public class Utils {
+    private static final String REMAINING = "remaining";
+    private static final String TEMPLATE_PLACEHOLDER = "(.+)";
+    private static final String TEMPLATE_WORD = "\\{\\{(\\w+)\\}\\}";
+
+
+    private static final String HIBERNATE_MODEL_PACKAGE = "hibernate.model.package";
+
     private static final Object[] NO_PARAMS = new Object[0];
 
     private static final Class<?>[] NO_ARGS = new Class<?>[0];
@@ -77,6 +86,8 @@ public class Utils {
     public static final String SYSPROP_CONFIG_PATH = "app.database.configuration";
     public static final String SYSPROP_PATH = "app.configuration";
     public static final String ORG_RESTLET_HTTP_HEADERS = "org.restlet.http.headers";
+
+    private static String packageName;
 
     public static String encrypt(final String s) {
         final StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
@@ -716,4 +727,58 @@ public class Utils {
         return entity;
     }
 
+    public static String getModelPackageName() {
+        if (packageName == null) {
+            packageName = (String) Utils.getDatabaseConfigurationProperties().get(HIBERNATE_MODEL_PACKAGE);
+        }
+        return packageName;
+    }
+
+    public static Map<String, String> getParts(final String source, final String template) {
+        return getParts(source, template, null);
+    }
+
+    public static Map<String, String> getParts(final String source, final String template, List<String> names) {
+        final String regex = TEMPLATE_WORD;
+
+        final Pattern pattern = Pattern.compile(regex);
+        final Matcher matcher = pattern.matcher(template);
+
+        if (names == null) {
+            names = new ArrayList<String>();
+            while (matcher.find()) {
+                names.add(matcher.group(1));
+            }
+        }
+
+        final String regex2 = matcher.replaceAll(TEMPLATE_PLACEHOLDER);
+
+        final Pattern pattern2 = Pattern.compile(regex2);
+        final Matcher matcher2 = pattern2.matcher(source);
+
+        final boolean find = matcher2.find();
+
+        final Map<String, String> map = new LinkedHashMap<String, String>();
+        if (find) {
+            for(int i = 0; i < matcher2.groupCount(); i++) {
+                final String value = matcher2.group(i + 1);
+
+                String key = null;
+                if (i < names.size()) {
+                    key = names.get(i);
+                } else {
+                    key = REMAINING;
+                }
+                map.put(key, value);
+            }
+        }
+
+        if (!map.containsKey(REMAINING)) {
+            final int end = matcher2.end();
+            final String remaining = source.substring(end);
+            map.put(REMAINING, remaining);
+        }
+
+        return map;
+    }
 }
