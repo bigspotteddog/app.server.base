@@ -723,7 +723,7 @@ public class Utils {
         final Constructor<?> constructor = forName.getDeclaredConstructor(NO_ARGS);
         constructor.setAccessible(true);
         final EntityImpl entity = (EntityImpl) constructor.newInstance(NO_PARAMS);
-        entity.setId(key.getId());
+        entity.setId(key.toString());
         return entity;
     }
 
