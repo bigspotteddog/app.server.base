@@ -68,7 +68,7 @@ import com.maintainer.data.router.WebSwitch;
 
 public class Utils {
     private static final String REMAINING = "remaining";
-    private static final String TEMPLATE_PLACEHOLDER = "(.+)";
+    private static final String TEMPLATE_PLACEHOLDER = "([^/\\?]+)";
     private static final String TEMPLATE_WORD = "\\{\\{(\\w+)\\}\\}";
 
 
@@ -773,10 +773,12 @@ public class Utils {
             }
         }
 
-        if (!map.containsKey(REMAINING)) {
+        if (find && !map.containsKey(REMAINING)) {
             final int end = matcher2.end();
             final String remaining = source.substring(end);
-            map.put(REMAINING, remaining);
+            if (remaining != null && remaining.length() > 0) {
+                map.put(REMAINING, remaining);
+            }
         }
 
         return map;
