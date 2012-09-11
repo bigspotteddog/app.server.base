@@ -1,10 +1,15 @@
 package com.maintainer.data.provider;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.maintainer.util.Utils;
 
 public class Key implements Comparable<Key>, Serializable {
+    private static final String KEY_PATTERN = "([\\w\\.]+\\([^\\)]+\\))";
     private static final long serialVersionUID = -6778571338817109631L;
     transient private Class<?> kind;
     private Key parent;
@@ -13,37 +18,14 @@ public class Key implements Comparable<Key>, Serializable {
 
     protected Key() {}
 
-    public Key(final Class<?> kind, final Long id) {
-        setKind(kind);
+    public Key(final String kind, final Object id) {
+        this(kind, id, null);
+    }
+
+    public Key(final String kind, final Object id, final Key parent) {
+        this.kindName = kind;
         this.id = id;
-    }
-
-    public Key(final Class<?> kind, final String name) {
-        setKind(kind);
-        this.id = name;
-    }
-
-    public Key(final Class<?> kind, final Object id) {
-        setKind(kind);
-        this.id = id;
-    }
-
-    public Key(final Class<?> kind, final Object id, final Key parent) {
-        setKind(kind);
         this.parent = parent;
-        this.id = id;
-    }
-
-    public Key(final Class<?> kind, final Long id, final Key parent) {
-        setKind(kind);
-        this.parent = parent;
-        this.id = id;
-    }
-
-    public Key(final Class<?> kind, final String name, final Key parent) {
-        setKind(kind);
-        this.parent = parent;
-        this.id = name;
     }
 
     public Key getParent() {
@@ -55,6 +37,13 @@ public class Key implements Comparable<Key>, Serializable {
     }
 
     public Class<?> getKind() {
+        if (kind == null) {
+            try {
+                kind = Class.forName(kindName);
+            } catch (final Exception e) {
+                e.printStackTrace();
+            }
+        }
         return kind;
     }
 
@@ -126,22 +115,48 @@ public class Key implements Comparable<Key>, Serializable {
         return toString().compareTo(other.toString());
     }
 
-    public static Key fromString(final String string) throws Exception {
-        final String[] keys = string.split("/");
+    public static Key create(final Class<?> kind, final Object id) {
+        return create(kind, id, null);
+    }
+
+    public static Key create(final Class<?> kind, final Object id, final Key parent) {
+        return create(kind.getName(), id, parent);
+    }
+
+    public static Key create(final String kind, final Object id, final Key parent) {
+        return new Key(kind, id, parent);
+    }
+
+    public static Key fromString(final String string) {
+        final Pattern p = Pattern.compile(KEY_PATTERN);
+        final Matcher m = p.matcher(string);
+
+        final List<String> keys = new ArrayList<String>();
+        while(m.find()) {
+            final String key = m.group();
+            keys.add(key);
+        }
 
         Key parent = null;
         Key key = null;
         for (final String k : keys) {
             final String[] split = k.split("[\\(\\)]");
 
-            final String kindName = split[0];
+            String kindName = split[0];
             String className = kindName;
             if (className.indexOf('.') == -1) {
                 className = Utils.getModelPackageName() + '.' + className;
             }
-            final Class<?> kind = Class.forName(className);
+
+            try {
+                final Class<?> kind = Class.forName(className);
+                kindName = kind.getName();
+            } catch(final Exception e) {
+                e.printStackTrace();
+            }
+
             final String id = split[1];
-            key = new Key(kind, id);
+            key = Key.create(kindName, id, null);
             if (parent != null) {
                 key.setParent(parent);
             }

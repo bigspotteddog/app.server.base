@@ -50,7 +50,7 @@ public class Query {
         final Class<?> kind = getKind();
         final Autocreate annotation = kind.getAnnotation(Autocreate.class);
         if (ID.equals(condition) && (annotation == null || Autocreate.EMPTY.equals(annotation.parent()))) {
-            final Key key = new Key(kind, value);
+            final Key key = Key.create(kind, value);
             setKey(key);
         } else {
             if (ID.equals(condition)) {

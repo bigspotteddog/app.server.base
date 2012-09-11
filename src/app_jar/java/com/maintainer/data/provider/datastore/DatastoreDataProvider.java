@@ -53,7 +53,7 @@ import com.maintainer.util.Utils;
 
 public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataProvider<T> {
     private static final Logger log = Logger.getLogger(DatastoreDataProvider.class.getName());
-    private static final Cache<com.maintainer.data.provider.Key, Object> cache = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.HOURS).build();
+    private static final Cache<String, Object> cache = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.HOURS).build();
     private static final AsyncMemcacheService memcache = MemcacheServiceFactory.getAsyncMemcacheService();
 
     private static final Map<String, FilterOperator> ops = new HashMap<String, FilterOperator>();
@@ -129,11 +129,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         final com.maintainer.data.provider.Key nobodyelsesKey = createNobodyelsesKey(posted);
         target.setKey(nobodyelsesKey);
 
-        if (posted.getId() == 0) {
-            target.setId(posted.getName());
-        } else {
-            target.setId(posted.getId());
-        }
+        target.setId(nobodyelsesKey.toString());
 
         invalidateCached(nobodyelsesKey);
 
@@ -164,13 +160,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         entity = toEntity(entity, target);
 
         final DatastoreService datastore = getDatastore();
-        final Key posted = datastore.put(entity);
-
-        if (posted.getId() == 0) {
-            target.setId(posted.getName());
-        } else {
-            target.setId(posted.getId());
-        }
+        datastore.put(entity);
 
         invalidateCached(nobodyelsesKey);
 
@@ -352,8 +342,8 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             }
 
             final Key key = entity.getKey();
-            final com.maintainer.data.provider.Key key2 = createNobodyelsesKey(key);
-            obj.setId(key2.getId());
+            final com.maintainer.data.provider.Key nobodyelsesKey = createNobodyelsesKey(key);
+            obj.setId(nobodyelsesKey.toString());
 
             if (key.getParent() != null) {
                 final Autocreate autocreate = obj.getClass().getAnnotation(Autocreate.class);
@@ -364,9 +354,9 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                     EntityImpl parent = null;
                     final Autocreate fieldAutocreate = field.getAnnotation(Autocreate.class);
                     if (fieldAutocreate != null && fieldAutocreate.keysOnly()) {
-                        parent = Utils.getKeyedOnly(key2.getParent());
+                        parent = Utils.getKeyedOnly(nobodyelsesKey.getParent());
                     } else {
-                        parent = (EntityImpl) get(key2.getParent());
+                        parent = (EntityImpl) get(nobodyelsesKey.getParent());
                     }
                     field.set(obj, parent);
                     obj.setParent(parent);
@@ -447,7 +437,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                     if (value != null) {
                         if (EntityBase.class.isAssignableFrom(value.getClass())) {
                             final EntityBase base = (EntityBase) value;
-                            value = createDatastoreKey(base.getParent(), getKindName(base.getClass()), base.getId());
+                            value = createDatastoreKey(base.getKey());
                         } else if (Collection.class.isAssignableFrom(value.getClass())) {
                             final List<Object> list = new ArrayList<Object>((Collection<Object>) value);
                             value = list;
@@ -457,7 +447,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                                 final Object o = iterator.next();
                                 if (EntityBase.class.isAssignableFrom(o.getClass())) {
                                     final EntityBase base = (EntityBase) o;
-                                    final Key key = createDatastoreKey(base.getParent(), getKindName(base.getClass()), base.getId());
+                                    final Key key = createDatastoreKey(base.getKey());
                                     iterator.set(key);
                                 }
                             }
@@ -527,7 +517,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             id = k.getId();
         }
 
-        final com.maintainer.data.provider.Key key = new com.maintainer.data.provider.Key(class1, id);
+        final com.maintainer.data.provider.Key key = com.maintainer.data.provider.Key.create(class1, id);
 
         if (k.getParent() != null) {
             key.setParent(createNobodyelsesKey(k.getParent()));
@@ -540,22 +530,6 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         final String className = k.getKind();
         final Class<?> class1 = Class.forName(className);
         return class1;
-    }
-
-    private Key createDatastoreKey(final T target) {
-        com.maintainer.data.provider.Key parentKey = null;
-        final String kind = getKindName(target.getClass());
-        final Object id = target.getId();
-
-        if (target.getParent() != null) {
-            parentKey = target.getParent().getKey();
-        }
-
-        if (parentKey == null) {
-            return createDatastoreKey(kind, id);
-        } else {
-            return createDatastoreKey(parentKey = null, kind, id);
-        }
     }
 
     private Key createDatastoreKey(final com.maintainer.data.provider.Key k) {
@@ -852,7 +826,16 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
     private void putAllCache(final Map<com.maintainer.data.provider.Key, Object> map) {
         putAllLocalCache(map);
-        memcache.putAll(map);
+        putAllMemcache(map);
+    }
+
+    private void putAllMemcache(final Map<com.maintainer.data.provider.Key, Object> map) {
+        final Map<String, Object> cacheable = new HashMap<String, Object>();
+        for (final Entry<com.maintainer.data.provider.Key, Object> e : map.entrySet()) {
+            cacheable.put(e.getKey().toString(), e.getValue());
+        }
+
+        memcache.putAll(cacheable);
     }
 
     private void putAllLocalCache(final Map<com.maintainer.data.provider.Key, Object> map) {
@@ -867,13 +850,17 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
     private void putCache(final com.maintainer.data.provider.Key key, final Object o) {
         putLocalCache(key, o);
-        memcache.put(key, o);
+        putMemcache(key, o);
+    }
+
+    private void putMemcache(final com.maintainer.data.provider.Key key, final Object o) {
+        memcache.put(key.toString(), o);
     }
 
     private Object getCached(final com.maintainer.data.provider.Key key) throws Exception {
         Object o = getLocalCache(key);
         if (o == null) {
-            final Future<Object> future = memcache.get(key);
+            final Future<Object> future = memcache.get(key.toString());
             o = future.get();
             if (o != null) {
                 putLocalCache(key, o);
@@ -884,12 +871,12 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
     private void invalidateCached(final com.maintainer.data.provider.Key key) {
         invalidateLocalCache(key);
-        memcache.delete(key);
+        memcache.delete(key.toString());
     }
 
     private void putLocalCache(final com.maintainer.data.provider.Key key, final Object o) {
         if (local) {
-            cache.put(key, o);
+            cache.put(key.toString(), o);
         }
     }
 
@@ -898,7 +885,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             return null;
         }
 
-        final Object o = cache.getIfPresent(key);
+        final Object o = cache.getIfPresent(key.toString());
         return o;
     }
 
@@ -911,10 +898,15 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         final Set<com.maintainer.data.provider.Key> keySet = map2.keySet();
         final boolean isChanged = keySet.isEmpty() || keys.removeAll(keySet);
         if (!keys.isEmpty() && isChanged) {
-            final Future<Map<com.maintainer.data.provider.Key, Object>> future = memcache.getAll(keys);
-            final Map<com.maintainer.data.provider.Key, Object> map3 = future.get();
+
+            final List<String> stringKeys = getStringKeys(keys);
+
+            final Future<Map<String, Object>> future = memcache.getAll(stringKeys);
+            final Map<String, Object> map3 = future.get();
             if (!map3.isEmpty()) {
-                map.putAll(map3);
+                for (final Entry<String, Object> e : map3.entrySet()) {
+                    map.put(com.maintainer.data.provider.Key.fromString(e.getKey()), e.getValue());
+                }
             }
         }
         return map;
@@ -925,13 +917,30 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             return Collections.emptyMap();
         }
 
-        final ImmutableMap<com.maintainer.data.provider.Key, Object> allPresent = cache.getAllPresent(keys);
-        return allPresent;
+        final List<String> stringKeys = getStringKeys(keys);
+
+        final ImmutableMap<String, Object> allPresent = cache.getAllPresent(stringKeys);
+
+        final Map<com.maintainer.data.provider.Key, Object> keysPresent = new LinkedHashMap<com.maintainer.data.provider.Key, Object>();
+        for (final Entry<String, Object> e : allPresent.entrySet()) {
+            keysPresent.put(com.maintainer.data.provider.Key.fromString(e.getKey()), e.getValue());
+        }
+
+        return keysPresent;
+    }
+
+    private List<String> getStringKeys(
+            final List<com.maintainer.data.provider.Key> keys) {
+        final List<String> stringKeys = new ArrayList<String>();
+        for (final com.maintainer.data.provider.Key k : keys) {
+            stringKeys.add(k.toString());
+        }
+        return stringKeys;
     }
 
     private void invalidateLocalCache(final com.maintainer.data.provider.Key key) {
         if (local) {
-            cache.invalidate(key);
+            cache.invalidate(key.toString());
         }
     }
 }

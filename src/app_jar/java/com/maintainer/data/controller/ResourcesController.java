@@ -106,8 +106,6 @@ public abstract class ResourcesController<T> extends ServerResource {
         final EntityImpl obj2 = (EntityImpl) obj;
         if (obj2.getId() != null) {
             throw new Exception(ID_PROVIDED);
-        } else {
-            convertIdToLong(obj2);
         }
 
         prePost(obj);
@@ -131,8 +129,6 @@ public abstract class ResourcesController<T> extends ServerResource {
         final EntityImpl obj2 = (EntityImpl) obj;
         if (obj2.getId() == null) {
             throw new Exception(NO_ID_PROVIDED);
-        } else {
-            convertIdToLong(obj2);
         }
 
         prePut(obj);
@@ -156,7 +152,7 @@ public abstract class ResourcesController<T> extends ServerResource {
 
         final DataProvider<T> service = getDataProvider();
 
-        Key key = new Key(kind, id);
+        Key key = Key.fromString((String) id);
         final T obj = service.get(key);
         preDelete(obj);
 
