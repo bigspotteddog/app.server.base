@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -44,9 +45,12 @@ import com.maintainer.util.Utils;
 
 @SuppressWarnings("unused")
 public abstract class ResourcesController<T> extends ServerResource {
-    private static final String RESOURCE_TEMPLATE = "/{{resource}}([/\\?].+)?";
 
     private static final String RESOURCE = "resource";
+
+    private static final String RESOURCE_TEMPLATE = "/?([^/\\?]+)";
+    private static final String RESOURCE_ID_TEMPLATE = "/?([^/\\?]+)/([^/\\?]+)";
+    private static final List<String> RESOURCE_ID = Arrays.asList("resource", "id");
 
     private static final String UTF_8 = "UTF-8";
 
@@ -647,8 +651,7 @@ public abstract class ResourcesController<T> extends ServerResource {
     }
 
     protected String getResource() {
-        String root = getRequest().getRootRef().toString();
-        root = URI.create(root).getPath();
+        final String root = getRoot();
 
         final Reference resourceRef = getRequest().getResourceRef();
         String ref = resourceRef.toString();
@@ -658,11 +661,18 @@ public abstract class ResourcesController<T> extends ServerResource {
         if (ref.startsWith(root)) {
             buf.append(root);
         }
+
         buf.append(RESOURCE_TEMPLATE);
         final String template = buf.toString();
 
-        final Map<String, String> parts = Utils.getParts(ref, template);
+        final Map<String, String> parts = Utils.getParts(ref, template, RESOURCE_ID);
         return parts.get(RESOURCE);
+    }
+
+    private String getRoot() {
+        String root = getRequest().getRootRef().toString();
+        root = URI.create(root).getPath();
+        return root;
     }
 
     private String getResource2() {
