@@ -24,7 +24,7 @@ public class UserResourceController extends GenericController<User> {
         final DataProvider<?> provider = getDataProvider();
         final User user = obj;
 
-        final User existing = (User) provider.get(new Key(user.getClass(), user.getId()));
+        final User existing = (User) provider.get(Key.create(user.getClass(), user.getId()));
         if (existing.getPassword() == null || (user.getPassword() != null && !existing.getPassword().equals(user.getPassword()))) {
             encryptPassword(user);
         }

@@ -110,7 +110,7 @@ public class MapDatastoreDataProvider extends AbstractDataProvider<Map<String, O
                         final Key k = (Key) value;
                         final String className = k.getKind();
                         final Class<?> class1 = Class.forName(className);
-                        value = get(new com.maintainer.data.provider.Key(class1, k.getId()));
+                        value = get(com.maintainer.data.provider.Key.create(class1, k.getId()));
                     } else if (Text.class.isAssignableFrom(value.getClass())) {
                         value = ((Text) value).getValue();
                     } else if (Collection.class.isAssignableFrom(value.getClass())) {
@@ -123,7 +123,7 @@ public class MapDatastoreDataProvider extends AbstractDataProvider<Map<String, O
                                 final Key k = (Key) o;
                                 final String className = k.getKind();
                                 final Class<?> class1 = Class.forName(className);
-                                o = get(new com.maintainer.data.provider.Key(class1, k.getId()));
+                                o = get(com.maintainer.data.provider.Key.create(class1, k.getId()));
                                 iterator.set(o);
                             }
                         }
@@ -196,7 +196,7 @@ public class MapDatastoreDataProvider extends AbstractDataProvider<Map<String, O
 
     @Override
     public Map<String, Object> put(Map<String, Object> target) throws Exception {
-        final com.maintainer.data.provider.Key key = new com.maintainer.data.provider.Key(target.getClass(), (Long) target.get("id"));
+        final com.maintainer.data.provider.Key key = com.maintainer.data.provider.Key.create(target.getClass(), target.get("id"));
         final Map<String, Object> existing = get(key);
 
         if (checkEqual(target, existing)) {

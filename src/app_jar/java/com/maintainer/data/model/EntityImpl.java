@@ -8,7 +8,6 @@ import javax.persistence.MappedSuperclass;
 
 import com.maintainer.data.provider.AutoCreateVisitor;
 import com.maintainer.data.provider.Key;
-import com.maintainer.util.Base64;
 
 @MappedSuperclass
 public class EntityImpl implements EntityBase {
@@ -43,8 +42,6 @@ public class EntityImpl implements EntityBase {
     @Override
     public void setParent(final EntityBase parent) {
         this.parent = parent;
-        clearKey();
-        getWebSafeKey();
     }
 
     @Override
@@ -55,27 +52,14 @@ public class EntityImpl implements EntityBase {
     @Override
     public void setId(final Object id) {
         this.id = id;
-        clearKey();
-        getWebSafeKey();
-    }
-
-    private void clearKey() {
-        key = null;
-        keyString = null;
     }
 
     public String getWebSafeKey() {
-        if (keyString == null) {
-            keyString = Base64.encodeToString(getKey().toString().getBytes(), false);
-        }
         return keyString;
     }
 
     @Override
     public Object getId() {
-        if (key != null) {
-            return key.getId();
-        }
         return id;
     }
 
@@ -101,11 +85,7 @@ public class EntityImpl implements EntityBase {
     @Override
     public Key getKey() {
         if (key == null) {
-            final Key key2 = new Key(getClass(), getId());
-            if (getParent() != null) {
-                key2.setParent(getParent().getKey());
-            }
-            key = key2;
+            key = Key.fromString((String) id);
         }
         return key;
     }
@@ -113,7 +93,6 @@ public class EntityImpl implements EntityBase {
     @Override
     public void setKey(final Key key) {
         this.key = key;
-        this.id = key.getId();
     }
 
     @Override
