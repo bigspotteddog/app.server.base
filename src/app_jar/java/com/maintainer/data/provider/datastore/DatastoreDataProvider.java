@@ -104,6 +104,188 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return null;
     }
 
+    @Override
+    public List<T> getAll(final Class<?> kind) throws Exception {
+        final String kindName = getKindName(kind);
+
+        final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(kindName);
+        final FetchOptions options = FetchOptions.Builder.withDefaults();
+
+        final List<T> list = getEntities(q, options, 0);
+        return list;
+    }
+
+    @Override
+    public T post(final T target) throws Exception {
+        autocreate(target);
+
+        target.setCreated(new Date());
+
+        final Entity entity = toEntity(null, target);
+
+        final DatastoreService datastore = getDatastore();
+        final Key posted = datastore.put(entity);
+
+        final com.maintainer.data.provider.Key nobodyelsesKey = createNobodyelsesKey(posted);
+        target.setKey(nobodyelsesKey);
+
+        if (posted.getId() == 0) {
+            target.setId(posted.getName());
+        } else {
+            target.setId(posted.getId());
+        }
+
+        invalidateCached(nobodyelsesKey);
+
+        return target;
+    }
+
+    @Override
+    public T put(T target) throws Exception {
+        final com.maintainer.data.provider.Key nobodyelsesKey = target.getKey();
+        final T existing = get(nobodyelsesKey);
+
+        if (checkEqual(target, existing)) {
+            return target;
+        } else {
+            log.debug(nobodyelsesKey + " changed.");
+        }
+
+        autocreate(target);
+
+        if (target.getId() == null) {
+            target = post(target);
+            return target;
+        }
+
+        target.setModified(new Date());
+
+        Entity entity = getEntity(createDatastoreKey(nobodyelsesKey));
+        entity = toEntity(entity, target);
+
+        final DatastoreService datastore = getDatastore();
+        final Key posted = datastore.put(entity);
+
+        if (posted.getId() == 0) {
+            target.setId(posted.getName());
+        } else {
+            target.setId(posted.getId());
+        }
+
+        invalidateCached(nobodyelsesKey);
+
+        return target;
+    }
+
+    @Override
+    public com.maintainer.data.provider.Key delete(final com.maintainer.data.provider.Key key) throws Exception {
+        autodelete(key);
+
+        final DatastoreService datastore = getDatastore();
+        datastore.delete(createDatastoreKey(key));
+        invalidateCached(key);
+        return key;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public List<T> find(final Query query) throws Exception {
+        final DatastoreService datastore = getDatastore();
+
+        if (query.getKey() != null) {
+            try {
+                final Key key = createDatastoreKey(query.getKey());
+                final Entity entity = datastore.get(key);
+                final T fromEntity = fromEntity(query.getKind(), entity);
+                final ResultListImpl<T> list = new ResultListImpl<T>();
+                list.add(fromEntity);
+                putCache(fromEntity.getKey(), fromEntity);
+                return list;
+            } catch (final EntityNotFoundException e) {
+                e.printStackTrace();
+            }
+            return ResultListImpl.emptyList();
+        }
+
+        final String pageDirection = query.getPageDirection();
+
+        final com.google.appengine.api.datastore.Query q = getQuery(query);
+
+        FetchOptions options = FetchOptions.Builder.withDefaults();
+
+        try {
+            if (Query.PREVIOUS.equals(pageDirection)) {
+                final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getPreviousCursor());
+                options.startCursor(fromWebSafeString);
+            } else if (Query.NEXT.equals(pageDirection)) {
+                final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getNextCursor());
+                options.startCursor(fromWebSafeString);
+            }
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+
+        if (query.getOffset() > 0) {
+            options.offset(query.getOffset());
+        }
+
+        final int limit = query.getLimit();
+        if (limit > 0) {
+            options.limit(limit + 1);
+        }
+
+        final ResultListImpl<T> list = getEntities(q, options, limit);
+
+        if (!list.isEmpty()) {
+            boolean hasMoreRecords = false;
+            if (limit > 0) {
+                hasMoreRecords = list.size() > limit;
+            }
+
+            if (hasMoreRecords) {
+                list.remove(list.size() - 1);
+            }
+
+            if (Query.PREVIOUS.equals(pageDirection)) {
+                Collections.reverse(list);
+                final Cursor end = list.getStartCursor();
+                final Cursor start = list.getEndCursor();
+                list.setStartCursor(start);
+                list.setEndCursor(end);
+
+                if (!hasMoreRecords) {
+                    list.setStartCursor(null);
+                }
+            } else if (Query.NEXT.equals(pageDirection)) {
+                if (!hasMoreRecords) {
+                    list.setEndCursor(null);
+                }
+            } else {
+                if (containsEqualOrIn(q)) {
+                    list.setStartCursor(null);
+                    list.setEndCursor(null);
+                } else {
+                    if (!hasMoreRecords) {
+                        list.setEndCursor(null);
+                    }
+
+                    options = cloneOptionsWithoutCursors(options);
+
+                    final boolean empty = testBoundary(q, options);
+                    if (empty) {
+                        list.setStartCursor(null);
+                    }
+                }
+            }
+        }
+
+        return list;
+    }
+
+    protected boolean checkEqual(final T target, final T existing) throws Exception {
+        return isEqual(target, existing);
+    }
+
     private Entity getEntity(final Key key) throws EntityNotFoundException {
         final DatastoreService datastore = getDatastore();
         final Entity entity = datastore.get(key);
@@ -207,82 +389,6 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
     private String getKindName(final Class<?> clazz) {
         return com.maintainer.data.provider.Key.getKindName(clazz);
-    }
-
-    @Override
-    public List<T> getAll(final Class<?> kind) throws Exception {
-        final String kindName = getKindName(kind);
-
-        final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(kindName);
-        final FetchOptions options = FetchOptions.Builder.withDefaults();
-
-        final List<T> list = getEntities(q, options, 0);
-        return list;
-    }
-
-    @Override
-    public T post(final T target) throws Exception {
-        autocreate(target);
-
-        target.setCreated(new Date());
-
-        final Entity entity = toEntity(null, target);
-
-
-        final DatastoreService datastore = getDatastore();
-        final Key posted = datastore.put(entity);
-
-        if (posted.getId() == 0) {
-            target.setId(posted.getName());
-        } else {
-            target.setId(posted.getId());
-        }
-
-        final com.maintainer.data.provider.Key cacheKey = createNobodyelsesKey(posted);
-        invalidateCached(cacheKey);
-
-        return target;
-    }
-
-
-    @Override
-    public T put(T target) throws Exception {
-        final com.maintainer.data.provider.Key key = getKey(target);
-        final T existing = get(key);
-
-        if (checkEqual(target, existing)) {
-            return target;
-        } else {
-            log.debug(key + " changed.");
-        }
-
-        autocreate(target);
-
-        if (target.getId() == null) {
-            target = post(target);
-            return target;
-        }
-
-        target.setModified(new Date());
-
-        Entity entity = getEntity(createDatastoreKey(key));
-        entity = toEntity(entity, target);
-
-        final DatastoreService datastore = getDatastore();
-        final Key posted = datastore.put(entity);
-
-        if (posted.getId() == 0) {
-            target.setId(posted.getName());
-        } else {
-            target.setId(posted.getId());
-        }
-
-        invalidateCached(key);
-        return target;
-    }
-
-    protected boolean checkEqual(final T target, final T existing) throws Exception {
-        return isEqual(target, existing);
     }
 
     private Entity newEntity(final EntityBase parent, final String kind) {
@@ -400,16 +506,6 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return fields;
     }
 
-    @Override
-    public com.maintainer.data.provider.Key delete(final com.maintainer.data.provider.Key key) throws Exception {
-        autodelete(key);
-
-        final DatastoreService datastore = getDatastore();
-        datastore.delete(createDatastoreKey(key));
-        invalidateCached(key);
-        return key;
-    }
-
     private void addFilter(final com.google.appengine.api.datastore.Query q, final String propertyName, final FilterOperator operator, Object value) {
         if (EntityImpl.class.isAssignableFrom(value.getClass())) {
             final EntityImpl entity = (EntityImpl) value;
@@ -509,102 +605,6 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         }
 
         return key;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public List<T> find(final Query query) throws Exception {
-        final DatastoreService datastore = getDatastore();
-
-        if (query.getKey() != null) {
-            try {
-                final Entity entity = datastore.get(createDatastoreKey(query.getKey()));
-                final T fromEntity = fromEntity(query.getKind(), entity);
-                final ResultListImpl<T> list = new ResultListImpl<T>();
-                list.add(fromEntity);
-                putCache(fromEntity.getKey(), fromEntity);
-                return list;
-            } catch (final EntityNotFoundException e1) {
-                e1.printStackTrace();
-            }
-            return ResultListImpl.emptyList();
-        }
-
-        final String pageDirection = query.getPageDirection();
-
-        final com.google.appengine.api.datastore.Query q = getQuery(query);
-
-        FetchOptions options = FetchOptions.Builder.withDefaults();
-
-        try {
-            if (Query.PREVIOUS.equals(pageDirection)) {
-                final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getPreviousCursor());
-                options.startCursor(fromWebSafeString);
-            } else if (Query.NEXT.equals(pageDirection)) {
-                final Cursor fromWebSafeString = Cursor.fromWebSafeString(query.getNextCursor());
-                options.startCursor(fromWebSafeString);
-            }
-        } catch (final Exception e) {
-            e.printStackTrace();
-        }
-
-        if (query.getOffset() > 0) {
-            options.offset(query.getOffset());
-        }
-
-        final int limit = query.getLimit();
-        if (limit > 0) {
-            options.limit(limit + 1);
-        }
-
-        final ResultListImpl<T> list = getEntities(q, options, limit);
-
-        if (!list.isEmpty()) {
-            boolean hasMoreRecords = false;
-            if (limit > 0) {
-                hasMoreRecords = list.size() > limit;
-            }
-
-            if (hasMoreRecords) {
-                list.remove(list.size() - 1);
-            }
-
-            if (Query.PREVIOUS.equals(pageDirection)) {
-                Collections.reverse(list);
-                final Cursor end = list.getStartCursor();
-                final Cursor start = list.getEndCursor();
-                list.setStartCursor(start);
-                list.setEndCursor(end);
-
-                if (!hasMoreRecords) {
-                    list.setStartCursor(null);
-                }
-            } else if (Query.NEXT.equals(pageDirection)) {
-                if (!hasMoreRecords) {
-                    list.setEndCursor(null);
-                }
-            } else {
-                if (containsEqualOrIn(q)) {
-                    list.setStartCursor(null);
-                    list.setEndCursor(null);
-                } else {
-                    if (!hasMoreRecords) {
-                        list.setEndCursor(null);
-                    }
-
-                    final Cursor start = list.getStartCursor();
-                    options = cloneOptionsWithoutCursors(options);
-                    //options.startCursor(start);
-
-                    final boolean empty = testBoundary(q, options);
-                    if (empty) {
-                        list.setStartCursor(null);
-                    }
-                }
-            }
-        }
-
-        return list;
     }
 
     private boolean containsEqualOrIn(final com.google.appengine.api.datastore.Query q) {

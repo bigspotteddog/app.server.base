@@ -2,6 +2,8 @@ package com.maintainer.data.controller;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,6 +17,7 @@ import org.restlet.Request;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Method;
+import org.restlet.data.Reference;
 import org.restlet.data.Status;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
@@ -36,10 +39,17 @@ import com.maintainer.data.provider.Key;
 import com.maintainer.data.provider.Query;
 import com.maintainer.data.provider.datastore.ResultList;
 import com.maintainer.data.router.WebSwitch;
+import com.maintainer.util.Base64;
 import com.maintainer.util.Utils;
 
 @SuppressWarnings("unused")
 public abstract class ResourcesController<T> extends ServerResource {
+    private static final String RESOURCE_TEMPLATE = "/{{resource}}([/\\?].+)?";
+
+    private static final String RESOURCE = "resource";
+
+    private static final String UTF_8 = "UTF-8";
+
     private static final String MINUS = "-";
 
     private static final Logger log = Logger.getLogger(ResourcesController.class.getName());
@@ -56,20 +66,107 @@ public abstract class ResourcesController<T> extends ServerResource {
     private boolean checkFields = true;
     private boolean ignoreInvalidFields = false;
 
-    protected abstract DataProvider<T> getDataProvider() throws DefaultDataProviderInitializationException;
-    protected abstract Class<?> getControllerClass(String resource);
-    protected abstract String getResourceMapping(Class<?> clazz);
-
     public Representation getHead() throws Exception {
         final String resource = getResource();
 
         final Map<String, Object> item = new HashMap<String, Object>();
-        item.put("resource", resource);
+        item.put(RESOURCE, resource);
 
         final String json = getGson().toJson(item, Utils.getItemType());
 
         return getJsonResponse(json);
     }
+
+    @Get("json")
+    public Representation getItems() throws Exception {
+        final Request request = getRequest();
+        final Method method = request.getMethod();
+        if (Method.HEAD.equals(method)) {
+            return getHead();
+        }
+
+        return getItems(request);
+    }
+
+    @Post("json")
+    public Representation postItem(final Representation rep) throws Exception {
+        final Class<?> kind = getType();
+        checkReadOnly(kind);
+
+        final String incomingJson = rep.getText();
+
+        final DataProvider<T> service = getDataProvider();
+
+        T obj = service.fromJson(kind, incomingJson);
+
+        final EntityImpl obj2 = (EntityImpl) obj;
+        if (obj2.getId() != null) {
+            throw new Exception(ID_PROVIDED);
+        } else {
+            convertIdToLong(obj2);
+        }
+
+        prePost(obj);
+        obj = service.post(obj);
+
+        final String json = getGson().toJson(obj);
+
+        return getJsonResponse(json);
+    }
+
+    @Put("json")
+    public Representation putItem(final Representation rep) throws Exception {
+        final Class<?> kind = getType();
+        checkReadOnly(kind);
+
+        final String incomingJson = rep.getText();
+
+        final DataProvider<T> service = getDataProvider();
+        final T obj = service.fromJson(getType(), incomingJson);
+
+        final EntityImpl obj2 = (EntityImpl) obj;
+        if (obj2.getId() == null) {
+            throw new Exception(NO_ID_PROVIDED);
+        } else {
+            convertIdToLong(obj2);
+        }
+
+        prePut(obj);
+        final T merged = service.merge(obj);
+
+        final String json = getGson().toJson(merged);
+
+        return getJsonResponse(json);
+    }
+
+    @Delete("json")
+    public Representation deleteItem() throws Exception {
+        final Class<?> kind = getType();
+        checkReadOnly(kind);
+
+        final Object id = getId();
+
+        if (id == null) {
+            throw new Exception(NO_ID_PROVIDED);
+        }
+
+        final DataProvider<T> service = getDataProvider();
+
+        Key key = new Key(kind, id);
+        final T obj = service.get(key);
+        preDelete(obj);
+
+        key = service.delete(key);
+
+        final Representation response = new StringRepresentation("{\"" + ID + "\":\"" + key.getId() + "\"}");
+        response.setMediaType(MediaType.APPLICATION_JSON);
+        setStatus(Status.SUCCESS_OK);
+        return response;
+    }
+
+    protected abstract DataProvider<T> getDataProvider() throws DefaultDataProviderInitializationException;
+    protected abstract Class<?> getControllerClass(String resource);
+    protected abstract String getResourceMapping(Class<?> clazz);
 
     protected void setMaxRows(final int maxRows) {
         this.maxRows = maxRows;
@@ -151,7 +248,12 @@ public abstract class ResourcesController<T> extends ServerResource {
 
                 final boolean isId = resource.getProperty() != null && i == resources.size() - 1;
                 if (isId) {
-                    query.filter(ID, resource.getProperty());
+                    if (Utils.isNumeric(resource.getProperty())) {
+                        query.filter(ID, resource.getProperty());
+                    } else {
+                        final String string = new String(Base64.decodeFast(URLDecoder.decode(resource.getProperty(), UTF_8)));
+                        query.setKey(Key.fromString(string));
+                    }
                 }
 
                 if (isLastResource(resources, i)) {
@@ -228,7 +330,7 @@ public abstract class ResourcesController<T> extends ServerResource {
     protected void postGet(final Collection<T> collection) {}
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public Object autocreate(final Object target) throws Exception {
+    private Object autocreate(final Object target) throws Exception {
         if (target == null) {
             return null;
         }
@@ -423,17 +525,6 @@ public abstract class ResourcesController<T> extends ServerResource {
         return clazz;
     }
 
-    @Get("json")
-    public Representation getItems() throws Exception {
-        final Request request = getRequest();
-        final Method method = request.getMethod();
-        if (Method.HEAD.equals(method)) {
-            return getHead();
-        }
-
-        return getItems(request);
-    }
-
     @SuppressWarnings("unchecked")
     protected Representation getItems(final Request request) throws Exception {
         Representation response = null;
@@ -487,32 +578,6 @@ public abstract class ResourcesController<T> extends ServerResource {
         return value;
     }
 
-    @Post("json")
-    public Representation postItem(final Representation rep) throws Exception {
-        final Class<?> kind = getType();
-        checkReadOnly(kind);
-
-        final String incomingJson = rep.getText();
-
-        final DataProvider<T> service = getDataProvider();
-
-        T obj = service.fromJson(kind, incomingJson);
-
-        final EntityImpl obj2 = (EntityImpl) obj;
-        if (obj2.getId() != null) {
-            throw new Exception(ID_PROVIDED);
-        } else {
-            convertIdToLong(obj2);
-        }
-
-        prePost(obj);
-        obj = service.post(obj);
-
-        final String json = getGson().toJson(obj);
-
-        return getJsonResponse(json);
-    }
-
     private void convertIdToLong(final EntityImpl obj) {
         if (obj.getId() != null && !String.class.isAssignableFrom(obj.getId().getClass())) {
             obj.setId(new BigDecimal(obj.getId().toString()).longValue());
@@ -538,31 +603,6 @@ public abstract class ResourcesController<T> extends ServerResource {
     protected void prePost(final T obj) throws Exception {
     }
 
-    @Put("json")
-    public Representation putItem(final Representation rep) throws Exception {
-        final Class<?> kind = getType();
-        checkReadOnly(kind);
-
-        final String incomingJson = rep.getText();
-
-        final DataProvider<T> service = getDataProvider();
-        final T obj = service.fromJson(getType(), incomingJson);
-
-        final EntityImpl obj2 = (EntityImpl) obj;
-        if (obj2.getId() == null) {
-            throw new Exception(NO_ID_PROVIDED);
-        } else {
-            convertIdToLong(obj2);
-        }
-
-        prePut(obj);
-        final T merged = service.merge(obj);
-
-        final String json = getGson().toJson(merged);
-
-        return getJsonResponse(json);
-    }
-
     protected Representation getJsonResponse(final String json) {
         final Representation response = new StringRepresentation(json);
         response.setMediaType(MediaType.APPLICATION_JSON);
@@ -573,43 +613,10 @@ public abstract class ResourcesController<T> extends ServerResource {
     protected void prePut(final T obj) throws Exception {
     }
 
-    @Delete("json")
-    public Representation deleteItem() throws Exception {
-        final Class<?> kind = getType();
-        checkReadOnly(kind);
-
-        final Object id = getId();
-
-        if (id == null) {
-            throw new Exception(NO_ID_PROVIDED);
-        }
-
-        final DataProvider<T> service = getDataProvider();
-
-        Key key = new Key(kind, id);
-        final T obj = service.get(key);
-        preDelete(obj);
-
-        key = service.delete(key);
-
-        final Representation response = new StringRepresentation("{\"" + ID + "\":\"" + key.getId() + "\"}");
-        response.setMediaType(MediaType.APPLICATION_JSON);
-        setStatus(Status.SUCCESS_OK);
-        return response;
-    }
-
     protected void preDelete(final T obj) throws Exception {
     }
 
-    protected String getResource() {
-        final ArrayList<Resource> resources = Utils.getResources(getRequest());
-        if (resources.size() > 0) {
-            return resources.get(0).getResource();
-        }
-        return null;
-    }
-
-    protected Object getId() {
+    private Object getId() {
         final ArrayList<Resource> resources = Utils.getResources(getRequest());
         if (resources.size() < 1) {
             return ID_NOT_PROVIDED;
@@ -624,15 +631,7 @@ public abstract class ResourcesController<T> extends ServerResource {
         return resource.getProperty();
     }
 
-    protected String getResource2() {
-        final ArrayList<Resource> resources = Utils.getResources(getRequest());
-        if (resources.size() > 1) {
-            return resources.get(1).getResource();
-        }
-        return null;
-    }
-
-    protected long getId2() {
+    private long getId2() {
         final ArrayList<Resource> resources = Utils.getResources(getRequest());
         if (resources.size() < 2) {
             return ID_NOT_PROVIDED;
@@ -645,5 +644,32 @@ public abstract class ResourcesController<T> extends ServerResource {
         }
 
         return resource.getId();
+    }
+
+    protected String getResource() {
+        String root = getRequest().getRootRef().toString();
+        root = URI.create(root).getPath();
+
+        final Reference resourceRef = getRequest().getResourceRef();
+        String ref = resourceRef.toString();
+        ref = URI.create(ref).getPath();
+
+        final StringBuilder buf = new StringBuilder();
+        if (ref.startsWith(root)) {
+            buf.append(root);
+        }
+        buf.append(RESOURCE_TEMPLATE);
+        final String template = buf.toString();
+
+        final Map<String, String> parts = Utils.getParts(ref, template);
+        return parts.get(RESOURCE);
+    }
+
+    private String getResource2() {
+        final ArrayList<Resource> resources = Utils.getResources(getRequest());
+        if (resources.size() > 1) {
+            return resources.get(1).getResource();
+        }
+        return null;
     }
 }
