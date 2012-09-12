@@ -129,7 +129,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         final com.maintainer.data.provider.Key nobodyelsesKey = createNobodyelsesKey(posted);
         target.setKey(nobodyelsesKey);
 
-        target.setId(nobodyelsesKey.toString());
+        target.setId(Utils.getEncodedKeyString(nobodyelsesKey));
 
         invalidateCached(nobodyelsesKey);
 
@@ -343,7 +343,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
             final Key key = entity.getKey();
             final com.maintainer.data.provider.Key nobodyelsesKey = createNobodyelsesKey(key);
-            obj.setId(nobodyelsesKey.toString());
+            obj.setId(Utils.getEncodedKeyString(nobodyelsesKey));
 
             if (key.getParent() != null) {
                 final Autocreate autocreate = obj.getClass().getAnnotation(Autocreate.class);

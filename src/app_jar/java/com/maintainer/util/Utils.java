@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -13,6 +14,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
@@ -67,6 +69,7 @@ import com.maintainer.data.provider.Key;
 import com.maintainer.data.router.WebSwitch;
 
 public class Utils {
+    private static final String UTF_8 = "UTF-8";
     private static final String REMAINING = "remaining";
     private static final String TEMPLATE_PLACEHOLDER = "([^/\\?]+)";
     private static final String TEMPLATE_WORD = "\\{\\{(\\w+)\\}\\}";
@@ -782,5 +785,25 @@ public class Utils {
         }
 
         return map;
+    }
+
+    public static boolean isEncodeKeys() {
+        return false;
+    }
+
+    public static String getEncodedKeyString(final com.maintainer.data.provider.Key nobodyelsesKey) {
+        String string = nobodyelsesKey.toString();
+        if (Utils.isEncodeKeys()) {
+            string = Base64.encodeToString(string.getBytes(), false);
+        }
+        return string;
+    }
+
+    public static String fromEncodedKeyString(String string) throws UnsupportedEncodingException {
+        string = URLDecoder.decode(string, UTF_8);
+        if (Utils.isEncodeKeys()) {
+            string = new String(Base64.decodeFast(string));
+        }
+        return string;
     }
 }
