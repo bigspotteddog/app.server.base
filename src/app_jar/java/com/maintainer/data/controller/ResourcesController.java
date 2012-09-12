@@ -3,7 +3,6 @@ package com.maintainer.data.controller;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.net.URI;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -186,7 +185,7 @@ public abstract class ResourcesController<T> extends ServerResource {
                     if (Utils.isNumeric(resource.getProperty())) {
                         query.filter(ID, resource.getProperty());
                     } else {
-                        final String string = new String(Base64.decodeFast(URLDecoder.decode(resource.getProperty(), UTF_8)));
+                        final String string = Utils.fromEncodedKeyString(resource.getProperty());
                         query.setKey(Key.fromString(string));
                     }
                 }
@@ -628,22 +627,13 @@ public abstract class ResourcesController<T> extends ServerResource {
             return ID_NOT_PROVIDED;
         }
 
-        return resource.getProperty();
-    }
-
-    private long getId2() {
-        final ArrayList<Resource> resources = Utils.getResources(getRequest());
-        if (resources.size() < 2) {
-            return ID_NOT_PROVIDED;
+        String string = resource.getProperty();
+        if (Utils.isEncodeKeys()) {
+            final byte[] bytes = Base64.decodeFast(string);
+            string = new String(bytes);
         }
 
-        final Resource resource = resources.get(1);
-        final boolean isId = resource.isId();
-        if (!isId) {
-            return ID_NOT_PROVIDED;
-        }
-
-        return resource.getId();
+        return string;
     }
 
     protected String getResource() {
@@ -669,13 +659,5 @@ public abstract class ResourcesController<T> extends ServerResource {
         String root = getRequest().getRootRef().toString();
         root = URI.create(root).getPath();
         return root;
-    }
-
-    private String getResource2() {
-        final ArrayList<Resource> resources = Utils.getResources(getRequest());
-        if (resources.size() > 1) {
-            return resources.get(1).getResource();
-        }
-        return null;
     }
 }
