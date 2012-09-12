@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.maintainer.util.Base64;
 import com.maintainer.util.Utils;
 
 public class Key implements Comparable<Key>, Serializable {
@@ -101,13 +102,14 @@ public class Key implements Comparable<Key>, Serializable {
         final String[] path = kindName.split("\\.");
         final String k = path[path.length - 1];
 
-        return buf
+        final String string = buf
             .append(k)
             .append('(')
             .append(id)
             .append(')')
             .toString();
 
+        return Base64.encodeToString(string.getBytes(), false);
     }
 
     @Override
@@ -127,7 +129,10 @@ public class Key implements Comparable<Key>, Serializable {
         return new Key(kind, id, parent);
     }
 
-    public static Key fromString(final String string) {
+    public static Key fromString(String string) {
+        final byte[] bytes = Base64.decodeFast(string);
+        string = new String(bytes);
+
         final Pattern p = Pattern.compile(KEY_PATTERN);
         final Matcher m = p.matcher(string);
 

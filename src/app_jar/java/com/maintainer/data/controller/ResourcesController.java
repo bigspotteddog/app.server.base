@@ -92,92 +92,27 @@ public abstract class ResourcesController<T> extends ServerResource {
         return getItems(request);
     }
 
-    @Post("json")
-    public Representation postItem(final Representation rep) throws Exception {
-        final Class<?> kind = getType();
-        checkReadOnly(kind);
-
-        final String incomingJson = rep.getText();
-
-        final DataProvider<T> service = getDataProvider();
-
-        T obj = service.fromJson(kind, incomingJson);
-
-        final EntityImpl obj2 = (EntityImpl) obj;
-        if (obj2.getId() != null) {
-            throw new Exception(ID_PROVIDED);
+    @SuppressWarnings("unchecked")
+    protected Representation getItems(final Request request) throws Exception {
+        Representation response = null;
+        String json = null;
+        try {
+            final Object obj = get(request);
+            if (List.class.isAssignableFrom(obj.getClass())) {
+                json = toJson((List<T>) obj);
+            } else {
+                json = toJson((T) obj);
+            }
+            response = new StringRepresentation(json);
+            response.setMediaType(MediaType.APPLICATION_JSON);
+            setStatus(Status.SUCCESS_OK);
+        } catch (final NotFoundException nf) {
+            setStatus(Status.CLIENT_ERROR_NOT_FOUND);
+        } catch (final InvalidResourceException nr) {
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
         }
 
-        prePost(obj);
-        obj = service.post(obj);
-
-        final String json = getGson().toJson(obj);
-
-        return getJsonResponse(json);
-    }
-
-    @Put("json")
-    public Representation putItem(final Representation rep) throws Exception {
-        final Class<?> kind = getType();
-        checkReadOnly(kind);
-
-        final String incomingJson = rep.getText();
-
-        final DataProvider<T> service = getDataProvider();
-        final T obj = service.fromJson(getType(), incomingJson);
-
-        final EntityImpl obj2 = (EntityImpl) obj;
-        if (obj2.getId() == null) {
-            throw new Exception(NO_ID_PROVIDED);
-        }
-
-        prePut(obj);
-        final T merged = service.merge(obj);
-
-        final String json = getGson().toJson(merged);
-
-        return getJsonResponse(json);
-    }
-
-    @Delete("json")
-    public Representation deleteItem() throws Exception {
-        final Class<?> kind = getType();
-        checkReadOnly(kind);
-
-        final Object id = getId();
-
-        if (id == null) {
-            throw new Exception(NO_ID_PROVIDED);
-        }
-
-        final DataProvider<T> service = getDataProvider();
-
-        Key key = Key.fromString((String) id);
-        final T obj = service.get(key);
-        preDelete(obj);
-
-        key = service.delete(key);
-
-        final Representation response = new StringRepresentation("{\"" + ID + "\":\"" + key.getId() + "\"}");
-        response.setMediaType(MediaType.APPLICATION_JSON);
-        setStatus(Status.SUCCESS_OK);
         return response;
-    }
-
-    protected abstract DataProvider<T> getDataProvider() throws DefaultDataProviderInitializationException;
-    protected abstract Class<?> getControllerClass(String resource);
-    protected abstract String getResourceMapping(Class<?> clazz);
-
-    protected void setMaxRows(final int maxRows) {
-        this.maxRows = maxRows;
-    }
-
-    protected void setCheckFields(final boolean checkFields) {
-        this.checkFields = checkFields;
-    }
-
-    protected void setIgnoreInvalidFields(final boolean ignoreInvalidFields) {
-        this.ignoreInvalidFields = ignoreInvalidFields;
     }
 
     @SuppressWarnings("unchecked")
@@ -323,6 +258,94 @@ public abstract class ResourcesController<T> extends ServerResource {
             postGet((T) obj);
         }
         return obj;
+    }
+
+    @Post("json")
+    public Representation postItem(final Representation rep) throws Exception {
+        final Class<?> kind = getType();
+        checkReadOnly(kind);
+
+        final String incomingJson = rep.getText();
+
+        final DataProvider<T> service = getDataProvider();
+
+        T obj = service.fromJson(kind, incomingJson);
+
+        final EntityImpl obj2 = (EntityImpl) obj;
+        if (obj2.getId() != null) {
+            throw new Exception(ID_PROVIDED);
+        }
+
+        prePost(obj);
+        obj = service.post(obj);
+
+        final String json = getGson().toJson(obj);
+
+        return getJsonResponse(json);
+    }
+
+    @Put("json")
+    public Representation putItem(final Representation rep) throws Exception {
+        final Class<?> kind = getType();
+        checkReadOnly(kind);
+
+        final String incomingJson = rep.getText();
+
+        final DataProvider<T> service = getDataProvider();
+        final T obj = service.fromJson(getType(), incomingJson);
+
+        final EntityImpl obj2 = (EntityImpl) obj;
+        if (obj2.getId() == null) {
+            throw new Exception(NO_ID_PROVIDED);
+        }
+
+        prePut(obj);
+        final T merged = service.merge(obj);
+
+        final String json = getGson().toJson(merged);
+
+        return getJsonResponse(json);
+    }
+
+    @Delete("json")
+    public Representation deleteItem() throws Exception {
+        final Class<?> kind = getType();
+        checkReadOnly(kind);
+
+        final Object id = getId();
+
+        if (id == null) {
+            throw new Exception(NO_ID_PROVIDED);
+        }
+
+        final DataProvider<T> service = getDataProvider();
+
+        Key key = Key.fromString((String) id);
+        final T obj = service.get(key);
+        preDelete(obj);
+
+        key = service.delete(key);
+
+        final Representation response = new StringRepresentation("{\"" + ID + "\":\"" + key.getId() + "\"}");
+        response.setMediaType(MediaType.APPLICATION_JSON);
+        setStatus(Status.SUCCESS_OK);
+        return response;
+    }
+
+    protected abstract DataProvider<T> getDataProvider() throws DefaultDataProviderInitializationException;
+    protected abstract Class<?> getControllerClass(String resource);
+    protected abstract String getResourceMapping(Class<?> clazz);
+
+    protected void setMaxRows(final int maxRows) {
+        this.maxRows = maxRows;
+    }
+
+    protected void setCheckFields(final boolean checkFields) {
+        this.checkFields = checkFields;
+    }
+
+    protected void setIgnoreInvalidFields(final boolean ignoreInvalidFields) {
+        this.ignoreInvalidFields = ignoreInvalidFields;
     }
 
     protected void postGet(final T entity) {}
@@ -523,29 +546,6 @@ public abstract class ResourcesController<T> extends ServerResource {
             throw new InvalidResourceException();
         }
         return clazz;
-    }
-
-    @SuppressWarnings("unchecked")
-    protected Representation getItems(final Request request) throws Exception {
-        Representation response = null;
-        String json = null;
-        try {
-            final Object obj = get(request);
-            if (List.class.isAssignableFrom(obj.getClass())) {
-                json = toJson((List<T>) obj);
-            } else {
-                json = toJson((T) obj);
-            }
-            response = new StringRepresentation(json);
-            response.setMediaType(MediaType.APPLICATION_JSON);
-            setStatus(Status.SUCCESS_OK);
-        } catch (final NotFoundException nf) {
-            setStatus(Status.CLIENT_ERROR_NOT_FOUND);
-        } catch (final InvalidResourceException nr) {
-            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-        }
-
-        return response;
     }
 
     protected String toJson(final List<T> list) {
