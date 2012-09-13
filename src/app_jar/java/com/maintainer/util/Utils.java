@@ -69,6 +69,7 @@ import com.maintainer.data.provider.Key;
 import com.maintainer.data.router.WebSwitch;
 
 public class Utils {
+    private static final String APPLICATION_ENCODE_KEYS = "application.encode.keys";
     private static final String UTF_8 = "UTF-8";
     private static final String REMAINING = "remaining";
     private static final String TEMPLATE_PLACEHOLDER = "([^/\\?]+)";
@@ -91,6 +92,7 @@ public class Utils {
     public static final String ORG_RESTLET_HTTP_HEADERS = "org.restlet.http.headers";
 
     private static String packageName;
+    private static Boolean isEncodeKeys = null;
 
     public static String encrypt(final String s) {
         final StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
@@ -793,7 +795,12 @@ public class Utils {
     }
 
     public static boolean isEncodeKeys() {
-        return true;
+        if (isEncodeKeys == null) {
+            final Properties properties = getApplicationServerProperties();
+            final Object b = properties.get(APPLICATION_ENCODE_KEYS);
+            isEncodeKeys = b != null && Boolean.valueOf((String) b);
+        }
+        return isEncodeKeys;
     }
 
     public static String getEncodedKeyString(final com.maintainer.data.provider.Key nobodyelsesKey) {
