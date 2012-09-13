@@ -362,7 +362,12 @@ public class Utils {
         final ArrayList<Resource> resources = new ArrayList<Resource>();
 
         Resource resource = null;
-        for (final String s : segments) {
+        for (String s : segments) {
+            try {
+                s = URLDecoder.decode(s, UTF_8);
+            } catch (final UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
             if (resource == null) {
                 resource = new Resource(s);
                 resources.add(resource);
