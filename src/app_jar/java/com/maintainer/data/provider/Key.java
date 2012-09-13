@@ -90,11 +90,17 @@ public class Key implements Comparable<Key>, Serializable {
 
     @Override
     public String toString() {
+        String string = asString();
+        string = Utils.getEncodedKeyString(string);
+        return string;
+    }
+
+    public String asString() {
         final StringBuilder buf = new StringBuilder();
 
         if (parent != null) {
             buf
-            .append(parent.toString())
+            .append(parent.asString())
             .append(':');
         }
 
@@ -107,7 +113,6 @@ public class Key implements Comparable<Key>, Serializable {
             .append(id)
             .append(')')
             .toString();
-
         return string;
     }
 
@@ -128,7 +133,9 @@ public class Key implements Comparable<Key>, Serializable {
         return new Key(kind, id, parent);
     }
 
-    public static Key fromString(final String string) {
+    public static Key fromString(String string) {
+        string = Utils.fromEncodedKeyString(string);
+
         final Pattern p = Pattern.compile(KEY_PATTERN);
         final Matcher m = p.matcher(string);
 

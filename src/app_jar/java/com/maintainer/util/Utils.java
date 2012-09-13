@@ -788,19 +788,28 @@ public class Utils {
     }
 
     public static boolean isEncodeKeys() {
-        return false;
+        return true;
     }
 
     public static String getEncodedKeyString(final com.maintainer.data.provider.Key nobodyelsesKey) {
         String string = nobodyelsesKey.toString();
+        string = getEncodedKeyString(string);
+        return string;
+    }
+
+    public static String getEncodedKeyString(String string) {
         if (Utils.isEncodeKeys()) {
             string = Base64.encodeToString(string.getBytes(), false);
         }
         return string;
     }
 
-    public static String fromEncodedKeyString(String string) throws UnsupportedEncodingException {
-        string = URLDecoder.decode(string, UTF_8);
+    public static String fromEncodedKeyString(String string) {
+        try {
+            string = URLDecoder.decode(string, UTF_8);
+        } catch (final UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         if (Utils.isEncodeKeys()) {
             string = new String(Base64.decodeFast(string));
         }
