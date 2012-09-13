@@ -38,7 +38,6 @@ import com.maintainer.data.provider.Key;
 import com.maintainer.data.provider.Query;
 import com.maintainer.data.provider.datastore.ResultList;
 import com.maintainer.data.router.WebSwitch;
-import com.maintainer.util.Base64;
 import com.maintainer.util.Utils;
 
 @SuppressWarnings("unused")
@@ -324,7 +323,7 @@ public abstract class ResourcesController<T> extends ServerResource {
 
         key = service.delete(key);
 
-        final Representation response = new StringRepresentation("{\"" + ID + "\":\"" + key.getId() + "\"}");
+        final Representation response = new StringRepresentation("{\"" + ID + "\":\"" + key.toString() + "\"}");
         response.setMediaType(MediaType.APPLICATION_JSON);
         setStatus(Status.SUCCESS_OK);
         return response;
@@ -620,11 +619,7 @@ public abstract class ResourcesController<T> extends ServerResource {
             return ID_NOT_PROVIDED;
         }
 
-        String string = resource.getProperty();
-        if (Utils.isEncodeKeys()) {
-            final byte[] bytes = Base64.decodeFast(string);
-            string = new String(bytes);
-        }
+        final String string = resource.getProperty();
 
         return string;
     }
