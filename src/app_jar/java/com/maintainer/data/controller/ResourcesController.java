@@ -183,7 +183,7 @@ public abstract class ResourcesController<T> extends ServerResource {
                     if (Utils.isNumeric(resource.getProperty())) {
                         query.filter(ID, resource.getProperty());
                     } else {
-                        final String string = Utils.fromEncodedKeyString(resource.getProperty());
+                        final String string = resource.getProperty();
                         query.setKey(Key.fromString(string));
                     }
                 }
