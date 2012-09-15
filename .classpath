@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src/app_jar/java"/>
-	<classpathentry kind="src" path="test/java/com"/>
+	<classpathentry kind="src" path="test/app_jar/java"/>
 	<classpathentry kind="lib" path="build/dist/app.server.base-1.0.0.UNSTABLE.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/antlr-2.7.7.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/appengine-api.jar"/>

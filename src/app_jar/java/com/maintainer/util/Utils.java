@@ -340,6 +340,11 @@ public class Utils {
      */
 
     public static ArrayList<Resource> getResources(final Request request) {
+        final String path = cleansPath(request);
+        return getResources(path);
+    }
+
+    private static String cleansPath(final Request request) {
         final Reference resourceRef = request.getResourceRef();
         String path = resourceRef.getPath();
         final Reference rootRef = request.getRootRef();
@@ -358,7 +363,10 @@ public class Utils {
         if (path.startsWith("/")) {
             path = path.substring(1);
         }
+        return path;
+    }
 
+    private static ArrayList<Resource> getResources(final String path) {
         final Iterable<String> segments = Splitter.on('/').split(path);
 
         final ArrayList<Resource> resources = new ArrayList<Resource>();
@@ -546,16 +554,14 @@ public class Utils {
         return classes;
     }
 
-    public static Properties getProperties(final File file) throws ExceptionInInitializerError {
+    public static Properties getProperties(final File file) {
         final Properties properties = new Properties();
         Reader reader = null;
         try {
             reader = new FileReader(file);
             properties.load(reader);
-        } catch (final IOException e) {
-            throw new ExceptionInInitializerError("Failed to load " + file.getAbsolutePath() + ": " + e);
         } catch (final Exception e) {
-            throw new ExceptionInInitializerError("Failed to decrypt " + file.getAbsolutePath() + ": " + e);
+            e.printStackTrace();
         } finally {
             if (reader != null) {
                 try {
@@ -796,9 +802,14 @@ public class Utils {
 
     public static boolean isEncodeKeys() {
         if (isEncodeKeys == null) {
-            final Properties properties = getApplicationServerProperties();
-            final Object b = properties.get(APPLICATION_ENCODE_KEYS);
-            isEncodeKeys = b != null && Boolean.valueOf((String) b);
+            try {
+                final Properties properties = getApplicationServerProperties();
+                final Object b = properties.get(APPLICATION_ENCODE_KEYS);
+                isEncodeKeys = b != null && Boolean.valueOf((String) b);
+            } catch (final Exception e) {
+                e.printStackTrace();
+                isEncodeKeys = false;
+            }
         }
         return isEncodeKeys;
     }

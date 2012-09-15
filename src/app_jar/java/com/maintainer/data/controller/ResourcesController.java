@@ -114,7 +114,7 @@ public abstract class ResourcesController<T> extends ServerResource {
 
     @SuppressWarnings("unchecked")
     protected Object get(final Request request) throws Exception {
-        final ArrayList<Resource> resources = Utils.getResources(request);
+        final ArrayList<Resource> resources = getResources(request);
 
         Object parent = null;
         Object obj = null;
@@ -144,7 +144,8 @@ public abstract class ResourcesController<T> extends ServerResource {
 
                 if (obj != null && !resource.isProperty()) {
                     if (Collection.class.isAssignableFrom(obj.getClass())) {
-                        if (!resource.isId()) {
+                        final boolean isId = resource.getProperty() != null;
+                        if (!isId) {
                             throw new InvalidResourceException("Identifier for a collection must be numeric.");
                         }
 
@@ -156,7 +157,9 @@ public abstract class ResourcesController<T> extends ServerResource {
                             if (EntityBase.class.isAssignableFrom(o.getClass())) {
                                 final EntityBase e = (EntityBase) o;
                                 final Object id = e.getId();
-                                if (id.equals(resource.getId())) {
+
+                                //TODO: This will break with encoded keys on!
+                                if (id.equals(resource.getProperty())) {
                                     obj = o;
                                     break;
                                 }
@@ -178,7 +181,7 @@ public abstract class ResourcesController<T> extends ServerResource {
                     query.filter(parentResource.getResource(), parentResource.getId());
                 }
 
-                final boolean isId = resource.getProperty() != null && i == resources.size() - 1;
+                final boolean isId = resource.getProperty() != null; // && i == resources.size() - 1;
                 if (isId) {
                     if (Utils.isNumeric(resource.getProperty())) {
                         query.filter(ID, resource.getProperty());
@@ -255,6 +258,10 @@ public abstract class ResourcesController<T> extends ServerResource {
             postGet((T) obj);
         }
         return obj;
+    }
+
+    protected ArrayList<Resource> getResources(final Request request) {
+        return Utils.getResources(request);
     }
 
     @Post("json")
@@ -537,7 +544,7 @@ public abstract class ResourcesController<T> extends ServerResource {
         return dataProvider;
     }
 
-    private Class<?> getResourceClass(final Resource resource) throws Exception {
+    protected Class<?> getResourceClass(final Resource resource) throws Exception {
         final Class<?> clazz = getControllerClass(resource.getResource());
         if (clazz == null) {
             throw new InvalidResourceException();
@@ -608,7 +615,8 @@ public abstract class ResourcesController<T> extends ServerResource {
     }
 
     private Object getId() {
-        final ArrayList<Resource> resources = Utils.getResources(getRequest());
+        final Request request = getRequest();
+        final ArrayList<Resource> resources = getResources(request);
         if (resources.size() < 1) {
             return ID_NOT_PROVIDED;
         }
