@@ -231,4 +231,10 @@ public class HibernateDataProvider<T extends EntityBase> extends AbstractDataPro
             super(propertyName, value, op, ignoreCase);
         }
     }
+
+    @Override
+    public List<T> getAll(final List<Key> keysNeeded) throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

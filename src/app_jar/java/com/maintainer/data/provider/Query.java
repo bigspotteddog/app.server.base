@@ -37,6 +37,7 @@ public class Query {
     private int offset;
     private int limit;
     private Key key;
+    private boolean isKeysOnly;
 
     private String previousCursor;
     private String nextCursor;
@@ -160,5 +161,13 @@ public class Query {
 
     public boolean isEmpty() {
         return filters.isEmpty();
+    }
+
+    public boolean isKeysOnly() {
+        return isKeysOnly;
+    }
+
+    public void setKeysOnly(final boolean isKeysOnly) {
+        this.isKeysOnly = isKeysOnly;
     }
 }

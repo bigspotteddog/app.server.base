@@ -397,4 +397,11 @@ public class MapDatastoreDataProvider extends AbstractDataProvider<Map<String, O
     private void autocreate2(final Map<String, Object> target) {
         // TODO Auto-generated method stub
     }
+
+    @Override
+    public List<Map<String, Object>> getAll(
+            final List<com.maintainer.data.provider.Key> keysNeeded) throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }
