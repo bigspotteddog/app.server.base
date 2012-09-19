@@ -282,6 +282,7 @@ public abstract class ResourcesController<T> extends ServerResource {
 
         prePost(obj);
         obj = service.post(obj);
+        postPost(obj);
 
         final String json = getGson().toJson(obj);
 
@@ -599,6 +600,9 @@ public abstract class ResourcesController<T> extends ServerResource {
     }
 
     protected void prePost(final T obj) throws Exception {
+    }
+
+    protected void postPost(final T obj) throws Exception {
     }
 
     protected Representation getJsonResponse(final String json) {
