@@ -223,6 +223,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             options.limit(limit + 1);
         }
 
+        if (query.isKeysOnly()) {
+            q.setKeysOnly();
+        }
+
         final ResultListImpl<T> list = getEntities(q, options, limit);
 
         if (!list.isEmpty()) {
@@ -714,9 +718,37 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return q2;
     }
 
+    @Override
+    public List<T> getAll(final List<com.maintainer.data.provider.Key> keysNeeded) throws Exception {
+        final List<T> list = new ArrayList<T>(keysNeeded.size());
+
+        final List<Key> keys = new ArrayList<Key>();
+        for (final com.maintainer.data.provider.Key key : keysNeeded) {
+            keys.add(createDatastoreKey(key));
+        }
+
+        final Map<com.maintainer.data.provider.Key, Object> needsToBeCachedMap = new LinkedHashMap<com.maintainer.data.provider.Key, Object>();
+        final Map<Key, Entity> map3 = datastore.get(keys);
+        for (final Entry<Key, Entity> e : map3.entrySet()) {
+            final Key key = e.getKey();
+            final Entity entity = e.getValue();
+
+            final T target = fromEntity(getClazz(key), entity);
+            list.add(target);
+            needsToBeCachedMap.put(target.getKey(), target);
+        }
+        putAllCache(needsToBeCachedMap);
+
+        return list;
+    }
+
     @SuppressWarnings("unchecked")
     private ResultListImpl<T> getEntities(final com.google.appengine.api.datastore.Query q, FetchOptions options, final int limit) throws Exception {
-        q.setKeysOnly();
+        final boolean isKeysOnly = q.isKeysOnly();
+
+        if (!isKeysOnly) {
+            q.setKeysOnly();
+        }
 
         final DatastoreService datastore = getDatastore();
         final PreparedQuery p = datastore.prepare(q);
@@ -761,6 +793,19 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                 e.printStackTrace();
                 break;
             }
+        }
+
+        if (isKeysOnly) {
+            final ResultListImpl<T> list = new ResultListImpl<T>(keysNeeded.size());
+            for (final com.maintainer.data.provider.Key key : keysNeeded) {
+                final EntityImpl keyedOnly = Utils.getKeyedOnly(key);
+                list.add((T) keyedOnly);
+            }
+            list.setStartCursor(start);
+            list.setEndCursor(end);
+            list.setRemovedCursors(removedCursors);
+
+            return list;
         }
 
         final Map<com.maintainer.data.provider.Key, Object> map = new LinkedHashMap<com.maintainer.data.provider.Key, Object>();
