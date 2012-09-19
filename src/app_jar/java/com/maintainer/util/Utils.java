@@ -65,10 +65,12 @@ import com.maintainer.data.controller.GenericController;
 import com.maintainer.data.controller.Resource;
 import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
+import com.maintainer.data.model.User;
 import com.maintainer.data.provider.Key;
 import com.maintainer.data.router.WebSwitch;
 
 public class Utils {
+    public static final String _USER_ = "_user_";
     private static final String APPLICATION_ENCODE_KEYS = "application.encode.keys";
     private static final String UTF_8 = "UTF-8";
     private static final String REMAINING = "remaining";
@@ -837,5 +839,9 @@ public class Utils {
             string = new String(Base64.decodeFast(string));
         }
         return string;
+    }
+
+    public static User getUser(final Request request) {
+        return (User) request.getAttributes().get(_USER_);
     }
 }

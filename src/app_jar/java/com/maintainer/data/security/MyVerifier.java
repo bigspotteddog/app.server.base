@@ -15,20 +15,22 @@ public class MyVerifier extends SecretVerifier {
     private WebSwitch router;
 
     @SuppressWarnings("unchecked")
-    public int verify(Request request, String identifier, char[] secret) {
+    public int verify(final Request request, final String identifier, final char[] secret) {
 
         try {
-            List<User> list = (List<User>) Utils.subrequest(router, "users?username=" + identifier, request);
+            final List<User> list = (List<User>) Utils.subrequest(router, "users?username=" + identifier, request);
+            final User user = list.isEmpty()?null:list.get(0);
 
-            if (list == null || list.isEmpty()) {
+            if (user == null) {
                 return RESULT_INVALID;
             }
 
-            User user = list.get(0);
+            request.getAttributes().put(Utils._USER_, user);
+
             if (Utils.validatePassword(new String(secret), user.getPassword())) {
                 return RESULT_VALID;
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
 
@@ -36,7 +38,7 @@ public class MyVerifier extends SecretVerifier {
     }
 
     @Override
-    public int verify(Request request, Response response) {
+    public int verify(final Request request, final Response response) {
         int result = RESULT_VALID;
 
         if (request.getChallengeResponse() == null) {
@@ -45,8 +47,8 @@ public class MyVerifier extends SecretVerifier {
             if (Utils.isInternalRequest(request)) {
                 result = RESULT_VALID;
             } else {
-                String identifier = getIdentifier(request, response);
-                char[] secret = getSecret(request, response);
+                final String identifier = getIdentifier(request, response);
+                final char[] secret = getSecret(request, response);
                 result = verify(request, identifier, secret);
 
                 if (result == RESULT_VALID) {
@@ -65,12 +67,12 @@ public class MyVerifier extends SecretVerifier {
     }
 
     @Override
-    public int verify(String identifier, char[] secret) {
+    public int verify(final String identifier, final char[] secret) {
         // will not be called
         return 0;
     }
 
-    public void setApplication(WebSwitch application) {
+    public void setApplication(final WebSwitch application) {
         this.router = application;
     }
 

@@ -57,16 +57,6 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         return existing;
     }
 
-    protected Key getKey(final EntityBase incoming) throws Exception {
-        final Object id = incoming.getId();
-
-        if (id == null) {
-            throw new Exception("no id specified");
-        }
-
-        return incoming.getKey();
-    }
-
     protected void merge(final T incoming, final T existing) throws Exception {
         mergeAny(incoming, existing);
     }
@@ -133,7 +123,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
         T existing = null;
         if (!target.isNew()) {
-                existing = get(getKey(target));
+                existing = get(target.getKey());
         }
 
         final Field[] fields = target.getClass().getDeclaredFields();
@@ -233,14 +223,24 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
         final Autocreate classAutocreate = getAutocreate(target);
 
-        final boolean readonly = fieldAutocreate.readonly() || (classAutocreate != null && classAutocreate.readonly());
+        boolean readonly = fieldAutocreate.readonly();
+        if (readonly) {
+            readonly = classAutocreate == null || classAutocreate.readonly();
+        }
 
         if (readonly) {
             return target;
         }
 
-        final boolean create = fieldAutocreate.create() || (classAutocreate != null && classAutocreate.create());
-        final boolean update = fieldAutocreate.update() || (classAutocreate != null && classAutocreate.update());
+        boolean create = fieldAutocreate.create();
+        if (create) {
+            create = classAutocreate == null || classAutocreate.create();
+        }
+
+        boolean update = fieldAutocreate.update();
+        if (update) {
+            update = classAutocreate == null || classAutocreate.update();
+        }
 
         if (target.isNew() && create) {
             final DataProvider<EntityBase> dataProvider = (DataProvider<EntityBase>) DataProviderFactory.instance().getDataProvider(target.getClass());
@@ -261,7 +261,17 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
         final Autocreate classAutocreate = getAutocreate(target);
 
-        if ((classAutocreate == null || (classAutocreate.delete() && !classAutocreate.readonly())) && fieldAutocreate.delete()) {
+        boolean readonly = fieldAutocreate.readonly();
+        if (readonly) {
+            readonly = classAutocreate == null || classAutocreate.readonly();
+        }
+
+        boolean delete = fieldAutocreate.delete();
+        if (delete) {
+            delete = classAutocreate == null || classAutocreate.delete();
+        }
+
+        if (!readonly && delete) {
             log.debug("deleting: " + target.getClass().getSimpleName());
             if (Collection.class.isAssignableFrom(target.getClass())) {
                 final List<Object> list = new ArrayList<Object>((Collection<Object>) target);

@@ -370,8 +370,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return obj;
     }
 
-    private String getEncodedKeyString(final com.maintainer.data.provider.Key nobodyelsesKey) {
-        //return Utils.getEncodedKeyString(nobodyelsesKey);
+    protected String getEncodedKeyString(final com.maintainer.data.provider.Key nobodyelsesKey) {
         return nobodyelsesKey.toString();
     }
 
