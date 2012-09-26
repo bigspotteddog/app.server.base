@@ -200,6 +200,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
 
         final com.google.appengine.api.datastore.Query q = getQuery(query);
 
+        if (query.getParent() != null) {
+            q.setAncestor(createDatastoreKey(query.getParent()));
+        }
+
         FetchOptions options = FetchOptions.Builder.withDefaults();
 
         try {
