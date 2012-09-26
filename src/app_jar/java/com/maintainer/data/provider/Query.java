@@ -36,6 +36,7 @@ public class Query {
     private String order;
     private int offset;
     private int limit;
+    private Key parent;
     private Key key;
     private boolean isKeysOnly;
 
@@ -108,6 +109,14 @@ public class Query {
 
     public String getKindName() {
         return getKind().getSimpleName();
+    }
+
+    public void setParent(final Key parent) {
+        this.parent = parent;
+    }
+
+    public Key getParent() {
+        return parent;
     }
 
     public void setKey(final Key key) {
