@@ -421,7 +421,8 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                 if (id != null) {
                     Key key = null;
                     key = createDatastoreKey(parent, kindName, id);
-                    target.setId(id);
+                    final com.maintainer.data.provider.Key nobodyelsesKey = new com.maintainer.data.provider.Key(clazz.getName(), id);
+                    target.setId(getEncodedKeyString(nobodyelsesKey));
                     entity = newEntity(key);
                 } else {
                     entity = newEntity(parent, kindName);
@@ -851,7 +852,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             final Key k = e.getKey();
             final com.maintainer.data.provider.Key key = createNobodyelsesKey(k);
             final T o = (T) map.get(key);
-            list.add(o);
+            if (o != null) {
+                o.setKey(key);
+                list.add(o);
+            }
         }
 
         list.setStartCursor(start);
