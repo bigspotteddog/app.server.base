@@ -516,6 +516,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             final com.maintainer.data.provider.Key k = (com.maintainer.data.provider.Key) value;
             value = createDatastoreKey(k);
         }
+
         q.addFilter(propertyName.trim(), operator, value);
     }
 
