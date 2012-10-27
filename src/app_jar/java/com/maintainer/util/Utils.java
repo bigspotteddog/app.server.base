@@ -346,7 +346,7 @@ public class Utils {
         return getResources(path);
     }
 
-    private static String cleansPath(final Request request) {
+    public static String cleansPath(final Request request) {
         final Reference resourceRef = request.getResourceRef();
         String path = resourceRef.getPath();
         final Reference rootRef = request.getRootRef();
@@ -368,7 +368,7 @@ public class Utils {
         return path;
     }
 
-    private static ArrayList<Resource> getResources(final String path) {
+    public static ArrayList<Resource> getResources(final String path) {
         final Iterable<String> segments = Splitter.on('/').split(path);
 
         final ArrayList<Resource> resources = new ArrayList<Resource>();

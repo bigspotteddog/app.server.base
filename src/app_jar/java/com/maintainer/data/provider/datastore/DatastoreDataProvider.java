@@ -290,7 +290,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
     }
 
     @SuppressWarnings("unchecked")
-    private T fromEntity(final Class<?> kind, final Entity entity) {
+    public T fromEntity(final Class<?> kind, final Entity entity) {
         T obj = null;
 
         try {

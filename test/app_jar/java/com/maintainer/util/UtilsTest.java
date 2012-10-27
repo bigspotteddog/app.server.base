@@ -10,16 +10,38 @@ import java.util.regex.Pattern;
 import junit.framework.TestCase;
 
 import org.junit.Test;
+import org.restlet.Request;
+import org.restlet.data.Method;
+import org.restlet.data.Reference;
 
 public class UtilsTest extends TestCase {
 
     @Test
     public void test() {
-        final String string = "/user?username=bink.lynch@gmail.com";
-        final String pattern = "{{resource}}\\?{{query}}";
+        String string = "/user?username=bink.lynch@gmail.com";
+        String pattern = "{{resource}}\\?{{query}}";
         final List<String> names = Arrays.asList("resource", "query");
-        final Map<String, String> parts = Utils.getParts(string, pattern, names);
+        Map<String, String> parts = Utils.getParts(string, pattern, names);
         assertEquals(2, parts.size());
+
+        string = "/tags/Watch?symbol=KO";
+        pattern = "{{resource}}/{{tag}}\\?{{query}}";
+        parts = Utils.getParts(string, pattern);
+        assertEquals(3, parts.size());
+    }
+
+    public void test1a() {
+        final Request request = new Request(Method.GET, "/data/tags/bob?name=test");
+        final Reference rootRef = new Reference("/data/");
+        request.setRootRef(rootRef);
+
+        final String path = Utils.cleansPath(request);
+        assertEquals("tags/bob", path);
+
+        final String[] split = path.split("/");
+        assertEquals(2, split.length);
+        assertEquals("tags", split[0]);
+        assertEquals("bob", split[1]);
     }
 
     public void test2() {

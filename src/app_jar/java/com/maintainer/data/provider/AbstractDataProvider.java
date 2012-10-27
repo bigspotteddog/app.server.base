@@ -41,7 +41,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
     @Override
     public T merge(final T incoming) throws Exception {
-        final Key key = ((EntityBase) incoming).getKey();
+        final Key key = getKey(incoming);
         final T existing = get(key);
 
         if (existing == null) {
@@ -55,6 +55,10 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         put(existing);
 
         return existing;
+    }
+
+    protected Key getKey(final T target) {
+        return ((EntityBase) target).getKey();
     }
 
     protected void merge(final T incoming, final T existing) throws Exception {
@@ -281,7 +285,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
             } else {
                 final Object id = ((EntityBase) target).getId();
                 if (id != null) {
-                    DataProviderFactory.instance().getDataProvider(target.getClass()).delete(((EntityBase) target).getKey());
+                    DataProviderFactory.instance().getDataProvider(target.getClass()).delete(getKey((T) target));
                 }
             }
         }
