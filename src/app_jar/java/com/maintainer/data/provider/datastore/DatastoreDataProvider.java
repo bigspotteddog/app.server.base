@@ -27,7 +27,6 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
@@ -46,33 +45,17 @@ import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
 import com.maintainer.data.model.NotIndexed;
 import com.maintainer.data.model.NotStored;
-import com.maintainer.data.provider.AbstractDataProvider;
 import com.maintainer.data.provider.Filter;
 import com.maintainer.data.provider.Query;
 import com.maintainer.util.Utils;
 
-public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataProvider<T> {
+public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatastoreDataProvider<T> {
     private static final Logger log = Logger.getLogger(DatastoreDataProvider.class.getName());
     private static final Cache<String, Object> cache = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.HOURS).build();
     private static final AsyncMemcacheService memcache = MemcacheServiceFactory.getAsyncMemcacheService();
 
-    private static final Map<String, FilterOperator> ops = new HashMap<String, FilterOperator>();
     private boolean local;
     private DatastoreService datastore;
-
-    public DatastoreDataProvider() {
-        ops.put("ge", FilterOperator.GREATER_THAN_OR_EQUAL);
-        ops.put("gt", FilterOperator.GREATER_THAN);
-        ops.put("le", FilterOperator.LESS_THAN_OR_EQUAL);
-        ops.put("lt", FilterOperator.LESS_THAN);
-        ops.put("eq", FilterOperator.EQUAL);
-        ops.put(">=", FilterOperator.GREATER_THAN_OR_EQUAL);
-        ops.put(">", FilterOperator.GREATER_THAN);
-        ops.put("<=", FilterOperator.LESS_THAN_OR_EQUAL);
-        ops.put("<", FilterOperator.LESS_THAN);
-        ops.put("=", FilterOperator.EQUAL);
-        ops.put("in", FilterOperator.IN);
-    }
 
     @Override
     public Object getId(final Object object) {
@@ -378,10 +361,6 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         return obj;
     }
 
-    protected String getEncodedKeyString(final com.maintainer.data.provider.Key nobodyelsesKey) {
-        return nobodyelsesKey.toString();
-    }
-
     private DatastoreService getDatastore() {
         if (datastore == null) {
             datastore = DatastoreServiceFactory.getDatastoreService();
@@ -521,80 +500,6 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         q.addFilter(propertyName.trim(), operator, value);
     }
 
-    private com.maintainer.data.provider.Key createNobodyelsesKey(final Key k) throws ClassNotFoundException {
-        final Class<?> class1 = getClazz(k);
-
-        Object id = null;
-        if (k.getId() == 0) {
-            id = k.getName();
-        } else {
-            id = k.getId();
-        }
-
-        final com.maintainer.data.provider.Key key = com.maintainer.data.provider.Key.create(class1, id);
-
-        if (k.getParent() != null) {
-            key.setParent(createNobodyelsesKey(k.getParent()));
-        }
-
-        return key;
-    }
-
-    private Class<?> getClazz(final Key k) throws ClassNotFoundException {
-        final String className = k.getKind();
-        final Class<?> class1 = Class.forName(className);
-        return class1;
-    }
-
-    private Key createDatastoreKey(final com.maintainer.data.provider.Key k) {
-        if (k.getParent() == null) {
-            return createDatastoreKey(k.getKindName(), k.getId());
-        } else {
-            return createDatastoreKey(k.getParent(), k.getKindName(), k.getId());
-        }
-    }
-
-    private Key createDatastoreKey(final String kind, final Object id) {
-        Key key = null;
-
-        if (Utils.isNumeric(id.toString())) {
-            key = KeyFactory.createKey(kind, new BigDecimal(id.toString()).longValue());
-        } else if (Long.class.isAssignableFrom(id.getClass())) {
-            key = KeyFactory.createKey(kind, (Long) id);
-        } else if (Double.class.isAssignableFrom(id.getClass())){
-            key = KeyFactory.createKey(kind, ((Double) id).longValue());
-        } else {
-            key = KeyFactory.createKey(kind, (String) id);
-        }
-
-        return key;
-    }
-
-    private Key createDatastoreKey(final EntityBase parent, final String kind, final Object id) {
-        if (parent == null) {
-            return createDatastoreKey(kind, id);
-        }
-        return createDatastoreKey(parent.getKey(), kind, id);
-    }
-
-    private Key createDatastoreKey(final com.maintainer.data.provider.Key parent, final String kind, final Object id) {
-        Key key = null;
-
-        final Key parentKey = createDatastoreKey(parent);
-
-        if (Utils.isNumeric(id.toString())) {
-            key = KeyFactory.createKey(parentKey, kind, new BigDecimal(id.toString()).longValue());
-        } else if (Long.class.isAssignableFrom(id.getClass())) {
-            key = KeyFactory.createKey(parentKey, kind, (Long) id);
-        } else if (Double.class.isAssignableFrom(id.getClass())){
-            key = KeyFactory.createKey(parentKey, kind, ((Double) id).longValue());
-        } else {
-            key = KeyFactory.createKey(parentKey, kind, (String) id);
-        }
-
-        return key;
-    }
-
     private boolean containsEqualOrIn(final com.google.appengine.api.datastore.Query q) {
         for (final FilterPredicate f : q.getFilterPredicates()) {
             final FilterOperator operator = f.getOperator();
@@ -609,27 +514,18 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
         final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(getKindName(query.getKind()));
 
         for (final Filter e : query.getFilters()) {
-            String key = e.getCondition();
+            final String condition = e.getCondition();
 
-            final String[] split = key.split("(\\s|:)");
-            key = split[0];
+            final String key = getFieldFromCondition(condition);
+            final String op = getOperatorFromCondition(condition);
 
-            FilterOperator op = null;
-            if (split.length > 1) {
-                final String o = split[1];
-                op = ops.get(o);
-            }
-
-            if (op == null) {
-                op = FilterOperator.EQUAL;
-            }
-
-            Object value = e.getValue();
+            final FilterOperator operator = getOperator(op);
 
             final Class<?> keyType = Utils.getKeyType(query.getKind(), key);
+            Object value = e.getValue();
             value = Utils.convert(value, keyType);
 
-            addFilter(q, key, op, value);
+            addFilter(q, key, operator, value);
         }
 
         final String pageDirection = query.getPageDirection();
@@ -661,6 +557,9 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
                     }
                 }
             }
+        } else if (hasInequalityFilter(query)) {
+            final String field = getInequalityField(query);
+            q.addSort(field);
         }
 
         if (Query.PREVIOUS.equals(pageDirection)) {
@@ -669,6 +568,33 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDataPro
             q.addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.ASCENDING);
         }
         return q;
+    }
+
+    private String getInequalityField(final Query query) {
+        for (final Filter f : query.getFilters()) {
+            final String condition = f.getCondition();
+
+            final String op = this.getOperatorFromCondition(condition);
+            final boolean b = this.isInequalityOperator(op);
+            if (b) {
+                return this.getFieldFromCondition(condition);
+            }
+        }
+        return null;
+    }
+
+    private boolean hasInequalityFilter(final Query query) {
+        for (final Filter f : query.getFilters()) {
+            final String condition = f.getCondition();
+
+            final String op = this.getOperatorFromCondition(condition);
+            final boolean b = this.isInequalityOperator(op);
+            if (b) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private boolean testBoundary(com.google.appengine.api.datastore.Query q, final FetchOptions options) throws Exception {

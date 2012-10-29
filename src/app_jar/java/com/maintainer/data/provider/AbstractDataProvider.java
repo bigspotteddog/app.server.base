@@ -127,7 +127,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
         T existing = null;
         if (!target.isNew()) {
-                existing = get(target.getKey());
+            existing = get(target.getKey());
         }
 
         final Field[] fields = target.getClass().getDeclaredFields();
