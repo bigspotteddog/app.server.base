@@ -96,9 +96,9 @@ public abstract class ResourcesController<T> extends ServerResource {
         try {
             final Object obj = get(request);
             if (List.class.isAssignableFrom(obj.getClass())) {
-                json = toJson((List<T>) obj);
+                json = toJson((List) obj);
             } else {
-                json = toJson((T) obj);
+                json = toJson(obj);
             }
             response = new StringRepresentation(json);
             response.setMediaType(MediaType.APPLICATION_JSON);
@@ -553,11 +553,11 @@ public abstract class ResourcesController<T> extends ServerResource {
         return clazz;
     }
 
-    protected String toJson(final List<T> list) {
+    protected String toJson(final List list) {
         return getGson().toJson(list);
     }
 
-    protected String toJson(final T entity) {
+    protected String toJson(final Object entity) {
         return getGson().toJson(entity);
     }
 
