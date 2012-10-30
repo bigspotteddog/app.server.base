@@ -84,7 +84,7 @@ public class EntityImpl implements EntityBase {
 
     @Override
     public Key getKey() {
-        if (key == null) {
+        if (key == null && id != null) {
             key = Key.fromString((String) id);
         }
         return key;

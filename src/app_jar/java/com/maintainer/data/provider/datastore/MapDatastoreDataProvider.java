@@ -2,114 +2,35 @@ package com.maintainer.data.provider.datastore;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
-import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.EntityNotFoundException;
-import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.PreparedQuery;
-import com.google.appengine.api.datastore.Query.FilterOperator;
-import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.datastore.Text;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.maintainer.data.model.EntityBase;
-import com.maintainer.data.model.EntityImpl;
-import com.maintainer.data.provider.Filter;
-import com.maintainer.data.provider.Query;
-import com.maintainer.util.Utils;
+import com.maintainer.data.model.MapEntityImpl;
 
-public class MapDatastoreDataProvider extends AbstractDatastoreDataProvider<Map<String, Object>> {
-    private static final Logger log = Logger.getLogger(DatastoreDataProvider.class.getName());
-    private static final Cache<com.maintainer.data.provider.Key, Object> cache = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.SECONDS).build();
-
-    private static final Map<String, FilterOperator> ops = new HashMap<String, FilterOperator>();
-
-    static {
-        ops.put("ge", FilterOperator.GREATER_THAN_OR_EQUAL);
-        ops.put("gt", FilterOperator.GREATER_THAN);
-        ops.put("le", FilterOperator.LESS_THAN_OR_EQUAL);
-        ops.put("lt", FilterOperator.LESS_THAN);
-        ops.put("eq", FilterOperator.EQUAL);
-        ops.put(">=", FilterOperator.GREATER_THAN_OR_EQUAL);
-        ops.put(">", FilterOperator.GREATER_THAN);
-        ops.put("<=", FilterOperator.LESS_THAN_OR_EQUAL);
-        ops.put("<", FilterOperator.LESS_THAN);
-        ops.put("=", FilterOperator.EQUAL);
-        ops.put("in", FilterOperator.IN);
-    }
-
-    private String kindName;
-
-    public MapDatastoreDataProvider() {}
-
-    public MapDatastoreDataProvider(final String kindName) {
-        this.kindName = kindName;
-    }
-
-    public String getKindName() {
-        return kindName;
-    }
+public class MapDatastoreDataProvider<T extends MapEntityImpl> extends DatastoreDataProvider<T> {
+    private static final Logger log = Logger.getLogger(MapDatastoreDataProvider.class.getName());
 
     @Override
-    public Object getId(final Object object) {
-        if (object != null && Key.class.isAssignableFrom(object.getClass())) {
-            final Key key = (Key) object;
-            return key.getId();
-        }
-        return super.getId(object);
-    }
-
     @SuppressWarnings("unchecked")
-    @Override
-    public Map<String, Object> get(final com.maintainer.data.provider.Key key) {
-        final Map<String, Object> cached = (Map<String, Object>) cache.getIfPresent(key);
-        if (cached != null) {
-            log.debug(key + " returned from cache.");
-            return cached;
-        }
-
-        final Key k = createDatastoreKey(key.getKindName(), key.getId());
-        try {
-            final Entity entity = getEntity(k);
-            final Map<String, Object> fetched = fromEntity(key.getKind(), entity);
-            cache.put(key, fetched);
-            return fetched;
-        } catch (final EntityNotFoundException e) {
-            //ignore, it will just be null
-        }
-        return null;
-    }
-
-    private Entity getEntity(final Key key) throws EntityNotFoundException {
-        final DatastoreService datastore = getDatastore();
-        final Entity entity = datastore.get(key);
-        return entity;
-    }
-
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> fromEntity(final Class<?> kind, final Entity entity) {
-        Map<String, Object> obj = null;
+    public T fromEntity(final Class<?> kind, final Entity entity) {
+        final T obj = super.fromEntity(kind, entity);
 
         try {
-            obj = new LinkedHashMap<String, Object>();
-
             final Map<String, Object> properties = entity.getProperties();
             for (final Entry<String, Object> e : properties.entrySet()) {
-                final String key = e.getKey();
+                final String field = e.getKey();
+                if ("id".equals(field) || "created".equals(field) || "modified".equals(field)) {
+                    continue;
+                }
+
                 Object value = e.getValue();
 
                 if (value != null) {
@@ -136,14 +57,9 @@ public class MapDatastoreDataProvider extends AbstractDatastoreDataProvider<Map<
                         }
                         value = list;
                     }
-                    obj.put(key, value);
+                    obj.put(field, value);
                 }
             }
-
-            final com.maintainer.data.provider.Key nobodyelsesKey = createNobodyelsesKey(entity.getKey());
-            obj.put("key", nobodyelsesKey);
-            obj.put("id", nobodyelsesKey.asString());
-
         } catch (final Exception e) {
             throw new RuntimeException(e);
         }
@@ -151,104 +67,14 @@ public class MapDatastoreDataProvider extends AbstractDatastoreDataProvider<Map<
         return obj;
     }
 
-    private DatastoreService getDatastore() {
-        final DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        return datastore;
-    }
-
-    private String getKindName(final Class<?> clazz) {
-        return com.maintainer.data.provider.Key.getKindName(clazz);
-    }
-
     @Override
-    public List<Map<String, Object>> getAll(final Class<?> kind) throws Exception {
-        final String kindName = getKindName(kind);
+    protected Entity toEntity(Entity entity, final T target) throws Exception {
 
-        final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query();
-        final DatastoreService datastore = getDatastore();
-        final PreparedQuery p = datastore.prepare(q);
-        final List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-        final List<Entity> entities = p.asList(FetchOptions.Builder.withDefaults());
-        for (final Entity e : entities) {
-            final Map<String, Object> obj = fromEntity(kind, e);
-            list.add(obj);
-        }
-        return list;
-    }
-
-    @Override
-    public List<Map<String, Object>> getAll(final List<com.maintainer.data.provider.Key> keysNeeded) throws Exception {
-        final List<Key> keys = new ArrayList<Key>(keysNeeded.size());
-
-        for (final com.maintainer.data.provider.Key key : keysNeeded) {
-            keys.add(createDatastoreKey(key));
-        }
-
-        final List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-        final Map<Key, Entity> entities = getDatastore().get(keys);
-        for (final Entry<Key, Entity> entry : entities.entrySet()) {
-            final Entity e = entry.getValue();
-            final Map<String, Object> obj = fromEntity(null, e);
-            list.add(obj);
-        }
-
-        return list;
-    }
-
-    @Override
-    public Map<String, Object> post(final Map<String, Object> target) throws Exception {
-        autocreate2(target);
-
-        Entity entity = new Entity(getKindName(target.getClass()));
-        entity = toEntity(entity, target);
-
-        final DatastoreService datastore = getDatastore();
-        final Key posted = datastore.put(entity);
-        target.put("id", posted.getId());
-        return target;
-    }
-
-
-    @Override
-    public Map<String, Object> put(Map<String, Object> target) throws Exception {
-        final com.maintainer.data.provider.Key key = (com.maintainer.data.provider.Key) target.get("key");
-        final Map<String, Object> existing = get(key);
-
-        if (checkEqual(target, existing)) {
-            return target;
-        } else {
-            log.debug(key + " changed.");
-        }
-
-        autocreate2(target);
-
-        if (target.get("id") == null) {
-            target = post(target);
-            return target;
-        }
-
-        Entity entity = getEntity(createDatastoreKey(key));
-        entity = toEntity(entity, target);
-
-        final DatastoreService datastore = getDatastore();
-        final Key posted = datastore.put(entity);
-
-        final com.maintainer.data.provider.Key nobodyelsesKey = createNobodyelsesKey(posted);
-        target.put("key", nobodyelsesKey);
-        target.put("id", getEncodedKeyString(nobodyelsesKey));
-        return target;
-    }
-
-    protected boolean checkEqual(final Map<String, Object> target, final Map<String, Object> existing) throws Exception {
-        return isEqual(target, existing);
-    }
-
-    @SuppressWarnings("unchecked")
-    private Entity toEntity(final Entity entity, final Map<String, Object> target) throws Exception {
+        entity = super.toEntity(entity, target);
 
         for (final Entry<String, Object> entry : target.entrySet()) {
             final String field = entry.getKey();
-            if ("key".equals(field) || "id".equals(field)) {
+            if ("id".equals(field) || "created".equals(field) || "modified".equals(field)) {
                 continue;
             }
 
@@ -288,116 +114,5 @@ public class MapDatastoreDataProvider extends AbstractDatastoreDataProvider<Map<
         }
 
         return entity;
-    }
-
-    @Override
-    public com.maintainer.data.provider.Key delete(final com.maintainer.data.provider.Key key) throws Exception {
-        autodelete(key);
-
-        final DatastoreService datastore = getDatastore();
-        datastore.delete(createDatastoreKey(key.getKindName(), key.getId()));
-        return key;
-    }
-
-    private void addFilter(final com.google.appengine.api.datastore.Query q, final String propertyName, final FilterOperator operator, Object value) {
-        if (EntityImpl.class.isAssignableFrom(value.getClass())) {
-            final EntityImpl entity = (EntityImpl) value;
-            value = createDatastoreKey(entity.getKey());
-        } else if (com.maintainer.data.provider.Key.class.isAssignableFrom(value.getClass())) {
-            final com.maintainer.data.provider.Key k = (com.maintainer.data.provider.Key) value;
-            value = createDatastoreKey(k);
-        }
-        q.addFilter(propertyName.trim(), operator, value);
-    }
-
-    @Override
-    public List<Map<String, Object>> find(final Query query) {
-        final DatastoreService datastore = getDatastore();
-
-        if (query.getKey() != null) {
-            try {
-                final Entity entity = datastore.get(createDatastoreKey(query.getKey()));
-                final Map<String, Object> fromEntity = fromEntity(query.getKind(), entity);
-                final ArrayList<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-                list.add(fromEntity);
-                return list;
-            } catch (final EntityNotFoundException e1) {
-                e1.printStackTrace();
-            }
-            return Collections.emptyList();
-        }
-
-        final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(getKindName(query.getKind()));
-
-        for (final Filter e : query.getFilters()) {
-            String key = e.getCondition();
-
-            final String[] split = key.split("(\\s|:)");
-            key = split[0];
-
-            FilterOperator op = null;
-            if (split.length > 1) {
-                final String o = split[1];
-                op = ops.get(o);
-            }
-
-            if (op == null) {
-                op = FilterOperator.EQUAL;
-            }
-
-            Object value = e.getValue();
-
-            final Class<?> keyType = Utils.getKeyType(query.getKind(), key);
-            value = Utils.convert(value, keyType);
-
-            addFilter(q, key, op, value);
-        }
-
-        if (query.getOrder() != null) {
-            final String[] fields = StringUtils.split(query.getOrder(), ',');
-            for (String field : fields) {
-
-
-                if (field.startsWith("-")) {
-                    field = field.substring(1);
-                    if (!"id".equals(field.toLowerCase())) {
-                        q.addSort(field, SortDirection.DESCENDING);
-                    } else {
-                        q.addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.DESCENDING);
-                    }
-                } else {
-                    if (!"id".equals(field.toLowerCase())) {
-                        if (field.startsWith("+")) {
-                            field = field.substring(1);
-                        }
-                        q.addSort(field);
-                    }
-                }
-            }
-        }
-
-        final FetchOptions options = FetchOptions.Builder.withDefaults();
-        if (query.getOffset() > 0) {
-            options.offset(query.getOffset());
-        }
-
-        if (query.getLimit() > 0) {
-            options.limit(query.getLimit());
-        }
-
-        final PreparedQuery p = datastore.prepare(q);
-
-        final List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-        final List<Entity> entities = p.asList(options);
-        for (final Entity e : entities) {
-            final Map<String, Object> target = fromEntity(query.getKind(), e);
-            list.add(target);
-        }
-
-        return list;
-    }
-
-    private void autocreate2(final Map<String, Object> target) {
-        // TODO Auto-generated method stub
     }
 }

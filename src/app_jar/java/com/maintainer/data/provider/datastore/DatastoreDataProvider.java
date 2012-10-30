@@ -257,6 +257,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
                     }
                 }
             }
+
+            if (options.getStartCursor() == null) {
+                list.setStartCursor(null);
+            }
         }
 
         return list;
@@ -361,14 +365,14 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return obj;
     }
 
-    private DatastoreService getDatastore() {
+    protected DatastoreService getDatastore() {
         if (datastore == null) {
             datastore = DatastoreServiceFactory.getDatastoreService();
         }
         return datastore;
     }
 
-    private String getKindName(final Class<?> clazz) {
+    protected String getKindName(final Class<?> clazz) {
         return com.maintainer.data.provider.Key.getKindName(clazz);
     }
 
@@ -380,7 +384,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
     }
 
     @SuppressWarnings("unchecked")
-    private Entity toEntity(Entity entity, final T target) throws Exception {
+    protected Entity toEntity(Entity entity, final T target) throws Exception {
 
         if (entity == null) {
             final Class<? extends EntityBase> clazz = target.getClass();
