@@ -664,7 +664,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         }
 
         final Map<com.maintainer.data.provider.Key, Object> needsToBeCachedMap = new LinkedHashMap<com.maintainer.data.provider.Key, Object>();
-        final Map<Key, Entity> map3 = datastore.get(keys);
+        final Map<Key, Entity> map3 = getDatastore().get(keys);
         for (final Entry<Key, Entity> e : map3.entrySet()) {
             final Key key = e.getKey();
             final Entity entity = e.getValue();
