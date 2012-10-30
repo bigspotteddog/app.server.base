@@ -5,14 +5,14 @@ import com.maintainer.util.Utils;
 public class Resource {
     private static final Long ID_NOT_PROVIDED = Long.MIN_VALUE;
 
-    private final String resource;
+    private String resource;
     private String property;
 
-    public Resource(String resource) {
+    public Resource(final String resource) {
         this.resource = resource;
     }
 
-    public Resource(String resource, String property) {
+    public Resource(final String resource, final String property) {
         this.resource = resource;
         this.property = property;
     }
@@ -21,11 +21,15 @@ public class Resource {
         return resource;
     }
 
+    public void setResource(final String resource) {
+        this.resource = resource;
+    }
+
     public boolean isProperty() {
         return property == null;
     }
 
-    public void setProperty(String property) {
+    public void setProperty(final String property) {
         this.property = property;
     }
 
@@ -38,7 +42,9 @@ public class Resource {
     }
 
     public Long getId() {
-        if (!isId()) return ID_NOT_PROVIDED;
+        if (!isId()) {
+            return ID_NOT_PROVIDED;
+        }
         return Long.parseLong(property);
     }
 
@@ -47,8 +53,10 @@ public class Resource {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other == null) return false;
+    public boolean equals(final Object other) {
+        if (other == null) {
+            return false;
+        }
         return getPath().equals(other.toString());
     }
 
