@@ -26,6 +26,7 @@ import org.restlet.resource.Post;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
 
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.maintainer.data.model.Autocreate;
 import com.maintainer.data.model.EntityBase;
@@ -480,19 +481,27 @@ public abstract class ResourcesController<T> extends ServerResource {
             log.debug("key = " + key + ", value = " + value);
 
             if (Query.OFFSET.equals(key)) {
-                query.setOffset(Integer.parseInt(value));
+                if (!Strings.isNullOrEmpty(value)) {
+                    query.setOffset(Integer.parseInt(value));
+                }
             } else if (Query.LIMIT.equals(key)) {
-                query.setLimit(Integer.parseInt(value));
+                if (!Strings.isNullOrEmpty(value)) {
+                    query.setLimit(Integer.parseInt(value));
+                }
             } else if (Query.ORDER.equals(key)) {
-                query.setOrder(value);
+                if (!Strings.isNullOrEmpty(value)) {
+                    query.setOrder(value);
+                }
             } else if (Query.POS.equals(key)) {
-                if (value.startsWith(MINUS)) {
-                    value = value.substring(1);
-                    query.setPreviousCursor(value);
-                    query.previous();
-                } else {
-                    query.setNextCursor(value);
-                    query.next();
+                if (!Strings.isNullOrEmpty(value)) {
+                    if (value.startsWith(MINUS)) {
+                        value = value.substring(1);
+                        query.setPreviousCursor(value);
+                        query.previous();
+                    } else {
+                        query.setNextCursor(value);
+                        query.next();
+                    }
                 }
             } else {
                 if (key.startsWith(":")) {

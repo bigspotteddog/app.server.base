@@ -36,6 +36,7 @@ import com.google.appengine.api.datastore.QueryResultIterator;
 import com.google.appengine.api.datastore.Text;
 import com.google.appengine.api.memcache.AsyncMemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
+import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
@@ -534,7 +535,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
 
         final String pageDirection = query.getPageDirection();
 
-        if (query.getOrder() != null) {
+        if (!Strings.isNullOrEmpty(query.getOrder())) {
             final String[] fields = StringUtils.split(query.getOrder(), ',');
             for (String field : fields) {
                 if (field.startsWith("-")) {
