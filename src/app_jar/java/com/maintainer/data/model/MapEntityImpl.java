@@ -10,6 +10,10 @@ public class MapEntityImpl extends EntityImpl implements Map<String, Object> {
     @NotStored
     private final LinkedHashMap<String, Object> properties = new LinkedHashMap<String, Object>();
 
+    public boolean isIndexed(final Object key) {
+        return true;
+    }
+
     @Override
     public void setId(final Object id) {
         put("id", id);

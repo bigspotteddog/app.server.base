@@ -3,6 +3,7 @@ package com.maintainer.data.provider;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.base.Strings;
 import com.maintainer.data.model.Autocreate;
 import com.maintainer.util.Utils;
 
@@ -48,7 +49,7 @@ public class Query {
         this.kind = kind;
     }
 
-    public Query filter(final String condition, Object value) {
+    public Query filter(final String condition, Object value) throws Exception {
         final Class<?> kind = getKind();
         final Autocreate annotation = kind.getAnnotation(Autocreate.class);
         if (ID.equals(condition) && (annotation == null || Autocreate.EMPTY.equals(annotation.parent()))) {
@@ -169,7 +170,7 @@ public class Query {
     }
 
     public boolean isEmpty() {
-        return filters.isEmpty();
+        return filters.isEmpty() && Strings.isNullOrEmpty(order);
     }
 
     public boolean isKeysOnly() {

@@ -148,13 +148,11 @@ public class Utils {
     }
 
     public static Type getItemsType() {
-        return new TypeToken<List<Map<String, Object>>>() {
-        }.getType();
+        return new TypeToken<List<Map<String, Object>>>() {}.getType();
     }
 
     public static Type getItemType() {
-        return new TypeToken<Map<String, Object>>() {
-        }.getType();
+        return new TypeToken<Map<String, Object>>() {}.getType();
     }
 
     public static Class<?> getType(final Object obj) {
@@ -267,7 +265,7 @@ public class Utils {
         primitiveMap.put(double.class, Double.class);
     }
 
-    public static Object convert(Object value, Class<?> destClass) {
+    public static Object convert(Object value, Class<?> destClass) throws Exception {
         if ((value == null) || "".equals(value)) {
             return value;
         }
@@ -300,7 +298,7 @@ public class Utils {
      * end
      */
 
-    private static Object getConvertedValue(Object value, final Class<?> destClass, final String incoming) {
+    private static Object getConvertedValue(Object value, final Class<?> destClass, final String incoming) throws Exception {
         if (value.getClass().equals(destClass)) {
             return value;
         }
@@ -318,10 +316,10 @@ public class Utils {
         } catch (final IllegalAccessException e) {
             // this won't happen
         } catch (final InvocationTargetException e) {
-            // when this happens, the string cannot be converted to the intended
-            // type
-            // we are ignoring it here - the original string will be returned.
-            // But it can be re-thrown if desired!
+            // when this happens, the string cannot be converted to the intended type
+            // we are not ignoring it here - the original string will be returned.
+            // It will be re-thrown as desired!
+            throw e;
         }
         return value;
     }
@@ -712,6 +710,11 @@ public class Utils {
         return date;
     }
 
+    public static String format(final Date date, final String format) {
+        final SimpleDateFormat sdf = getSimpleDateFormat(format);
+        return sdf.format(date);
+    }
+
     private static final Map<String, SimpleDateFormat> sdfs = new ConcurrentHashMap<String, SimpleDateFormat>();
     private static SimpleDateFormat getSimpleDateFormat(final String format) {
         SimpleDateFormat sdf = sdfs.get(format);
@@ -733,7 +736,12 @@ public class Utils {
         if (string == null || string.isEmpty()) {
             return 0d;
         }
-        return (Double) convert(string, Double.class);
+        try {
+            final Double d = (Double) convert(string, Double.class);
+            return d;
+        } catch (final Exception e) {
+            return 0d;
+        }
     }
 
     public static EntityImpl getKeyedOnly(final Key key) throws Exception {
@@ -843,5 +851,9 @@ public class Utils {
 
     public static User getUser(final Request request) {
         return (User) request.getAttributes().get(_USER_);
+    }
+
+    public static boolean isEmpty(final String string) {
+        return string == null || string.trim().length() == 0;
     }
 }

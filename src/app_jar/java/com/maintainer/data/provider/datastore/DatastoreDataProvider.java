@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
+import com.google.appengine.api.datastore.Blob;
 import com.google.appengine.api.datastore.Cursor;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -27,6 +28,7 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
@@ -338,6 +340,8 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
 
             final Key key = entity.getKey();
             final com.maintainer.data.provider.Key nobodyelsesKey = createNobodyelsesKey(key);
+            nobodyelsesKey.setKind(kind);
+
             obj.setKey(nobodyelsesKey);
             obj.setId(getEncodedKeyString(nobodyelsesKey));
 
@@ -515,7 +519,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return false;
     }
 
-    private com.google.appengine.api.datastore.Query getQuery(final Query query) {
+    private com.google.appengine.api.datastore.Query getQuery(final Query query) throws Exception {
         final com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(getKindName(query.getKind()));
 
         for (final Filter e : query.getFilters()) {
@@ -655,9 +659,24 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return q2;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public List<T> getAll(final List<com.maintainer.data.provider.Key> keysNeeded) throws Exception {
+    public List<T> getAll(final Collection<com.maintainer.data.provider.Key> keysNeeded) throws Exception {
         final List<T> list = new ArrayList<T>(keysNeeded.size());
+
+        final Map<com.maintainer.data.provider.Key, Object> map = getCachedAndTrimKeysNeeded(keysNeeded);
+        for (final Entry<com.maintainer.data.provider.Key, Object> e : map.entrySet()) {
+            final com.maintainer.data.provider.Key key = e.getKey();
+            final T t = (T) e.getValue();
+
+            // because the keys are not in the cache
+            if (t.getKey() ==  null) {
+                t.setKey(key);
+                t.setId(getEncodedKeyString(key));
+            }
+
+            list.add(t);
+        }
 
         final List<Key> keys = new ArrayList<Key>();
         for (final com.maintainer.data.provider.Key key : keysNeeded) {
@@ -746,13 +765,11 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         }
 
         final Map<com.maintainer.data.provider.Key, Object> map = new LinkedHashMap<com.maintainer.data.provider.Key, Object>();
-        final Map<com.maintainer.data.provider.Key, Object> map2 = getAllCache(keysNeeded);
+        final Map<com.maintainer.data.provider.Key, Object> map2 = getCachedAndTrimKeysNeeded(keysNeeded);
 
         if (!map2.isEmpty()) {
             map.putAll(map2);
         }
-
-        keysNeeded.removeAll(map2.keySet());
 
         if (!keysNeeded.isEmpty()) {
             final List<Key> keys = new ArrayList<Key>();
@@ -794,6 +811,12 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         list.setRemovedCursors(removedCursors);
 
         return list;
+    }
+
+    public Map<com.maintainer.data.provider.Key, Object> getCachedAndTrimKeysNeeded(final Collection<com.maintainer.data.provider.Key> keysNeeded) throws Exception {
+        final Map<com.maintainer.data.provider.Key, Object> map2 = getAllCache(keysNeeded);
+        keysNeeded.removeAll(map2.keySet());
+        return map2;
     }
 
     private FetchOptions cloneOptionsWithoutCursors(final FetchOptions options) {
@@ -878,7 +901,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return o;
     }
 
-    private Map<com.maintainer.data.provider.Key, Object> getAllCache(final List<com.maintainer.data.provider.Key> keys) throws Exception {
+    private Map<com.maintainer.data.provider.Key, Object> getAllCache(final Collection<com.maintainer.data.provider.Key> keys) throws Exception {
         final Map<com.maintainer.data.provider.Key, Object> map = new LinkedHashMap<com.maintainer.data.provider.Key, Object>();
         final Map<com.maintainer.data.provider.Key, Object> map2 = getAllLocalCache(keys);
         if (!map2.isEmpty()) {
@@ -901,7 +924,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return map;
     }
 
-    private Map<com.maintainer.data.provider.Key, Object> getAllLocalCache(final List<com.maintainer.data.provider.Key> keys) {
+    private Map<com.maintainer.data.provider.Key, Object> getAllLocalCache(final Collection<com.maintainer.data.provider.Key> keys) {
         if (!local) {
             return Collections.emptyMap();
         }
@@ -918,8 +941,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return keysPresent;
     }
 
-    private List<String> getStringKeys(
-            final List<com.maintainer.data.provider.Key> keys) {
+    private List<String> getStringKeys(final Collection<com.maintainer.data.provider.Key> keys) {
         final List<String> stringKeys = new ArrayList<String>();
         for (final com.maintainer.data.provider.Key k : keys) {
             stringKeys.add(k.toString());
@@ -931,5 +953,53 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         if (local) {
             cache.invalidate(key.toString());
         }
+    }
+
+    public static void writeBlob(final String folder, final String name, final byte[] bytes) {
+        writeBlob(folder, name, bytes, true);
+    }
+
+    public static void writeBlob(final String folder, final String name, final byte[] bytes, final boolean cache) {
+        if (Utils.isEmpty(folder) || Utils.isEmpty(name) || bytes == null) return;
+
+        final Blob blob = new Blob(bytes);
+        final Entity entity = new Entity(folder, name);
+        entity.setUnindexedProperty("content", blob);
+
+        DatastoreServiceFactory.getDatastoreService().put(entity);
+
+        if (cache) {
+            final Key key = entity.getKey();
+            final String keyToString = KeyFactory.keyToString(key);
+            MemcacheServiceFactory.getMemcacheService().put(keyToString, bytes);
+        }
+    }
+
+    public static byte[] readBlob(final String folder, final String name) {
+        final Key key = KeyFactory.createKey(folder,  name);
+
+        final String keyToString = KeyFactory.keyToString(key);
+        byte[] bytes = (byte[]) MemcacheServiceFactory.getMemcacheService().get(keyToString);
+        if (bytes != null) {
+            return bytes;
+        }
+
+        try {
+            final Entity entity = DatastoreServiceFactory.getDatastoreService().get(key);
+            final Blob blob = (Blob) entity.getProperty("content");
+            if (blob != null) {
+                bytes = blob.getBytes();
+                MemcacheServiceFactory.getMemcacheService().put(keyToString, bytes);
+                return bytes;
+            }
+        } catch (final EntityNotFoundException e) {}
+        return null;
+    }
+
+    public static void deleteBlob(final String folder, final String name) {
+        final Key key = KeyFactory.createKey(folder, name);
+        DatastoreServiceFactory.getAsyncDatastoreService().delete(key);
+        final String keyToString = KeyFactory.keyToString(key);
+        MemcacheServiceFactory.getAsyncMemcacheService().delete(keyToString);
     }
 }
