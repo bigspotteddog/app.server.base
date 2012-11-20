@@ -13,7 +13,19 @@ public class Filter {
         return condition;
     }
 
+    public String getField() {
+        return condition.split(":")[0];
+    }
+
     public Object getValue() {
         return value;
+    }
+
+    public String getOperation() {
+        final String[] split = condition.split(":");
+        if (split.length == 1) {
+            return "eq";
+        }
+        return split[1];
     }
 }

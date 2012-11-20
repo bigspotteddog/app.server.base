@@ -576,7 +576,7 @@ public abstract class ResourcesController<T> extends ServerResource {
 
     // Return the first value as a string. Later, convert the string
     // value using the reflected type of the java property by name.
-    protected Object getFilterValue(final String name, Object value) {
+    protected Object getFilterValue(final String name, Object value) throws Exception {
         Field field = null;
         final Class<?> clazz = getType();
         try {

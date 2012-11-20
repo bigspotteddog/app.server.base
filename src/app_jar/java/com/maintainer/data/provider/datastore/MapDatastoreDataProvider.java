@@ -110,7 +110,13 @@ public class MapDatastoreDataProvider<T extends MapEntityImpl> extends Datastore
                     value = new Text(string);
                 }
             }
-            entity.setProperty(field, value);
+
+            final boolean indexed = target.isIndexed(field);
+            if (indexed) {
+                entity.setProperty(field, value);
+            } else {
+                entity.setUnindexedProperty(field, value);
+            }
         }
 
         return entity;

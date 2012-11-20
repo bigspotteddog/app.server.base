@@ -71,6 +71,11 @@ public class EntityImpl implements EntityBase {
     @Override
     public boolean equals(final Object obj) {
         final EntityImpl other = (EntityImpl) obj;
+
+        if (this.getId() == null || other == null || other.getId() == null) {
+            return false;
+        }
+
         return this.getId().equals(other.getId());
     }
 

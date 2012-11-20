@@ -1,6 +1,7 @@
 package com.maintainer.data.provider.hibernate;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -108,7 +109,7 @@ public class HibernateDataProvider<T extends EntityBase> extends AbstractDataPro
 
     @SuppressWarnings("unchecked")
     @Override
-    public List<T> find(final Query query) {
+    public List<T> find(final Query query) throws Exception {
         final Map<String, String> alias = new HashMap<String, String>();
 
         final Session datastore = getDatastore();
@@ -233,7 +234,7 @@ public class HibernateDataProvider<T extends EntityBase> extends AbstractDataPro
     }
 
     @Override
-    public List<T> getAll(final List<Key> keysNeeded) throws Exception {
+    public List<T> getAll(final Collection<Key> keysNeeded) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
