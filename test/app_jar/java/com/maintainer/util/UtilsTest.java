@@ -14,6 +14,8 @@ import org.restlet.Request;
 import org.restlet.data.Method;
 import org.restlet.data.Reference;
 
+import com.google.gson.Gson;
+
 public class UtilsTest extends TestCase {
 
     @Test
@@ -138,5 +140,20 @@ public class UtilsTest extends TestCase {
         parts = Utils.getParts(source, template, Arrays.asList("resource", "id"));
         System.out.println(parts);
 
+    }
+
+    public void testJsonStringParsing() {
+
+        final String json = "{\"field\": \"bob\", \"field1\":{\"test1\":\"test\",\"test2\":2}}";
+
+        final Gson gson = Utils.getGson();
+        final Json fromJson = gson.fromJson(json, Json.class);
+
+        assertNotNull(fromJson);
+    }
+
+    public class Json {
+        private String field;
+        private JsonString field1;
     }
 }

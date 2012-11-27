@@ -61,8 +61,8 @@ public abstract class ResourcesController<T> extends ServerResource {
     private static final String ID = "id";
     private static final String ID2 = "id2";
     private static final long ID_NOT_PROVIDED = 0;
-    private static final String ID_PROVIDED = "id provided with post";
-    private static final String NO_ID_PROVIDED = "no id provided with put";
+    public static final String ID_PROVIDED = "Id provided with post.";
+    public static final String NO_ID_PROVIDED = "No id provided with put.";
 
     private int maxRows = MAX_ROWS;
     private boolean checkFields = true;
