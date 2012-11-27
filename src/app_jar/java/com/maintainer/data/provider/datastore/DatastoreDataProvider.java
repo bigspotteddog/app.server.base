@@ -50,6 +50,7 @@ import com.maintainer.data.model.NotIndexed;
 import com.maintainer.data.model.NotStored;
 import com.maintainer.data.provider.Filter;
 import com.maintainer.data.provider.Query;
+import com.maintainer.util.JsonString;
 import com.maintainer.util.Utils;
 
 public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatastoreDataProvider<T> {
@@ -334,6 +335,11 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
                         }
                         value = list;
                     }
+
+                    if (JsonString.class.isAssignableFrom(f.getType())) {
+                        value = new JsonString(value.toString());
+                    }
+
                     f.set(obj, value);
                 }
             }
@@ -460,6 +466,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
             }
 
             if (value != null) {
+                if (JsonString.class.isAssignableFrom(value.getClass())) {
+                    value = ((JsonString) value).getString();
+                }
+
                 if (String.class.isAssignableFrom(value.getClass())) {
                     final String string = (String) value;
                     if (string.length() > 500) {
