@@ -16,4 +16,5 @@ public @interface Autocreate {
     boolean remote() default false;
     boolean skip() default false;
     boolean keysOnly() default false;
+    boolean embedded() default false;
 }

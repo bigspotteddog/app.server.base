@@ -543,7 +543,7 @@ public abstract class ResourcesController<T> extends ServerResource {
         return i == resources.size() - 1;
     }
 
-    private DataProvider<?> getDataProvider(final Resource resource) throws Exception {
+    protected DataProvider<?> getDataProvider(final Resource resource) throws Exception {
         final Class<?> clazz = getResourceClass(resource);
 
         final DataProvider<?> dataProvider = DataProviderFactory.instance().getDataProvider(clazz);

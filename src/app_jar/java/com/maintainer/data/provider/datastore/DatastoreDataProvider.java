@@ -304,7 +304,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
                 Object value = properties.get(key);
 
                 if (value != null) {
-                    if (Key.class.isAssignableFrom(value.getClass())) {
+                    if (autocreate != null && autocreate.embedded()) {
+                        final String json = (String) value;
+                        value = Utils.getGson().fromJson(json, f.getType());
+                    } else if (Key.class.isAssignableFrom(value.getClass())) {
                         final Key k = (Key) value;
                         final com.maintainer.data.provider.Key key2 = createNobodyelsesKey(k);
                         if (autocreate != null && autocreate.keysOnly()) {
@@ -442,7 +445,9 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
             if (autocreate != null) {
                 try {
                     if (value != null) {
-                        if (EntityBase.class.isAssignableFrom(value.getClass())) {
+                        if (autocreate.embedded()) {
+                            value = Utils.getGson().toJson(value);
+                        } else if (EntityBase.class.isAssignableFrom(value.getClass())) {
                             final EntityBase base = (EntityBase) value;
                             value = createDatastoreKey(base.getKey());
                         } else if (Collection.class.isAssignableFrom(value.getClass())) {
