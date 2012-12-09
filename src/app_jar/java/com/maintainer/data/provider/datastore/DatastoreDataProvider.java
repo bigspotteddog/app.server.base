@@ -305,8 +305,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
 
                 if (value != null) {
                     if (autocreate != null && autocreate.embedded()) {
-                        final String json = (String) value;
-                        value = Utils.getGson().fromJson(json, f.getType());
+                        value = getEmbedded(f, value);
                     } else if (Key.class.isAssignableFrom(value.getClass())) {
                         final Key k = (Key) value;
                         final com.maintainer.data.provider.Key key2 = createNobodyelsesKey(k);
@@ -377,6 +376,15 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         }
 
         return obj;
+    }
+
+    protected Object getEmbedded(final Field f, Object value) {
+        if (Text.class.isAssignableFrom(value.getClass())) {
+            value = ((Text) value).getValue();
+        }
+        final String json = (String) value;
+        value = Utils.getGson().fromJson(json, f.getType());
+        return value;
     }
 
     protected DatastoreService getDatastore() {
