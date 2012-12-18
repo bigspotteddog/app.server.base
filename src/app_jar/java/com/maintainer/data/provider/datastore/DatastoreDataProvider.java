@@ -421,9 +421,13 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
 
             if (annotation != null && !Autocreate.EMPTY.equals(annotation.id())) {
 
-                final Object id = Utils.getFieldValue(target, annotation.id());
+                Object id = Utils.getFieldValue(target, annotation.id());
 
                 if (id != null) {
+                    if (EntityBase.class.isAssignableFrom(id.getClass())) {
+                        id = ((EntityBase) id).getKey().toString();
+                    }
+
                     Key key = null;
                     key = createDatastoreKey(parent, kindName, id);
                     final com.maintainer.data.provider.Key nobodyelsesKey = new com.maintainer.data.provider.Key(clazz.getName(), id);
