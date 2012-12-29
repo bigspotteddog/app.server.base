@@ -75,6 +75,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
     public T get(final com.maintainer.data.provider.Key key) throws Exception {
         final T cached = (T) getCached(key);
         if (cached != null) {
+            cached.setKey(key);
             log.debug(key + " returned from cache.");
             return cached;
         }
@@ -125,20 +126,22 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
     @Override
     public T put(T target) throws Exception {
         final com.maintainer.data.provider.Key nobodyelsesKey = target.getKey();
-        final T existing = get(nobodyelsesKey);
+        if (nobodyelsesKey != null) {
+            final T existing = get(nobodyelsesKey);
 
-        if (checkEqual(target, existing)) {
-            return target;
-        } else {
-            log.debug(nobodyelsesKey + " changed.");
+            if (checkEqual(target, existing)) {
+                return target;
+            } else {
+                log.debug(nobodyelsesKey + " changed.");
+            }
         }
-
-        autocreate(target);
 
         if (target.getId() == null) {
             target = post(target);
             return target;
         }
+
+        autocreate(target);
 
         target.setModified(new Date());
 
@@ -425,7 +428,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
 
                 if (id != null) {
                     if (EntityBase.class.isAssignableFrom(id.getClass())) {
-                        id = ((EntityBase) id).getKey().toString();
+                        id = ((EntityBase) id).getKey().asString();
                     }
 
                     Key key = null;

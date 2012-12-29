@@ -134,7 +134,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         for (final Field f : fields) {
             f.setAccessible(true);
             final Autocreate autocreate = f.getAnnotation(Autocreate.class);
-            if (autocreate != null) {
+            if (autocreate != null && !autocreate.embedded()) {
                 try {
                     final Object value = f.get(target);
                     if (value != null) {
@@ -259,7 +259,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
     @SuppressWarnings("unchecked")
     private void delete(final Object target, final Autocreate fieldAutocreate) throws Exception {
-        if (target == null) {
+        if (target == null || fieldAutocreate.embedded()) {
             return;
         }
 

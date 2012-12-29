@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -68,6 +69,19 @@ public abstract class ResourcesController<T> extends ServerResource {
     private boolean checkFields = true;
     private boolean ignoreInvalidFields = false;
 
+    private LinkedHashSet<String> errors;
+
+    protected LinkedHashSet<String> getErrors() {
+        if (errors == null) {
+            errors = new LinkedHashSet<String>();
+        }
+        return errors;
+    }
+
+    protected void addError(final String error) {
+        getErrors().add(error);
+    }
+
     public Representation getHead() throws Exception {
         final String resource = getResource();
 
@@ -90,20 +104,35 @@ public abstract class ResourcesController<T> extends ServerResource {
         return getItems(request);
     }
 
-    @SuppressWarnings("unchecked")
     protected Representation getItems(final Request request) throws Exception {
         Representation response = null;
         String json = null;
         try {
+            Status status = Status.SUCCESS_OK;
             final Object obj = get(request);
             if (List.class.isAssignableFrom(obj.getClass())) {
                 json = toJson((List) obj);
             } else {
                 json = toJson(obj);
             }
+
+            if (errors != null && !errors.isEmpty()) {
+                status = Status.CLIENT_ERROR_PRECONDITION_FAILED;
+
+                Object object = null;
+                if (List.class.isAssignableFrom(obj.getClass())) {
+                    object = Utils.getGson().fromJson(json, Utils.getItemsType());
+                } else {
+                    object = Utils.getGson().fromJson(json, Utils.getItemsType());
+                }
+
+                final ErrorResponse errorResponse = new ErrorResponse(errors, object);
+                json = Utils.getGson().toJson(errorResponse);
+            }
+
             response = new StringRepresentation(json);
             response.setMediaType(MediaType.APPLICATION_JSON);
-            setStatus(Status.SUCCESS_OK);
+            setStatus(status);
         } catch (final NotFoundException nf) {
             setStatus(Status.CLIENT_ERROR_NOT_FOUND);
         } catch (final InvalidResourceException nr) {
