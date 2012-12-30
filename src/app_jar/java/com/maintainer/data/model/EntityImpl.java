@@ -34,8 +34,6 @@ public class EntityImpl implements EntityBase {
     @NotIndexed @NotStored
     private String keyString;
 
-    private Autocreate autocreate;
-
     @Override
     public boolean isNew() {
         return id == null;
