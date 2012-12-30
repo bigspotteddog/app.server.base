@@ -274,6 +274,20 @@ public class Utils {
                 }
             };
 
+            final JsonSerializer<Key> keySerializer = new JsonSerializer<Key>() {
+                @Override
+                public JsonElement serialize(final Key key, final Type typeOfSrc, final JsonSerializationContext context) {
+                    return new JsonParser().parse(key.toString());
+                }
+            };
+
+            final JsonDeserializer<Key> keyDeserializer = new JsonDeserializer<Key>() {
+                @Override
+                public Key deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+                    return Key.fromString(json.toString());
+                }
+            };
+
             gson = new GsonBuilder()
                 .registerTypeAdapter(Date.class, dateSerializer)
                 .registerTypeAdapter(Date.class, dateDeserializer)
@@ -281,6 +295,8 @@ public class Utils {
                 .registerTypeAdapter(BigDecimal.class, bigDecimalDeserializer)
                 .registerTypeAdapter(JsonString.class, jsonStringDeserializer)
                 .registerTypeAdapter(JsonString.class, jsonStringSerializer)
+                .registerTypeAdapter(Key.class, keyDeserializer)
+                .registerTypeAdapter(Key.class, keySerializer)
                 .create();
         }
 

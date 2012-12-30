@@ -58,8 +58,16 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
     private static final Cache<String, Object> cache = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.HOURS).build();
     private static final AsyncMemcacheService memcache = MemcacheServiceFactory.getAsyncMemcacheService();
 
+    private boolean nocache;
     private boolean local;
     private DatastoreService datastore;
+
+    public DatastoreDataProvider() {}
+
+    public DatastoreDataProvider(final boolean nocache) {
+        this.nocache = nocache;
+        this.local = nocache;
+    }
 
     @Override
     public Object getId(final Object object) {
@@ -866,12 +874,14 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return options2;
     }
 
-    private void putAllCache(final Map<com.maintainer.data.provider.Key, Object> map) {
+    protected void putAllCache(final Map<com.maintainer.data.provider.Key, Object> map) {
         putAllLocalCache(map);
         putAllMemcache(map);
     }
 
-    private void putAllMemcache(final Map<com.maintainer.data.provider.Key, Object> map) {
+    protected void putAllMemcache(final Map<com.maintainer.data.provider.Key, Object> map) {
+        if (nocache) return;
+
         final Map<String, Object> cacheable = new HashMap<String, Object>();
         for (final Entry<com.maintainer.data.provider.Key, Object> e : map.entrySet()) {
             cacheable.put(e.getKey().toString(), e.getValue());
@@ -880,7 +890,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         memcache.putAll(cacheable);
     }
 
-    private void putAllLocalCache(final Map<com.maintainer.data.provider.Key, Object> map) {
+    protected void putAllLocalCache(final Map<com.maintainer.data.provider.Key, Object> map) {
         if (!local) {
             return;
         }
@@ -890,16 +900,20 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         }
     }
 
-    private void putCache(final com.maintainer.data.provider.Key key, final Object o) {
+    protected void putCache(final com.maintainer.data.provider.Key key, final Object o) {
         putLocalCache(key, o);
         putMemcache(key, o);
     }
 
-    private void putMemcache(final com.maintainer.data.provider.Key key, final Object o) {
+    protected void putMemcache(final com.maintainer.data.provider.Key key, final Object o) {
+        if (nocache) return;
+
         memcache.put(key.toString(), o);
     }
 
-    private Object getCached(final com.maintainer.data.provider.Key key) throws Exception {
+    protected Object getCached(final com.maintainer.data.provider.Key key) throws Exception {
+        if (nocache) return null;
+
         Object o = getLocalCache(key);
         if (o == null) {
             final Future<Object> future = memcache.get(key.toString());
@@ -911,18 +925,24 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return o;
     }
 
-    private void invalidateCached(final com.maintainer.data.provider.Key key) {
+    protected void invalidateCached(final com.maintainer.data.provider.Key key) {
         invalidateLocalCache(key);
+        invalidateMemcache(key);
+    }
+
+    private void invalidateMemcache(final com.maintainer.data.provider.Key key) {
+        if (nocache) return;
+
         memcache.delete(key.toString());
     }
 
-    private void putLocalCache(final com.maintainer.data.provider.Key key, final Object o) {
+    protected void putLocalCache(final com.maintainer.data.provider.Key key, final Object o) {
         if (local) {
             cache.put(key.toString(), o);
         }
     }
 
-    private Object getLocalCache(final com.maintainer.data.provider.Key key) {
+    protected Object getLocalCache(final com.maintainer.data.provider.Key key) {
         if (!local) {
             return null;
         }
@@ -931,8 +951,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return o;
     }
 
-    private Map<com.maintainer.data.provider.Key, Object> getAllCache(final Collection<com.maintainer.data.provider.Key> keys) throws Exception {
+    protected Map<com.maintainer.data.provider.Key, Object> getAllCache(final Collection<com.maintainer.data.provider.Key> keys) throws Exception {
         final Map<com.maintainer.data.provider.Key, Object> map = new LinkedHashMap<com.maintainer.data.provider.Key, Object>();
+        if (nocache) return map;
+
         final Map<com.maintainer.data.provider.Key, Object> map2 = getAllLocalCache(keys);
         if (!map2.isEmpty()) {
             map.putAll(map2);
@@ -954,7 +976,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return map;
     }
 
-    private Map<com.maintainer.data.provider.Key, Object> getAllLocalCache(final Collection<com.maintainer.data.provider.Key> keys) {
+    protected Map<com.maintainer.data.provider.Key, Object> getAllLocalCache(final Collection<com.maintainer.data.provider.Key> keys) {
         if (!local) {
             return Collections.emptyMap();
         }
@@ -979,7 +1001,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return stringKeys;
     }
 
-    private void invalidateLocalCache(final com.maintainer.data.provider.Key key) {
+    protected void invalidateLocalCache(final com.maintainer.data.provider.Key key) {
         if (local) {
             cache.invalidate(key.toString());
         }
