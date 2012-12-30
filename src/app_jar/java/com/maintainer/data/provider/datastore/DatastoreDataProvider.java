@@ -441,7 +441,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
 
                     Key key = null;
                     key = createDatastoreKey(parent, kindName, id);
-                    final com.maintainer.data.provider.Key nobodyelsesKey = new com.maintainer.data.provider.Key(clazz.getName(), id);
+                    final com.maintainer.data.provider.Key nobodyelsesKey = createNobodyelsesKey(key);
                     target.setId(getEncodedKeyString(nobodyelsesKey));
                     entity = newEntity(key);
                 } else {
