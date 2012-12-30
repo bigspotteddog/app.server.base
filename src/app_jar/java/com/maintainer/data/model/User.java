@@ -6,17 +6,18 @@ import javax.persistence.MappedSuperclass;
 public class User extends EntityImpl implements UserBase {
 
     private String username;
+    @NotIndexed
     private String password;
 
     protected User() {}
 
-    public User(String username, String password) {
+    public User(final String username, final String password) {
         this.username = username;
         this.password = password;
     }
 
     @Override
-    public void setUsername(String username) {
+    public void setUsername(final String username) {
         this.username = username;
     }
 
@@ -26,7 +27,7 @@ public class User extends EntityImpl implements UserBase {
     }
 
     @Override
-    public void setPassword(String password) {
+    public void setPassword(final String password) {
         this.password = password;
     }
 
