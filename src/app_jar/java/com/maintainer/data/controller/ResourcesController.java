@@ -632,7 +632,7 @@ public abstract class ResourcesController<T> extends ServerResource {
         }
     }
 
-    private Class<?> getType() {
+    protected Class<?> getType() {
         final Class<?> kind = getControllerClass(getResource());
         return kind;
     }

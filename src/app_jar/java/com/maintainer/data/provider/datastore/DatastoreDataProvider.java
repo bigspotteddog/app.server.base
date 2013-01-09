@@ -472,7 +472,12 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
                             value = Utils.getGson().toJson(value);
                         } else if (EntityBase.class.isAssignableFrom(value.getClass())) {
                             final EntityBase base = (EntityBase) value;
-                            value = createDatastoreKey(base.getKey());
+                            final com.maintainer.data.provider.Key key = base.getKey();
+                            if (key != null) {
+                                value = createDatastoreKey(key);
+                            } else {
+                                value = null;
+                            }
                         } else if (Collection.class.isAssignableFrom(value.getClass())) {
                             final List<Object> list = new ArrayList<Object>((Collection<Object>) value);
                             value = list;
