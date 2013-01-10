@@ -321,7 +321,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
                         final Key k = (Key) value;
                         final com.maintainer.data.provider.Key key2 = createNobodyelsesKey(k);
                         if (autocreate != null && autocreate.keysOnly()) {
-                            value = Utils.getKeyedOnly(key2);
+                            value = getKeyedOnly(key2);
                         } else {
                             value = get(key2);
                         }
@@ -339,7 +339,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
                                 final Key k = (Key) o;
                                 final com.maintainer.data.provider.Key key2 = createNobodyelsesKey(k);
                                 if (autocreate != null && autocreate.keysOnly()) {
-                                    o = Utils.getKeyedOnly(key2);
+                                    o = getKeyedOnly(key2);
                                 } else {
                                     o = get(key2);
                                 }
@@ -373,7 +373,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
                     EntityImpl parent = null;
                     final Autocreate fieldAutocreate = field.getAnnotation(Autocreate.class);
                     if (fieldAutocreate != null && fieldAutocreate.keysOnly()) {
-                        parent = Utils.getKeyedOnly(nobodyelsesKey.getParent());
+                        parent = getKeyedOnly(nobodyelsesKey.getParent());
                     } else {
                         parent = (EntityImpl) get(nobodyelsesKey.getParent());
                     }
@@ -387,6 +387,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         }
 
         return obj;
+    }
+
+    public EntityImpl getKeyedOnly(final com.maintainer.data.provider.Key key) throws Exception {
+        return Utils.getKeyedOnly(key);
     }
 
     protected Object getEmbedded(final Field f, Object value) {
@@ -797,7 +801,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         if (isKeysOnly) {
             final ResultListImpl<T> list = new ResultListImpl<T>(keysNeeded.size());
             for (final com.maintainer.data.provider.Key key : keysNeeded) {
-                final EntityImpl keyedOnly = Utils.getKeyedOnly(key);
+                final EntityImpl keyedOnly = getKeyedOnly(key);
                 list.add((T) keyedOnly);
             }
             list.setStartCursor(start);
