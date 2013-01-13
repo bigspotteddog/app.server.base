@@ -42,7 +42,18 @@ public class MyCookieAuthenticator extends CookieAuthenticator {
             response.getCookieSettings().add(credentialsCookie);
         }
 
+        log.debug("===== Credentials =====");
+        log.debug(credentialsCookie);
+
         return credentialsCookie;
+    }
+
+    @Override
+    protected ChallengeResponse parseCredentials(String cookieValue) {
+        if (cookieValue != null) {
+            cookieValue = cookieValue.split(",")[0];
+        }
+        return super.parseCredentials(cookieValue);
     }
 
     @Override
@@ -76,20 +87,25 @@ public class MyCookieAuthenticator extends CookieAuthenticator {
         }
 
         if (!authenticated) {
-            boolean json = false;
+            boolean html = false;
 
             final List<Preference<MediaType>> mediaTypes = Request.getCurrent().getClientInfo().getAcceptedMediaTypes();
-            for (final Preference<MediaType> t : mediaTypes) {
-                final MediaType type = t.getMetadata();
-                if (type.equals(MediaType.APPLICATION_JSON)) {
-                    json = true;
-                    break;
+            if (mediaTypes.isEmpty()) {
+                html = true;
+            } else {
+                for (final Preference<MediaType> t : mediaTypes) {
+                    final MediaType type = t.getMetadata();
+                    if (type.equals(MediaType.TEXT_HTML)) {
+                        html = true;
+                        break;
+                    }
                 }
             }
-            if (json) {
-                response.setStatus(Status.CLIENT_ERROR_UNAUTHORIZED, "Not authorized.");
-            } else {
+
+            if (html) {
                 response.redirectSeeOther(new Reference(request.getRootRef(), "/"));
+            } else {
+                response.setStatus(Status.CLIENT_ERROR_UNAUTHORIZED, "Not authorized.");
             }
         }
         return authenticated;

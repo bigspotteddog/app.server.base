@@ -191,6 +191,7 @@ public class Utils {
             final SimpleDateFormat sdf = new SimpleDateFormat("MM.dd.yy HH:mm z");
             final SimpleDateFormat sdf2 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
             final SimpleDateFormat sdf3 = new SimpleDateFormat("MM/dd/yyyy");
+            final SimpleDateFormat sdf4 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
             // from stackoverflow: http://stackoverflow.com/a/6875295/591203
             final JsonSerializer<Date> dateSerializer = new JsonSerializer<Date>() {
@@ -219,7 +220,11 @@ public class Utils {
                             try {
                                 date = sdf3.parse(asString);
                             } catch (final ParseException e2) {
-                                e2.printStackTrace();
+                                try {
+                                    date = sdf4.parse(asString);
+                                } catch (final ParseException e3) {
+                                    e3.printStackTrace();
+                                }
                             }
                         }
                     }
