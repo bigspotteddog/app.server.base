@@ -398,7 +398,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
             value = ((Text) value).getValue();
         }
         final String json = (String) value;
-        value = Utils.getGson().fromJson(json, f.getType());
+        value = Utils.getGson().fromJson(json, f.getGenericType());
         return value;
     }
 
