@@ -172,38 +172,27 @@ public class Key implements Comparable<Key>, Serializable {
             keys.add(new String(chars.toCharArray()));
         }
 
-        String parent = null;
-        final String me = keys.get(keys.size() - 1);
-        if (keys.size() > 1) {
-            parent = keys.get(0);
-        }
+        final Key key = getKey(keys);
+        return key;
+    }
+
+    public static Key getKey(final List<String> strings) {
+        final String me = strings.get(strings.size() - 1);
 
         Key parentKey = null;
-        if (parent != null) {
-            parentKey = getKey(parent);
+        if (strings.size() > 1) {
+            strings.remove(strings.size() - 1);
+            parentKey = getKey(strings);
         }
 
-        final Key meKey = getKey(me, parentKey);
-        return meKey;
-    }
+        final int firstParen = me.indexOf('(');
 
-    public static Key getKey(final String string) {
-        return getKey(string, null);
-    }
-
-    public static Key getKey(final String string, final Key parent) {
-        if (string.contains(":")) {
-            return fromDecodedString(string);
-        }
-
-        final int firstParen = string.indexOf('(');
-
-        final String kind = string.substring(0, firstParen);
-        String id = string.substring(firstParen + 1);
+        final String kind = me.substring(0, firstParen);
+        String id = me.substring(firstParen + 1);
         id = id.substring(0, id.length() - 1);
 
-        final Key key = Key.create(kind, id, parent);
-        return key;
+        final Key meKey = Key.create(kind, id, parentKey);
+        return meKey;
     }
 
     public static Key fromString2(String string) {
