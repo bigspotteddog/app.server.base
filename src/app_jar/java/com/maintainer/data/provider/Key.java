@@ -1,5 +1,6 @@
 package com.maintainer.data.provider;
 
+import java.io.CharArrayWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -134,6 +135,78 @@ public class Key implements Comparable<Key>, Serializable {
     }
 
     public static Key fromString(String string) {
+        string = Utils.fromEncodedKeyString(string);
+        return fromDecodedString(string);
+    }
+
+    public static Key fromDecodedString(final String string) {
+        final List<String> keys = new ArrayList<String>();
+        final char[] incoming = string.toCharArray();
+        int parens = 0;
+
+        final CharArrayWriter chars = new CharArrayWriter();
+        for (final char c : incoming) {
+            switch (c) {
+            case '(':
+                chars.append(c);
+                parens++;
+                break;
+            case ')':
+                chars.append(c);
+                parens--;
+                break;
+            case ':':
+                if (parens == 0) {
+                    keys.add(new String(chars.toCharArray()));
+                    chars.reset();
+                } else {
+                    chars.append(c);
+                }
+                break;
+            default:
+                chars.append(c);
+            }
+        }
+
+        if (chars.size() > 0) {
+            keys.add(new String(chars.toCharArray()));
+        }
+
+        String parent = null;
+        final String me = keys.get(keys.size() - 1);
+        if (keys.size() > 1) {
+            parent = keys.get(0);
+        }
+
+        Key parentKey = null;
+        if (parent != null) {
+            parentKey = getKey(parent);
+        }
+
+        final Key meKey = getKey(me, parentKey);
+        return meKey;
+    }
+
+    public static Key getKey(final String string) {
+        return getKey(string, null);
+    }
+
+    public static Key getKey(final String string, final Key parent) {
+        if (string.contains(":")) {
+            return fromDecodedString(string);
+        }
+
+        final int firstParen = string.indexOf('(');
+
+        final String kind = string.substring(0, firstParen);
+        String id = string.substring(firstParen + 1);
+        id = id.substring(0, id.length() - 1);
+
+        final Key key = Key.create(kind, id, parent);
+        return key;
+    }
+
+    public static Key fromString2(String string) {
         string = Utils.fromEncodedKeyString(string);
 
         final Pattern p = Pattern.compile(KEY_PATTERN);
