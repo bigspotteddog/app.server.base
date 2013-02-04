@@ -59,7 +59,7 @@ public abstract class ResourcesController<T> extends ServerResource {
 
     private static final int MAX_ROWS = 1000;
     private static final String _ID = "_id";
-    private static final String ID = "id";
+    public static final String ID = "id";
     private static final String ID2 = "id2";
     private static final long ID_NOT_PROVIDED = 0;
     public static final String ID_PROVIDED = "Id provided with post.";
@@ -621,7 +621,7 @@ public abstract class ResourcesController<T> extends ServerResource {
         return value;
     }
 
-    private void checkReadOnly(final Class<?> kind) {
+    protected void checkReadOnly(final Class<?> kind) {
         if (kind == null) {
             return;
         }
@@ -656,7 +656,7 @@ public abstract class ResourcesController<T> extends ServerResource {
     protected void preDelete(final T obj) throws Exception {
     }
 
-    private Object getId() {
+    protected Object getId() {
         final Request request = getRequest();
         final ArrayList<Resource> resources = getResources(request);
         if (resources.size() < 1) {

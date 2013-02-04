@@ -5,7 +5,6 @@ import java.util.Properties;
 
 import com.maintainer.data.model.User;
 import com.maintainer.data.provider.DataProvider;
-import com.maintainer.data.provider.Key;
 import com.maintainer.util.Utils;
 
 public class UserResourceController extends GenericController<User> {
@@ -24,7 +23,7 @@ public class UserResourceController extends GenericController<User> {
         final DataProvider<?> provider = getDataProvider();
         final User user = obj;
 
-        final User existing = (User) provider.get(Key.create(user.getClass(), user.getId()));
+        final User existing = (User) provider.get(user.getKey());
         if (existing.getPassword() == null || (user.getPassword() != null && !existing.getPassword().equals(user.getPassword()))) {
             encryptPassword(user);
         }

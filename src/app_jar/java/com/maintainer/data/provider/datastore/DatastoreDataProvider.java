@@ -14,7 +14,6 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -36,7 +35,7 @@ import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.datastore.Query.SortPredicate;
 import com.google.appengine.api.datastore.QueryResultIterator;
 import com.google.appengine.api.datastore.Text;
-import com.google.appengine.api.memcache.AsyncMemcacheService;
+import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
 import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
@@ -56,7 +55,7 @@ import com.maintainer.util.Utils;
 public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatastoreDataProvider<T> {
     private static final Logger log = Logger.getLogger(DatastoreDataProvider.class.getName());
     private static final Cache<String, Object> cache = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.HOURS).build();
-    private static final AsyncMemcacheService memcache = MemcacheServiceFactory.getAsyncMemcacheService();
+    private static final MemcacheService memcache = MemcacheServiceFactory.getMemcacheService();
 
     private boolean nocache;
     private boolean local;
@@ -393,7 +392,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return Utils.getKeyedOnly(key);
     }
 
-    protected Object getEmbedded(final Field f, Object value) {
+    protected Object getEmbedded(final Field f, Object value) throws Exception {
         if (Text.class.isAssignableFrom(value.getClass())) {
             value = ((Text) value).getValue();
         }
@@ -925,8 +924,9 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
 
         Object o = getLocalCache(key);
         if (o == null) {
-            final Future<Object> future = memcache.get(key.toString());
-            o = future.get();
+            //final Future<Object> future = memcache.get(key.toString());
+            //o = future.get();
+            o = memcache.get(key.toString());
             if (o != null) {
                 putLocalCache(key, o);
             }
@@ -974,8 +974,9 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
 
             final List<String> stringKeys = getStringKeys(keys);
 
-            final Future<Map<String, Object>> future = memcache.getAll(stringKeys);
-            final Map<String, Object> map3 = future.get();
+            //final Future<Map<String, Object>> future = memcache.getAll(stringKeys);
+            //final Map<String, Object> map3 = future.get();
+            final Map<String, Object> map3 = memcache.getAll(stringKeys);
             if (!map3.isEmpty()) {
                 for (final Entry<String, Object> e : map3.entrySet()) {
                     map.put(com.maintainer.data.provider.Key.fromString(e.getKey()), e.getValue());
