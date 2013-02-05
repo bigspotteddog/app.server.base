@@ -187,7 +187,11 @@ public class Key implements Comparable<Key>, Serializable {
 
         final int firstParen = me.indexOf('(');
 
-        final String kind = me.substring(0, firstParen);
+        String kind = me.substring(0, firstParen);
+        if (kind.indexOf('.') == -1) {
+            kind = Utils.getModelPackageName() + '.' + kind;
+        }
+
         String id = me.substring(firstParen + 1);
         id = id.substring(0, id.length() - 1);
 
