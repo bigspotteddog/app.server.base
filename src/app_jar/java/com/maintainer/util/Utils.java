@@ -185,127 +185,139 @@ public class Utils {
     private static Map<Class<?>, Class<?>> primitiveMap = new HashMap<Class<?>, Class<?>>();
 
     private static Gson gson = null;
+    private static Gson gsonPretty = null;
 
     public static Gson getGson() {
         if (gson == null) {
-            final SimpleDateFormat sdf = new SimpleDateFormat("MM.dd.yy HH:mm z");
-            final SimpleDateFormat sdf2 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
-            final SimpleDateFormat sdf3 = new SimpleDateFormat("MM/dd/yyyy");
-            final SimpleDateFormat sdf4 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            gson = getGsonBuilder().create();
+        }
+        return gson;
+    }
 
-            // from stackoverflow: http://stackoverflow.com/a/6875295/591203
-            final JsonSerializer<Date> dateSerializer = new JsonSerializer<Date>() {
-                @Override
-                public JsonElement serialize(final Date src, final Type typeOfSrc, final JsonSerializationContext context) {
-                    return src == null ? null : new JsonPrimitive(sdf.format(src));
-                }
-            };
+    public static Gson getGsonPretty() {
+        if (gsonPretty  == null) {
+            gsonPretty = getGsonBuilder().setPrettyPrinting().create();
+        }
+        return gsonPretty;
+    }
 
-            final JsonDeserializer<Date> dateDeserializer = new JsonDeserializer<Date>() {
-                @Override
-                public Date deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
-                    Date date = null;
-                    if (json == null) return null;
+    private static GsonBuilder getGsonBuilder() {
+        final SimpleDateFormat sdf = new SimpleDateFormat("MM.dd.yy HH:mm z");
+        final SimpleDateFormat sdf2 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+        final SimpleDateFormat sdf3 = new SimpleDateFormat("MM/dd/yyyy");
+        final SimpleDateFormat sdf4 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
-                    final String asString = json.getAsString();
+        // from stackoverflow: http://stackoverflow.com/a/6875295/591203
+        final JsonSerializer<Date> dateSerializer = new JsonSerializer<Date>() {
+            @Override
+            public JsonElement serialize(final Date src, final Type typeOfSrc, final JsonSerializationContext context) {
+                return src == null ? null : new JsonPrimitive(sdf.format(src));
+            }
+        };
 
-                    if (Utils.isEmpty(asString)) return null;
+        final JsonDeserializer<Date> dateDeserializer = new JsonDeserializer<Date>() {
+            @Override
+            public Date deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+                Date date = null;
+                if (json == null) return null;
 
+                final String asString = json.getAsString();
+
+                if (Utils.isEmpty(asString)) return null;
+
+                try {
+                    date = sdf.parse(asString);
+                } catch (final ParseException e) {
                     try {
-                        date = sdf.parse(asString);
-                    } catch (final ParseException e) {
+                        date = sdf2.parse(asString);
+                    } catch (final ParseException e1) {
                         try {
-                            date = sdf2.parse(asString);
-                        } catch (final ParseException e1) {
+                            date = sdf3.parse(asString);
+                        } catch (final ParseException e2) {
                             try {
-                                date = sdf3.parse(asString);
-                            } catch (final ParseException e2) {
-                                try {
-                                    date = sdf4.parse(asString);
-                                } catch (final ParseException e3) {
-                                    e3.printStackTrace();
-                                }
+                                date = sdf4.parse(asString);
+                            } catch (final ParseException e3) {
+                                e3.printStackTrace();
                             }
                         }
                     }
-                    return date;
                 }
-            };
+                return date;
+            }
+        };
 
-            final JsonSerializer<BigDecimal> bigDecimalSerializer = new JsonSerializer<BigDecimal>() {
-                @Override
-                public JsonElement serialize(final BigDecimal src, final Type typeOfSrc, final JsonSerializationContext context) {
-                    if (src == null) {
-                        return null;
-                    }
-
-                    Number number = null;
-                    if (src.scale() == 0) {
-                        number = src.intValue();
-                    } else {
-                        number = src.doubleValue();
-                    }
-
-                    return new JsonPrimitive(number);
+        final JsonSerializer<BigDecimal> bigDecimalSerializer = new JsonSerializer<BigDecimal>() {
+            @Override
+            public JsonElement serialize(final BigDecimal src, final Type typeOfSrc, final JsonSerializationContext context) {
+                if (src == null) {
+                    return null;
                 }
 
-            };
-
-            final JsonDeserializer<BigDecimal> bigDecimalDeserializer = new JsonDeserializer<BigDecimal>() {
-                @Override
-                public BigDecimal deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
-                    BigDecimal number = null;
-                    try {
-                        number = new BigDecimal(json.getAsString());
-                    } catch (final Exception e) {
-                        number = BigDecimal.ZERO;
-                        e.printStackTrace();
-                    }
-                    return number;
+                Number number = null;
+                if (src.scale() == 0) {
+                    number = src.intValue();
+                } else {
+                    number = src.doubleValue();
                 }
-            };
 
-            final JsonSerializer<JsonString> jsonStringSerializer = new JsonSerializer<JsonString>() {
-                @Override
-                public JsonElement serialize(final JsonString string, final Type typeOfSrc, final JsonSerializationContext context) {
-                    return new JsonParser().parse(string.getString());
+                return new JsonPrimitive(number);
+            }
+
+        };
+
+        final JsonDeserializer<BigDecimal> bigDecimalDeserializer = new JsonDeserializer<BigDecimal>() {
+            @Override
+            public BigDecimal deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+                BigDecimal number = null;
+                try {
+                    number = new BigDecimal(json.getAsString());
+                } catch (final Exception e) {
+                    number = BigDecimal.ZERO;
+                    e.printStackTrace();
                 }
-            };
+                return number;
+            }
+        };
 
-            final JsonDeserializer<JsonString> jsonStringDeserializer = new JsonDeserializer<JsonString>() {
-                @Override
-                public JsonString deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
-                    return new JsonString(json.toString());
-                }
-            };
+        final JsonSerializer<JsonString> jsonStringSerializer = new JsonSerializer<JsonString>() {
+            @Override
+            public JsonElement serialize(final JsonString string, final Type typeOfSrc, final JsonSerializationContext context) {
+                return new JsonParser().parse(string.getString());
+            }
+        };
 
-            final JsonSerializer<Key> keySerializer = new JsonSerializer<Key>() {
-                @Override
-                public JsonElement serialize(final Key key, final Type typeOfSrc, final JsonSerializationContext context) {
-                    return new JsonParser().parse(key.toString());
-                }
-            };
+        final JsonDeserializer<JsonString> jsonStringDeserializer = new JsonDeserializer<JsonString>() {
+            @Override
+            public JsonString deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+                return new JsonString(json.toString());
+            }
+        };
 
-            final JsonDeserializer<Key> keyDeserializer = new JsonDeserializer<Key>() {
-                @Override
-                public Key deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
-                    return Key.fromString(json.toString());
-                }
-            };
+        final JsonSerializer<Key> keySerializer = new JsonSerializer<Key>() {
+            @Override
+            public JsonElement serialize(final Key key, final Type typeOfSrc, final JsonSerializationContext context) {
+                return new JsonParser().parse(key.toString());
+            }
+        };
 
-            gson = new GsonBuilder()
-                .registerTypeAdapter(Date.class, dateSerializer)
-                .registerTypeAdapter(Date.class, dateDeserializer)
-                .registerTypeAdapter(BigDecimal.class, bigDecimalSerializer)
-                .registerTypeAdapter(BigDecimal.class, bigDecimalDeserializer)
-                .registerTypeAdapter(JsonString.class, jsonStringDeserializer)
-                .registerTypeAdapter(JsonString.class, jsonStringSerializer)
-                .registerTypeAdapter(Key.class, keyDeserializer)
-                .registerTypeAdapter(Key.class, keySerializer)
-                .create();
-        }
+        final JsonDeserializer<Key> keyDeserializer = new JsonDeserializer<Key>() {
+            @Override
+            public Key deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+                return Key.fromString(json.toString());
+            }
+        };
 
-        return gson;
+        final GsonBuilder builder = new GsonBuilder()
+            .registerTypeAdapter(Date.class, dateSerializer)
+            .registerTypeAdapter(Date.class, dateDeserializer)
+            .registerTypeAdapter(BigDecimal.class, bigDecimalSerializer)
+            .registerTypeAdapter(BigDecimal.class, bigDecimalDeserializer)
+            .registerTypeAdapter(JsonString.class, jsonStringDeserializer)
+            .registerTypeAdapter(JsonString.class, jsonStringSerializer)
+            .registerTypeAdapter(Key.class, keyDeserializer)
+            .registerTypeAdapter(Key.class, keySerializer);
+
+        return builder;
     }
 
     static {
