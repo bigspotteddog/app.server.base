@@ -7,6 +7,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 import org.restlet.Application;
+import org.restlet.Context;
 import org.restlet.Request;
 import org.restlet.Response;
 import org.restlet.Restlet;
@@ -138,7 +139,7 @@ public class WebSwitch extends Application {
         attachRoutes(router);
 
         if (isSecured) {
-            co = new MyCookieAuthenticator(getContext(), false, "My cookie realm", "MyExtraSecretKey".getBytes());
+            co = getCookieAuthenticator(getContext());
             co.setLoginFormPath("/");
             co.setVerifier(getVerifier());
             co.setEnroler(getEnroler(getApplicationName()));
@@ -159,6 +160,10 @@ public class WebSwitch extends Application {
 
     public String getCrentialsCookieName() {
         return co.getCookieName();
+    }
+
+    protected MyCookieAuthenticator getCookieAuthenticator(final Context context) {
+        return new MyCookieAuthenticator(context, false, "My cookie realm", "MyExtraSecretKey".getBytes());
     }
 
     protected MyEnroler getEnroler(final String applicationName) {

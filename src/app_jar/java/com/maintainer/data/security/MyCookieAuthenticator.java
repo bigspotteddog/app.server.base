@@ -111,18 +111,15 @@ public class MyCookieAuthenticator extends CookieAuthenticator {
         return authenticated;
     }
 
-    @SuppressWarnings({ "unused", "unchecked" })
     @Override
     protected int authenticated(final Request request, final Response response) {
         if (!Utils.isInternalRequest(request)) {
             final ClientInfo clientInfo = request.getClientInfo();
             final User user = clientInfo.getUser();
             if (user != null) {
-                final String identifier = user.getIdentifier();
-
                 final List<org.restlet.security.Role> roles = clientInfo.getRoles();
 
-                final List<Role> groups = (List<Role>) Utils.subrequest((WebSwitch) getApplication(), "roles?users.username=" + user.getIdentifier(), request);
+                final List<Role> groups = getUserRoles(request, user);
                 if (groups != null) {
                     for (final Role role : groups) {
                         final List<Function> functions = role.getFunctions();
@@ -134,5 +131,11 @@ public class MyCookieAuthenticator extends CookieAuthenticator {
             }
         }
         return super.authenticated(request, response);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected List<Role> getUserRoles(final Request request, final User user) {
+        final List<Role> groups = (List<Role>) Utils.subrequest((WebSwitch) getApplication(), "roles?users.username=" + user.getIdentifier(), request);
+        return groups;
     }
 }

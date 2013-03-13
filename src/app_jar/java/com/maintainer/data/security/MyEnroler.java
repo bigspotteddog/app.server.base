@@ -10,14 +10,14 @@ public class MyEnroler implements Enroler {
 
     private final String applicationName;
 
-    public MyEnroler(String applicationName) {
+    public MyEnroler(final String applicationName) {
         this.applicationName = applicationName;
     }
 
     @Override
-    public void enrole(ClientInfo clientInfo) {
+    public void enrole(final ClientInfo clientInfo) {
 
-        List<Role> roles = clientInfo.getRoles();
+        final List<Role> roles = clientInfo.getRoles();
         roles.add(new Role("*.*", "Any resource, any method."));
     }
 
