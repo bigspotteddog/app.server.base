@@ -3,8 +3,8 @@ package com.maintainer.data.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
-import org.apache.log4j.Logger;
 import org.restlet.Request;
 import org.restlet.data.ClientInfo;
 import org.restlet.security.User;
@@ -56,7 +56,7 @@ public class SecuredGenericController extends GenericController {
                     buf.append(']');
 
                     final String idsString = buf.toString();
-					log.debug("Looking for resource: " + "filters?role:in=" + idsString + "&resource=" + resource.getResource());
+                    log.fine("Looking for resource: " + "filters?role:in=" + idsString + "&resource=" + resource.getResource());
 
                     final List<Filter> filters = (List<Filter>) Utils.subrequest(
                             application,
@@ -65,7 +65,7 @@ public class SecuredGenericController extends GenericController {
                     );
 
                     for (final Filter filter : filters) {
-                        log.debug("Adding filter: " + filter.getFilter() + ", " + filter.getIds().toString());
+                        log.fine("Adding filter: " + filter.getFilter() + ", " + filter.getIds().toString());
                         query.filter(filter.getFilter(), filter.getIds());
                     }
                 }
