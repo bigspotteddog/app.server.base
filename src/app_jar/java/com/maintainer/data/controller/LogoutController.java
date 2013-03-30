@@ -25,6 +25,7 @@ public class LogoutController extends ServerResource {
         if (user != null) {
             identifier = user.getIdentifier();
         }
+
         final Gson gson = Utils.getGson();
         final Goodbye welcome = new Goodbye(identifier);
         final String json = gson.toJson(welcome);

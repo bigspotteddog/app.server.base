@@ -92,7 +92,7 @@ public abstract class AbstractDatastoreDataProvider<T> extends AbstractDataProvi
         return class1;
     }
 
-    protected Key createDatastoreKey(final com.maintainer.data.provider.Key k) {
+    public static Key createDatastoreKey(final com.maintainer.data.provider.Key k) {
         if (k.getParent() == null) {
             return createDatastoreKey(k.getKindName(), k.getId());
         } else {
@@ -100,7 +100,7 @@ public abstract class AbstractDatastoreDataProvider<T> extends AbstractDataProvi
         }
     }
 
-    protected Key createDatastoreKey(final String kind, final Object id) {
+    public static Key createDatastoreKey(final String kind, final Object id) {
         Key key = null;
 
         if (Utils.isNumeric(id.toString())) {
@@ -116,14 +116,14 @@ public abstract class AbstractDatastoreDataProvider<T> extends AbstractDataProvi
         return key;
     }
 
-    protected Key createDatastoreKey(final EntityBase parent, final String kind, final Object id) {
+    public static Key createDatastoreKey(final EntityBase parent, final String kind, final Object id) {
         if (parent == null) {
             return createDatastoreKey(kind, id);
         }
         return createDatastoreKey(parent.getKey(), kind, id);
     }
 
-    protected Key createDatastoreKey(final com.maintainer.data.provider.Key parent, final String kind, final Object id) {
+    public static Key createDatastoreKey(final com.maintainer.data.provider.Key parent, final String kind, final Object id) {
         Key key = null;
 
         final Key parentKey = createDatastoreKey(parent);
