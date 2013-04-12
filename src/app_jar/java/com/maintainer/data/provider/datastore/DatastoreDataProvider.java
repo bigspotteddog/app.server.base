@@ -1018,16 +1018,30 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
     }
 
     public static void writeBlob(final String folder, final String name, final byte[] bytes) {
-        writeBlob(folder, name, bytes, true);
+        writeBlob(folder, name, null, bytes, true);
     }
 
-    public static void writeBlob(final String folder, final String name, final byte[] bytes, final boolean cache) {
+    public static void writeBlob(final String folder, final String name, final com.maintainer.data.provider.Key parent, final byte[] bytes) {
+        writeBlob(folder, name, parent, bytes, true);
+    }
+
+    public static void writeBlob(final String folder, final String name, final com.maintainer.data.provider.Key parent, final byte[] bytes, final boolean cache) {
         if (Utils.isEmpty(folder) || Utils.isEmpty(name) || bytes == null) return;
 
-        final Blob blob = new Blob(bytes);
-        final Entity entity = new Entity(folder, name);
-        entity.setUnindexedProperty("content", blob);
+        Entity entity = null;
+        if (parent != null) {
+            final Key parentKey = createDatastoreKey(parent);
+            entity = new Entity(folder, name, parentKey);
+        } else {
+            entity = new Entity(folder, name);
+        }
 
+        writeBlob(entity, bytes, cache);
+    }
+
+    private static void writeBlob(final Entity entity, final byte[] bytes, final boolean cache) {
+        final Blob blob = new Blob(bytes);
+        entity.setUnindexedProperty("content", blob);
         DatastoreServiceFactory.getDatastoreService().put(entity);
 
         if (cache) {
@@ -1038,8 +1052,26 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
     }
 
     public static byte[] readBlob(final String folder, final String name) {
-        final Key key = KeyFactory.createKey(folder,  name);
+        return readBlob(null, folder, name);
+    }
 
+    public static byte[] readBlob(final com.maintainer.data.provider.Key parent, final String folder, final String name) {
+        final Key key = createDatastoreKeyWithOrWithoutParent(parent, folder, name);
+        return readBlob(key);
+    }
+
+    private static Key createDatastoreKeyWithOrWithoutParent(final com.maintainer.data.provider.Key parent, final String folder, final String name) {
+        Key key = null;
+
+        if (parent != null) {
+            key = createDatastoreKey(parent, folder, name);
+        } else {
+            key = createDatastoreKey(folder, name);
+        }
+        return key;
+    }
+
+    private static byte[] readBlob(final Key key) {
         final String keyToString = KeyFactory.keyToString(key);
         byte[] bytes = (byte[]) MemcacheServiceFactory.getMemcacheService().get(keyToString);
         if (bytes != null) {
@@ -1059,7 +1091,15 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
     }
 
     public static void deleteBlob(final String folder, final String name) {
-        final Key key = KeyFactory.createKey(folder, name);
+        deleteBlob(null, folder, name);
+    }
+
+    public static void deleteBlob(final com.maintainer.data.provider.Key parent, final String folder, final String name) {
+        final Key key = createDatastoreKey(parent, folder, name);
+        deleteBlob(key);
+    }
+
+    private static void deleteBlob(final Key key) {
         DatastoreServiceFactory.getAsyncDatastoreService().delete(key);
         final String keyToString = KeyFactory.keyToString(key);
         MemcacheServiceFactory.getAsyncMemcacheService().delete(keyToString);

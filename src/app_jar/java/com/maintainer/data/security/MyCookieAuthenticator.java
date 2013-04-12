@@ -123,8 +123,10 @@ public class MyCookieAuthenticator extends CookieAuthenticator {
                 if (groups != null) {
                     for (final Role role : groups) {
                         final List<Function> functions = role.getFunctions();
-                        for (final Function function : functions) {
-                            roles.add(new org.restlet.security.Role(function.getPath(), null));
+                        if (functions != null) {
+                            for (final Function function : functions) {
+                                roles.add(new org.restlet.security.Role(function.getPath(), null));
+                            }
                         }
                     }
                 }
