@@ -196,7 +196,7 @@ public class Utils {
 
     public static Gson getGsonPretty() {
         if (gsonPretty  == null) {
-            gsonPretty = getGsonBuilder().setPrettyPrinting().create();
+            gsonPretty = getGsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
         }
         return gsonPretty;
     }
