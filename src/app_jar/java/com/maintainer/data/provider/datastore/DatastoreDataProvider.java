@@ -1017,17 +1017,30 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         }
     }
 
-    public static void writeBlob(final String folder, final String name, final byte[] bytes) {
+    public static void writeBlob(final com.maintainer.data.provider.Key key, final byte[] bytes) throws Exception {
+        final String folder = key.getKindName();
+        final String name = (String) key.getId();
+        final com.maintainer.data.provider.Key parent = key.getParent();
+        writeBlob(folder, name, parent, bytes);
+    }
+
+    public static void writeBlob(final String folder, final String name, final byte[] bytes) throws Exception {
         writeBlob(folder, name, null, bytes, true);
     }
 
-    public static void writeBlob(final String folder, final String name, final com.maintainer.data.provider.Key parent, final byte[] bytes) {
+    public static void writeBlob(final String folder, final String name, final com.maintainer.data.provider.Key parent, final byte[] bytes) throws Exception {
         writeBlob(folder, name, parent, bytes, true);
     }
 
-    public static void writeBlob(final String folder, final String name, final com.maintainer.data.provider.Key parent, final byte[] bytes, final boolean cache) {
+    public static void writeBlob(final String folder, final String name, final com.maintainer.data.provider.Key parent, final byte[] bytes, final boolean cache) throws Exception {
         if (Utils.isEmpty(folder) || Utils.isEmpty(name) || bytes == null) return;
 
+        final Entity entity = createEntityWithOrWithoutParent(folder, name, parent);
+
+        writeBlob(entity, bytes, cache);
+    }
+
+    private static Entity createEntityWithOrWithoutParent(final String folder, final String name, final com.maintainer.data.provider.Key parent) {
         Entity entity = null;
         if (parent != null) {
             final Key parentKey = createDatastoreKey(parent);
@@ -1035,27 +1048,34 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         } else {
             entity = new Entity(folder, name);
         }
-
-        writeBlob(entity, bytes, cache);
+        return entity;
     }
 
-    private static void writeBlob(final Entity entity, final byte[] bytes, final boolean cache) {
+    private static void writeBlob(final Entity entity, final byte[] bytes, final boolean cache) throws Exception {
         final Blob blob = new Blob(bytes);
         entity.setUnindexedProperty("content", blob);
+
+        final Key datastoreKey = entity.getKey();
+        final Key parent = datastoreKey.getParent();
+        if (parent != null) {
+            final com.maintainer.data.provider.Key key = DatastoreDataProvider.createNobodyelsesKey(parent);
+            final String parentName = key.asString();
+            entity.setUnindexedProperty("owner", parentName);
+        }
+
         DatastoreServiceFactory.getDatastoreService().put(entity);
 
         if (cache) {
-            final Key key = entity.getKey();
-            final String keyToString = KeyFactory.keyToString(key);
+            final String keyToString = KeyFactory.keyToString(datastoreKey);
             MemcacheServiceFactory.getMemcacheService().put(keyToString, bytes);
         }
     }
 
-    public static byte[] readBlob(final String folder, final String name) {
+    public static com.maintainer.data.provider.datastore.Blob readBlob(final String folder, final String name) {
         return readBlob(null, folder, name);
     }
 
-    public static byte[] readBlob(final com.maintainer.data.provider.Key parent, final String folder, final String name) {
+    public static com.maintainer.data.provider.datastore.Blob readBlob(final com.maintainer.data.provider.Key parent, final String folder, final String name) {
         final Key key = createDatastoreKeyWithOrWithoutParent(parent, folder, name);
         return readBlob(key);
     }
@@ -1071,20 +1091,22 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return key;
     }
 
-    private static byte[] readBlob(final Key key) {
+    public static com.maintainer.data.provider.datastore.Blob readBlob(final Key key) {
         final String keyToString = KeyFactory.keyToString(key);
-        byte[] bytes = (byte[]) MemcacheServiceFactory.getMemcacheService().get(keyToString);
-        if (bytes != null) {
-            return bytes;
+        com.maintainer.data.provider.datastore.Blob blob2 =  (com.maintainer.data.provider.datastore.Blob) MemcacheServiceFactory.getMemcacheService().get(keyToString);
+        if (blob2 != null) {
+            return blob2;
         }
 
         try {
             final Entity entity = DatastoreServiceFactory.getDatastoreService().get(key);
             final Blob blob = (Blob) entity.getProperty("content");
             if (blob != null) {
-                bytes = blob.getBytes();
-                MemcacheServiceFactory.getMemcacheService().put(keyToString, bytes);
-                return bytes;
+                final byte[] bytes = blob.getBytes();
+
+                blob2 = new com.maintainer.data.provider.datastore.Blob(bytes);
+                MemcacheServiceFactory.getMemcacheService().put(keyToString, blob2);
+                return blob2;
             }
         } catch (final EntityNotFoundException e) {}
         return null;
@@ -1095,11 +1117,11 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
     }
 
     public static void deleteBlob(final com.maintainer.data.provider.Key parent, final String folder, final String name) {
-        final Key key = createDatastoreKey(parent, folder, name);
+        final Key key = createDatastoreKeyWithOrWithoutParent(parent, folder, name);
         deleteBlob(key);
     }
 
-    private static void deleteBlob(final Key key) {
+    public static void deleteBlob(final Key key) {
         DatastoreServiceFactory.getAsyncDatastoreService().delete(key);
         final String keyToString = KeyFactory.keyToString(key);
         MemcacheServiceFactory.getAsyncMemcacheService().delete(keyToString);

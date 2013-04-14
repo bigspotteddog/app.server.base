@@ -67,7 +67,7 @@ public abstract class AbstractDatastoreDataProvider<T> extends AbstractDataProvi
         return condition;
     }
 
-    protected com.maintainer.data.provider.Key createNobodyelsesKey(final Key k) throws ClassNotFoundException {
+    public static com.maintainer.data.provider.Key createNobodyelsesKey(final Key k) throws ClassNotFoundException {
         final Class<?> class1 = getClazz(k);
 
         Object id = null;
@@ -86,7 +86,7 @@ public abstract class AbstractDatastoreDataProvider<T> extends AbstractDataProvi
         return key;
     }
 
-    protected Class<?> getClazz(final Key k) throws ClassNotFoundException {
+    public static Class<?> getClazz(final Key k) throws ClassNotFoundException {
         final String className = k.getKind();
         final Class<?> class1 = Class.forName(className);
         return class1;
