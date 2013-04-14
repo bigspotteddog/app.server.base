@@ -1017,22 +1017,30 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         }
     }
 
-    public static void writeBlob(final com.maintainer.data.provider.Key key, final byte[] bytes) throws Exception {
+    public static void writeBlob(final com.maintainer.data.provider.Key key, final byte[] bytes, final Integer version) throws Exception {
         final String folder = key.getKindName();
         final String name = (String) key.getId();
         final com.maintainer.data.provider.Key parent = key.getParent();
-        writeBlob(folder, name, parent, bytes);
+        writeBlob(folder, name, parent, bytes, version);
     }
 
     public static void writeBlob(final String folder, final String name, final byte[] bytes) throws Exception {
-        writeBlob(folder, name, null, bytes, true);
+        writeBlob(folder, name, null, bytes, null);
+    }
+
+    public static void writeBlob(final String folder, final String name, final byte[] bytes, final Integer version) throws Exception {
+        writeBlob(folder, name, null, bytes, version, true);
     }
 
     public static void writeBlob(final String folder, final String name, final com.maintainer.data.provider.Key parent, final byte[] bytes) throws Exception {
-        writeBlob(folder, name, parent, bytes, true);
+        writeBlob(folder, name, parent, bytes, null);
     }
 
-    public static void writeBlob(final String folder, final String name, final com.maintainer.data.provider.Key parent, final byte[] bytes, final boolean cache) throws Exception {
+    public static void writeBlob(final String folder, final String name, final com.maintainer.data.provider.Key parent, final byte[] bytes, final Integer version) throws Exception {
+        writeBlob(folder, name, parent, bytes, version, true);
+    }
+
+    public static void writeBlob(final String folder, final String name, final com.maintainer.data.provider.Key parent, final byte[] bytes, final Integer version, final boolean cache) throws Exception {
         if (Utils.isEmpty(folder) || Utils.isEmpty(name) || bytes == null) return;
 
         final Entity entity = createEntityWithOrWithoutParent(folder, name, parent);
@@ -1052,6 +1060,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
     }
 
     private static void writeBlob(final Entity entity, final byte[] bytes, final boolean cache) throws Exception {
+        writeBlob(entity, bytes, null, cache);
+    }
+
+    private static void writeBlob(final Entity entity, final byte[] bytes, final Integer version, final boolean cache) throws Exception {
         final Blob blob = new Blob(bytes);
         entity.setUnindexedProperty("content", blob);
 
@@ -1063,6 +1075,9 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
             entity.setUnindexedProperty("owner", parentName);
         }
 
+        if (version != null) {
+            entity.setUnindexedProperty("version", version);
+        }
         DatastoreServiceFactory.getDatastoreService().put(entity);
 
         if (cache) {
@@ -1071,11 +1086,11 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         }
     }
 
-    public static com.maintainer.data.provider.datastore.Blob readBlob(final String folder, final String name) {
+    public static com.maintainer.data.provider.datastore.Blob readBlob(final String folder, final String name) throws Exception {
         return readBlob(null, folder, name);
     }
 
-    public static com.maintainer.data.provider.datastore.Blob readBlob(final com.maintainer.data.provider.Key parent, final String folder, final String name) {
+    public static com.maintainer.data.provider.datastore.Blob readBlob(final com.maintainer.data.provider.Key parent, final String folder, final String name) throws Exception {
         final Key key = createDatastoreKeyWithOrWithoutParent(parent, folder, name);
         return readBlob(key);
     }
@@ -1091,7 +1106,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         return key;
     }
 
-    public static com.maintainer.data.provider.datastore.Blob readBlob(final Key key) {
+    public static com.maintainer.data.provider.datastore.Blob readBlob(final Key key) throws Exception {
         final String keyToString = KeyFactory.keyToString(key);
         com.maintainer.data.provider.datastore.Blob blob2 =  (com.maintainer.data.provider.datastore.Blob) MemcacheServiceFactory.getMemcacheService().get(keyToString);
         if (blob2 != null) {
@@ -1105,6 +1120,11 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
                 final byte[] bytes = blob.getBytes();
 
                 blob2 = new com.maintainer.data.provider.datastore.Blob(bytes);
+
+                final Integer version = (Integer) entity.getProperty("version");
+                if (version != null) {
+                    blob2.setVersion(version);
+                }
                 MemcacheServiceFactory.getMemcacheService().put(keyToString, blob2);
                 return blob2;
             }
