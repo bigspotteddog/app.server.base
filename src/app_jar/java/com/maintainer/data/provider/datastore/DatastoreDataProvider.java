@@ -1082,7 +1082,9 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
 
         if (cache) {
             final String keyToString = KeyFactory.keyToString(datastoreKey);
-            MemcacheServiceFactory.getMemcacheService().put(keyToString, bytes);
+            final com.maintainer.data.provider.datastore.Blob blob2 = new com.maintainer.data.provider.datastore.Blob(bytes);
+            blob2.setVersion(version);
+            MemcacheServiceFactory.getMemcacheService().put(keyToString, blob2);
         }
     }
 
