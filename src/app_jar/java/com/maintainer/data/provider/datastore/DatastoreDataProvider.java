@@ -55,7 +55,7 @@ import com.maintainer.util.Utils;
 public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatastoreDataProvider<T> {
     private static final Logger log = Logger.getLogger(DatastoreDataProvider.class.getName());
     private static final Cache<String, Object> cache = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.HOURS).build();
-    private static final MemcacheService memcache = MemcacheServiceFactory.getMemcacheService();
+    private static final MemcacheService memcache = MyMemcacheServiceFactory.getMemcacheService();
 
     private boolean nocache;
     private boolean local;
@@ -1083,8 +1083,10 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         if (cache) {
             final String keyToString = KeyFactory.keyToString(datastoreKey);
             final com.maintainer.data.provider.datastore.Blob blob2 = new com.maintainer.data.provider.datastore.Blob(bytes);
-            blob2.setVersion(version);
-            MemcacheServiceFactory.getMemcacheService().put(keyToString, blob2);
+            if (version != null) {
+                blob2.setVersion(version);
+            }
+            MyMemcacheServiceFactory.getMemcacheService().put(keyToString, blob2);
         }
     }
 
@@ -1110,7 +1112,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
 
     public static com.maintainer.data.provider.datastore.Blob readBlob(final Key key) throws Exception {
         final String keyToString = KeyFactory.keyToString(key);
-        com.maintainer.data.provider.datastore.Blob blob2 =  (com.maintainer.data.provider.datastore.Blob) MemcacheServiceFactory.getMemcacheService().get(keyToString);
+        com.maintainer.data.provider.datastore.Blob blob2 =  (com.maintainer.data.provider.datastore.Blob) MyMemcacheServiceFactory.getMemcacheService().get(keyToString);
         if (blob2 != null) {
             return blob2;
         }
@@ -1146,6 +1148,6 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
     public static void deleteBlob(final Key key) {
         DatastoreServiceFactory.getAsyncDatastoreService().delete(key);
         final String keyToString = KeyFactory.keyToString(key);
-        MemcacheServiceFactory.getAsyncMemcacheService().delete(keyToString);
+        MyMemcacheServiceFactory.getAsyncMemcacheService().delete(keyToString);
     }
 }
