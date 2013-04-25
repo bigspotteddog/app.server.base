@@ -3,6 +3,7 @@ package com.maintainer.data.provider.datastore;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -15,9 +16,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 
 import com.google.appengine.api.datastore.Blob;
 import com.google.appengine.api.datastore.Cursor;
@@ -83,7 +84,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
         final T cached = (T) getCached(key);
         if (cached != null) {
             cached.setKey(key);
-            log.debug(key + " returned from cache.");
+            log.fine(key + " returned from cache.");
             return cached;
         }
 
@@ -139,7 +140,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
             if (checkEqual(target, existing)) {
                 return target;
             } else {
-                log.debug(nobodyelsesKey + " changed.");
+                log.fine(nobodyelsesKey + " changed.");
             }
         }
 
@@ -1111,17 +1112,20 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
     }
 
     public static com.maintainer.data.provider.datastore.Blob readBlob(final Key key) throws Exception {
-        final String keyToString = KeyFactory.keyToString(key);
+        final String keyToString = key.toString();
         com.maintainer.data.provider.datastore.Blob blob2 =  (com.maintainer.data.provider.datastore.Blob) MyMemcacheServiceFactory.getMemcacheService().get(keyToString);
         if (blob2 != null) {
             return blob2;
         }
 
         try {
+            byte[] bytes = null;
+
             final Entity entity = DatastoreServiceFactory.getDatastoreService().get(key);
+
             final Blob blob = (Blob) entity.getProperty("content");
             if (blob != null) {
-                final byte[] bytes = blob.getBytes();
+                bytes = blob.getBytes();
 
                 blob2 = new com.maintainer.data.provider.datastore.Blob(bytes);
 
@@ -1130,8 +1134,16 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
                     blob2.setVersion(version);
                 }
                 MemcacheServiceFactory.getMemcacheService().put(keyToString, blob2);
-                return blob2;
             }
+
+            int length = -1;
+            if (bytes != null) {
+                length = bytes.length;
+            }
+
+            log.warning(MessageFormat.format("Retieving index {0} results in {2} bytes.", keyToString, length));
+
+            return blob2;
         } catch (final EntityNotFoundException e) {}
         return null;
     }
