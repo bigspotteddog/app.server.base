@@ -13,7 +13,6 @@ import com.google.appengine.api.datastore.Transaction;
 import com.google.appengine.api.memcache.Expiration;
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheService.SetPolicy;
-import com.google.appengine.api.memcache.MemcacheServiceFactory;
 
 /**
  * A counter which can be incremented rapidly.
@@ -83,7 +82,7 @@ public class ShardedCounter {
      */
     private final String kind;
 
-    private final MemcacheService mc = MemcacheServiceFactory.getMemcacheService();
+    private final MemcacheService mc = MyMemcacheServiceFactory.getMemcacheService();
 
     /**
      * Constructor which creates a sharded counter using the provided counter
