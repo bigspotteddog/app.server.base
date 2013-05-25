@@ -289,14 +289,14 @@ public class Utils {
         final JsonDeserializer<JsonString> jsonStringDeserializer = new JsonDeserializer<JsonString>() {
             @Override
             public JsonString deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
-                return new JsonString(json.toString());
+                return null;
             }
         };
 
         final JsonSerializer<Key> keySerializer = new JsonSerializer<Key>() {
             @Override
             public JsonElement serialize(final Key key, final Type typeOfSrc, final JsonSerializationContext context) {
-                return new JsonParser().parse(key.toString());
+                return null;
             }
         };
 
@@ -315,7 +315,8 @@ public class Utils {
             .registerTypeAdapter(JsonString.class, jsonStringDeserializer)
             .registerTypeAdapter(JsonString.class, jsonStringSerializer)
             .registerTypeAdapter(Key.class, keyDeserializer)
-            .registerTypeAdapter(Key.class, keySerializer);
+            .registerTypeAdapter(Key.class, keySerializer)
+            .serializeSpecialFloatingPointValues();
 
         return builder;
     }

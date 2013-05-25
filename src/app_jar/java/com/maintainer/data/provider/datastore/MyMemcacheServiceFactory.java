@@ -19,4 +19,8 @@ public class MyMemcacheServiceFactory {
     public static boolean isActive() {
         return isActive;
     }
+
+    public static void setActive(final boolean b) {
+        isActive = b;
+    }
 }

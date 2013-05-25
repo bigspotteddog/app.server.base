@@ -26,7 +26,7 @@ public class EntityImpl implements EntityBase {
     transient private Date modified;
 
     @NotIndexed @NotStored
-    transient private Key key;
+    private Key key;
 
     @NotIndexed @NotStored
     private String cursor;

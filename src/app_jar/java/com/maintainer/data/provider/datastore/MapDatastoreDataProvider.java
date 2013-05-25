@@ -20,7 +20,7 @@ public class MapDatastoreDataProvider<T extends MapEntityImpl> extends Datastore
 
     @Override
     @SuppressWarnings("unchecked")
-    public T fromEntity(final Class<?> kind, final Entity entity) {
+    public T fromEntity(final Class<?> kind, final Entity entity) throws Exception {
         final T obj = super.fromEntity(kind, entity);
 
         try {
