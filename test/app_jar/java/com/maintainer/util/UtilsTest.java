@@ -15,8 +15,29 @@ import org.restlet.data.Method;
 import org.restlet.data.Reference;
 
 import com.google.gson.Gson;
+import com.maintainer.data.model.User;
+import com.maintainer.data.provider.Key;
 
 public class UtilsTest extends TestCase {
+
+    public void testKey() {
+        final Key key = Key.create(User.class, 123L);
+        final String string = key.asString();
+        assertEquals("User(123)", string);
+
+        final Key key2 = Key.fromDecodedString(string);
+        final String name = key2.getId().getClass().getSimpleName();
+        assertEquals("Long", name);
+
+        final Key key3 = Key.create(User.class, "Bob");
+        final String string3 = key3.asString();
+        assertEquals("User(\"Bob\")", string3);
+
+        final Key key4 = Key.fromDecodedString(string3);
+        final String name4 = key4.getId().getClass().getSimpleName();
+        assertEquals("String", name4);
+        assertEquals("Bob", key4.getId());
+    }
 
     @Test
     public void test() {

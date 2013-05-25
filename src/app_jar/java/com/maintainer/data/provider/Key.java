@@ -108,12 +108,22 @@ public class Key implements Comparable<Key>, Serializable {
         final String[] path = kindName.split("\\.");
         final String k = path[path.length - 1];
 
-        final String string = buf
-            .append(k)
-            .append('(')
-            .append(id)
-            .append(')')
-            .toString();
+        final boolean isStringId = String.class.isAssignableFrom(id.getClass());
+
+        buf.append(k).append('(');
+
+        if (isStringId) {
+            buf.append('"');
+        }
+
+        buf.append(id);
+
+        if (isStringId) {
+            buf.append('"');
+        }
+
+        final String string = buf.append(')').toString();
+
         return string;
     }
 
@@ -194,6 +204,20 @@ public class Key implements Comparable<Key>, Serializable {
 
         String id = me.substring(firstParen + 1);
         id = id.substring(0, id.length() - 1);
+
+        if (!Utils.isNumeric(id)) {
+            if ((id.startsWith("\"") && id.endsWith("\""))) {
+                id = id.substring(1, id.length() - 1);
+            }
+        } else {
+            try {
+                final Long lid = (Long) Utils.convert(id, Long.class);
+                final Key meKey = Key.create(kind, lid, parentKey);
+                return meKey;
+            } catch (final Exception e) {
+                // ignore this and process it as a string
+            }
+        }
 
         final Key meKey = Key.create(kind, id, parentKey);
         return meKey;
