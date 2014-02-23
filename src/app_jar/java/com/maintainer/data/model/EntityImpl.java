@@ -5,6 +5,7 @@ import java.util.Date;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.MappedSuperclass;
+import javax.persistence.Transient;
 
 import com.maintainer.data.provider.AutoCreateVisitor;
 import com.maintainer.data.provider.Key;
@@ -15,9 +16,9 @@ public class EntityImpl implements EntityBase {
     transient private EntityBase parent;
 
     @javax.persistence.Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @NotIndexed @NotStored
-    private Object id;
+    private String id;
 
     @NotIndexed
     transient private Date created;
@@ -25,13 +26,13 @@ public class EntityImpl implements EntityBase {
     @NotIndexed
     transient private Date modified;
 
-    @NotIndexed @NotStored
+    @NotIndexed @NotStored @Transient
     private Key key;
 
-    @NotIndexed @NotStored
+    @NotIndexed @NotStored @Transient
     private String cursor;
 
-    @NotIndexed @NotStored
+    @NotIndexed @NotStored @Transient
     private String keyString;
 
     @Override
@@ -50,7 +51,7 @@ public class EntityImpl implements EntityBase {
     }
 
     @Override
-    public void setId(final Object id) {
+    public void setId(final String id) {
         this.id = id;
     }
 
@@ -59,7 +60,7 @@ public class EntityImpl implements EntityBase {
     }
 
     @Override
-    public Object getId() {
+    public String getId() {
         return id;
     }
 
@@ -90,7 +91,7 @@ public class EntityImpl implements EntityBase {
     @Override
     public Key getKey() {
         if (key == null && id != null) {
-            key = Key.fromString((String) id);
+            key = Key.fromString(id);
         }
         return key;
     }

@@ -19,6 +19,7 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Method;
 import org.restlet.data.Reference;
 import org.restlet.data.Status;
+import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
@@ -310,9 +311,25 @@ public abstract class ResourcesController<T> extends ServerResource {
             throw new Exception(ID_PROVIDED);
         }
 
-        prePost(obj);
-        obj = service.post(obj);
-        postPost(obj);
+        try {
+            prePost(obj);
+            obj = service.post(obj);
+            postPost(obj);
+        } catch (Exception e) {
+            addError(e.getMessage());
+        }
+
+        if (errors != null && !errors.isEmpty()) {
+            Status status = Status.CLIENT_ERROR_PRECONDITION_FAILED;
+            final ErrorResponse errorResponse = new ErrorResponse(errors, obj);
+            String json = Utils.getGson().toJson(errorResponse);
+
+            JsonRepresentation response = new JsonRepresentation(json);
+            response.setMediaType(MediaType.APPLICATION_JSON);
+            setStatus(status);
+
+            return response;
+        }
 
         final String json = getGson().toJson(obj);
 
@@ -327,18 +344,33 @@ public abstract class ResourcesController<T> extends ServerResource {
         final String incomingJson = rep.getText();
 
         final DataProvider<T> service = getDataProvider();
-        final T obj = service.fromJson(getType(), incomingJson);
+        T obj = service.fromJson(getType(), incomingJson);
 
         final EntityImpl obj2 = (EntityImpl) obj;
         if (obj2.getId() == null) {
             throw new Exception(NO_ID_PROVIDED);
         }
 
-        prePut(obj);
-        final T merged = service.merge(obj);
+        try {
+            prePut(obj);
+            obj = service.merge(obj);
+        } catch (Exception e) {
+            addError(e.getMessage());
+        }
 
-        final String json = getGson().toJson(merged);
+        if (errors != null && !errors.isEmpty()) {
+            Status status = Status.CLIENT_ERROR_PRECONDITION_FAILED;
+            final ErrorResponse errorResponse = new ErrorResponse(errors, obj);
+            String json = Utils.getGson().toJson(errorResponse);
 
+            JsonRepresentation response = new JsonRepresentation(json);
+            response.setMediaType(MediaType.APPLICATION_JSON);
+            setStatus(status);
+
+            return response;
+        }
+
+        final String json = getGson().toJson(obj);
         return getJsonResponse(json);
     }
 
@@ -357,7 +389,24 @@ public abstract class ResourcesController<T> extends ServerResource {
 
         Key key = Key.fromString((String) id);
         final T obj = service.get(key);
-        preDelete(obj);
+
+        try {
+            preDelete(obj);
+        } catch (Exception e) {
+            addError(e.getMessage());
+        }
+
+        if (errors != null && !errors.isEmpty()) {
+            Status status = Status.CLIENT_ERROR_PRECONDITION_FAILED;
+            final ErrorResponse errorResponse = new ErrorResponse(errors, obj);
+            String json = Utils.getGson().toJson(errorResponse);
+
+            JsonRepresentation response = new JsonRepresentation(json);
+            response.setMediaType(MediaType.APPLICATION_JSON);
+            setStatus(status);
+
+            return response;
+        }
 
         key = service.delete(key);
 

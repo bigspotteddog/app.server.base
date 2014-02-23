@@ -924,6 +924,7 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
 
     protected Object getCached(final com.maintainer.data.provider.Key key) throws Exception {
         if (nocache) return null;
+        if (key == null) return null;
 
         Object o = getLocalCache(key);
         if (o == null) {
@@ -1135,6 +1136,17 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
             key = createDatastoreKey(folder, name);
         }
         return key;
+    }
+
+    public static String getKeyStringWithOrWithoutParent(final com.maintainer.data.provider.Key parent, final String folder, final String name) {
+        Key key = null;
+
+        if (parent != null) {
+            key = createDatastoreKey(parent, folder, name);
+        } else {
+            key = createDatastoreKey(folder, name);
+        }
+        return key.toString();
     }
 
     public static com.maintainer.data.provider.datastore.Blob readBlob(final Key key) throws Exception {
