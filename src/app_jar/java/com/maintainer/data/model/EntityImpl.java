@@ -21,6 +21,7 @@ public class EntityImpl implements EntityBase {
     private String id;
 
     @NotIndexed
+    @Autocreate(readonly=true)
     transient private Date created;
 
     @NotIndexed
