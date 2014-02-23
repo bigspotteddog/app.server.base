@@ -15,7 +15,7 @@ public class MapEntityImpl extends EntityImpl implements Map<String, Object> {
     }
 
     @Override
-    public void setId(final Object id) {
+    public void setId(final String id) {
         put("id", id);
     }
 

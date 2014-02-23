@@ -12,8 +12,8 @@ public interface EntityBase extends Serializable {
     void setParent(EntityBase parent);
     EntityBase getParent();
 
-    void setId(Object id);
-    Object getId();
+    void setId(String id);
+    String getId();
 
     void setCreated(Date date);
     Date getCreated();

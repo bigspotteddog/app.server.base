@@ -132,58 +132,62 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
         final Field[] fields = target.getClass().getDeclaredFields();
         for (final Field f : fields) {
-            f.setAccessible(true);
-            final Autocreate autocreate = f.getAnnotation(Autocreate.class);
-            if (autocreate != null && !autocreate.embedded()) {
-                try {
-                    final Object value = f.get(target);
-                    if (value != null) {
-                        if (EntityBase.class.isAssignableFrom(value.getClass())) {
-                            final EntityBase entity = (EntityBase) value;
-                            f.set(target, createOrUpdate(entity, autocreate));
-                        } else if (Collection.class.isAssignableFrom(value.getClass())) {
-                            final List<Object> list = new ArrayList<Object>((Collection<Object>) value);
-
-                            List<Object> removeThese = null;
-                            if (existing != null) {
-                                removeThese = (List<Object>) f.get(existing);
-                                if (removeThese != null) {
-                                    removeThese = new ArrayList<Object>(removeThese);
-                                }
-                            }
-
-                            final ListIterator<Object> iterator = list.listIterator();
-                            while(iterator.hasNext()) {
-                                final Object o = iterator.next();
-                                if (o == null) {
-                                    continue;
-                                }
-                                if (EntityBase.class.isAssignableFrom(o.getClass())) {
-                                    final EntityBase entity = (EntityBase) o;
-                                    iterator.set(createOrUpdate(entity, autocreate));
-                                }
-                            }
-
-                            if (removeThese != null && !removeThese.isEmpty()) {
-                                removeThese.removeAll(list);
-                                for (final Object object : removeThese) {
-                                    delete(object, autocreate);
-                                }
-                            }
-                        }
-                    } else {
-                        if (existing != null) {
-                            final Object object = f.get(existing);
-                            delete(object, autocreate);
-                        }
-                    }
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
+            autocreateFromField(target, existing, f);
         }
 
         return target;
+    }
+
+    protected void autocreateFromField(final EntityBase target, final T existing, final Field f) {
+        f.setAccessible(true);
+        final Autocreate autocreate = f.getAnnotation(Autocreate.class);
+        if (autocreate != null && !autocreate.embedded()) {
+            try {
+                final Object value = f.get(target);
+                if (value != null) {
+                    if (EntityBase.class.isAssignableFrom(value.getClass())) {
+                        final EntityBase entity = (EntityBase) value;
+                        f.set(target, createOrUpdate(entity, autocreate));
+                    } else if (Collection.class.isAssignableFrom(value.getClass())) {
+                        final List<Object> list = new ArrayList<Object>((Collection<Object>) value);
+
+                        List<Object> removeThese = null;
+                        if (existing != null) {
+                            removeThese = (List<Object>) f.get(existing);
+                            if (removeThese != null) {
+                                removeThese = new ArrayList<Object>(removeThese);
+                            }
+                        }
+
+                        final ListIterator<Object> iterator = list.listIterator();
+                        while(iterator.hasNext()) {
+                            final Object o = iterator.next();
+                            if (o == null) {
+                                continue;
+                            }
+                            if (EntityBase.class.isAssignableFrom(o.getClass())) {
+                                final EntityBase entity = (EntityBase) o;
+                                iterator.set(createOrUpdate(entity, autocreate));
+                            }
+                        }
+
+                        if (removeThese != null && !removeThese.isEmpty()) {
+                            removeThese.removeAll(list);
+                            for (final Object object : removeThese) {
+                                delete(object, autocreate);
+                            }
+                        }
+                    }
+                } else {
+                    if (existing != null) {
+                        final Object object = f.get(existing);
+                        delete(object, autocreate);
+                    }
+                }
+            } catch (final Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public T autodelete(final Key key) throws Exception {
