@@ -472,6 +472,12 @@ public class DatastoreDataProvider<T extends EntityBase> extends AbstractDatasto
             final Autocreate autocreate = f.getAnnotation(Autocreate.class);
 
             if (autocreate != null) {
+                if (autocreate.readonly()) {
+                    if (entity.getProperty(f.getName()) != null) {
+                        continue;
+                    }
+                }
+
                 try {
                     if (value != null) {
                         if (autocreate.embedded()) {
