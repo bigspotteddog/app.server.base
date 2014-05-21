@@ -183,7 +183,7 @@ public class WebSwitch extends Application {
         routes.put("/login", LoginController.class);
         routes.put("/logout", LogoutController.class);
         routes.put("/users", UserResourceController.class, Template.MODE_STARTS_WITH);
-        routes.put(GENERIC, GenericController.class, Template.MODE_STARTS_WITH);
+        routes.put(GENERIC, getGenericControllerClass(), Template.MODE_STARTS_WITH);
 
         fillRoutes(routes);
 
@@ -194,6 +194,10 @@ public class WebSwitch extends Application {
             final TemplateRoute route = e.getValue();
             addRoute(route);
         }
+    }
+
+    protected Class<? extends GenericController> getGenericControllerClass() {
+        return GenericController.class;
     }
 
     protected void addRoute(final TemplateRoute route) {

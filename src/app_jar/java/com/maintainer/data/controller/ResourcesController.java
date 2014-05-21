@@ -44,7 +44,7 @@ import com.maintainer.data.router.WebSwitch;
 import com.maintainer.util.Utils;
 
 @SuppressWarnings("unused")
-public abstract class ResourcesController<T> extends ServerResource {
+public abstract class ResourcesController<T extends EntityImpl> extends ServerResource {
 
     private static final String RESOURCE = "resource";
 
@@ -79,7 +79,7 @@ public abstract class ResourcesController<T> extends ServerResource {
         return errors;
     }
 
-    protected void addError(final String error) {
+    public void addError(final String error) {
         getErrors().add(error);
     }
 
@@ -241,7 +241,7 @@ public abstract class ResourcesController<T> extends ServerResource {
                     query.setLimit(maxRows);
                 }
 
-                list = dataProvider.find(query);
+                list = find(dataProvider, query);
 
                 if (list == null) {
                     throw new NotFoundException();
@@ -291,6 +291,10 @@ public abstract class ResourcesController<T> extends ServerResource {
         return obj;
     }
 
+    protected List<?> find(final DataProvider<?> dataProvider, final Query query) throws Exception {
+        return dataProvider.find(query);
+    }
+
     protected ArrayList<Resource> getResources(final Request request) {
         return Utils.getResources(request);
     }
@@ -306,7 +310,7 @@ public abstract class ResourcesController<T> extends ServerResource {
 
         T obj = service.fromJson(kind, incomingJson);
 
-        final EntityImpl obj2 = (EntityImpl) obj;
+        final EntityImpl obj2 = obj;
         if (obj2.getId() != null) {
             throw new Exception(ID_PROVIDED);
         }
@@ -346,7 +350,7 @@ public abstract class ResourcesController<T> extends ServerResource {
         final DataProvider<T> service = getDataProvider();
         T obj = service.fromJson(getType(), incomingJson);
 
-        final EntityImpl obj2 = (EntityImpl) obj;
+        final EntityImpl obj2 = obj;
         if (obj2.getId() == null) {
             throw new Exception(NO_ID_PROVIDED);
         }
@@ -354,6 +358,7 @@ public abstract class ResourcesController<T> extends ServerResource {
         try {
             prePut(obj);
             obj = service.merge(obj);
+            postPut(obj);
         } catch (Exception e) {
             addError(e.getMessage());
         }
@@ -409,6 +414,12 @@ public abstract class ResourcesController<T> extends ServerResource {
         }
 
         key = service.delete(key);
+
+        try {
+            postDelete(obj);
+        } catch (Exception e) {
+            addError(e.getMessage());
+        }
 
         final Representation response = new StringRepresentation("{\"" + ID + "\":\"" + key.toString() + "\"}");
         response.setMediaType(MediaType.APPLICATION_JSON);
@@ -687,6 +698,20 @@ public abstract class ResourcesController<T> extends ServerResource {
     }
 
     protected void prePost(final T obj) throws Exception {
+        validate(obj);
+    }
+
+    private void validate(final T obj) throws Exception {
+        List<String> errors = new ArrayList<String>();
+        boolean valid = obj.validate(errors);
+
+        if (!errors.isEmpty()) {
+            getErrors().addAll(errors);
+        }
+
+        if (!valid) {
+            throw new Exception("Validation errors exist.");
+        }
     }
 
     protected void postPost(final T obj) throws Exception {
@@ -700,9 +725,16 @@ public abstract class ResourcesController<T> extends ServerResource {
     }
 
     protected void prePut(final T obj) throws Exception {
+        validate(obj);
     }
 
     protected void preDelete(final T obj) throws Exception {
+    }
+
+    protected void postPut(final T obj) throws Exception {
+    }
+
+    protected void postDelete(final T obj) throws Exception {
     }
 
     protected Object getId() {

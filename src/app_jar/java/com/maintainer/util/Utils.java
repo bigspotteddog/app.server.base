@@ -78,7 +78,6 @@ public class Utils {
     private static final String TEMPLATE_PLACEHOLDER = "([^/\\?]+)";
     private static final String TEMPLATE_WORD = "\\{\\{(\\w+)\\}\\}";
 
-
     private static final String HIBERNATE_MODEL_PACKAGE = "hibernate.model.package";
 
     private static final Object[] NO_PARAMS = new Object[0];
@@ -96,6 +95,16 @@ public class Utils {
 
     private static String packageName;
     private static Boolean isEncodeKeys = null;
+
+    private static SimpleDateFormat sdf = new SimpleDateFormat("MM.dd.yy HH:mm z");
+    private static final SimpleDateFormat sdf2 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+    private static final SimpleDateFormat sdf3 = new SimpleDateFormat("MM/dd/yyyy");
+    private static final SimpleDateFormat sdf4 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    private static final SimpleDateFormat sdf5 = new SimpleDateFormat("yyyy-MM-dd");
+
+    public static final void setDateSerializationFormat(SimpleDateFormat incoming) {
+        sdf = incoming;
+    }
 
     public static String encrypt(final String s) {
         final StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
@@ -202,17 +211,12 @@ public class Utils {
     }
 
     private static GsonBuilder getGsonBuilder() {
-        final SimpleDateFormat sdf = new SimpleDateFormat("MM.dd.yy HH:mm z");
-        final SimpleDateFormat sdf2 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
-        final SimpleDateFormat sdf3 = new SimpleDateFormat("MM/dd/yyyy");
-        final SimpleDateFormat sdf4 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-        final SimpleDateFormat sdf5 = new SimpleDateFormat("yyyy-MM-dd");
-
         // from stackoverflow: http://stackoverflow.com/a/6875295/591203
         final JsonSerializer<Date> dateSerializer = new JsonSerializer<Date>() {
             @Override
             public JsonElement serialize(final Date src, final Type typeOfSrc, final JsonSerializationContext context) {
-                return src == null ? null : new JsonPrimitive(sdf.format(src));
+                // return src == null ? null : new JsonPrimitive(sdf.format(src));
+                return src == null ? null : new JsonPrimitive(src.getTime());
             }
         };
 
@@ -313,15 +317,15 @@ public class Utils {
         };
 
         final GsonBuilder builder = new GsonBuilder()
-            .registerTypeAdapter(Date.class, dateSerializer)
-            .registerTypeAdapter(Date.class, dateDeserializer)
-            .registerTypeAdapter(BigDecimal.class, bigDecimalSerializer)
-            .registerTypeAdapter(BigDecimal.class, bigDecimalDeserializer)
-            .registerTypeAdapter(JsonString.class, jsonStringDeserializer)
-            .registerTypeAdapter(JsonString.class, jsonStringSerializer)
-            .registerTypeAdapter(Key.class, keyDeserializer)
-            .registerTypeAdapter(Key.class, keySerializer)
-            .serializeSpecialFloatingPointValues();
+        .registerTypeAdapter(Date.class, dateSerializer)
+        .registerTypeAdapter(Date.class, dateDeserializer)
+        .registerTypeAdapter(BigDecimal.class, bigDecimalSerializer)
+        .registerTypeAdapter(BigDecimal.class, bigDecimalDeserializer)
+        .registerTypeAdapter(JsonString.class, jsonStringDeserializer)
+        .registerTypeAdapter(JsonString.class, jsonStringSerializer)
+        .registerTypeAdapter(Key.class, keyDeserializer)
+        .registerTypeAdapter(Key.class, keySerializer)
+        .serializeSpecialFloatingPointValues();
 
         return builder;
     }
