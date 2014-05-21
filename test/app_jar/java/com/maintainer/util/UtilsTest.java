@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import junit.framework.TestCase;
 
+import org.jasypt.util.text.BasicTextEncryptor;
 import org.junit.Test;
 import org.restlet.Request;
 import org.restlet.data.Method;
@@ -176,5 +177,16 @@ public class UtilsTest extends TestCase {
     public class Json {
         private String field;
         private JsonString field1;
+    }
+
+    public void testTextEncryption() {
+        final BasicTextEncryptor encryptor = new BasicTextEncryptor();
+        encryptor.setPassword("My very extra secret password");
+
+        final String string = encryptor.encrypt("1234 4567 8901 2344");
+        System.out.println(string);
+
+        final String string2 = encryptor.decrypt(string);
+        System.out.println(string2);
     }
 }

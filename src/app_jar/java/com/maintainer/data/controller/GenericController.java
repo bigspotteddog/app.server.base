@@ -10,13 +10,14 @@ import java.util.Properties;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.maintainer.data.model.EntityImpl;
 import com.maintainer.data.model.Resource;
 import com.maintainer.data.provider.DataProvider;
 import com.maintainer.data.provider.DataProviderFactory;
 import com.maintainer.data.provider.DefaultDataProviderInitializationException;
 import com.maintainer.util.Utils;
 
-public class GenericController<T> extends ResourcesController<T> {
+public class GenericController<T extends EntityImpl> extends ResourcesController<T> {
 
     private static final BiMap<String, Class<?>> map = HashBiMap.create();
 

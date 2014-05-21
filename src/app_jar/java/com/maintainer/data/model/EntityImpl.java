@@ -1,6 +1,7 @@
 package com.maintainer.data.model;
 
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -103,16 +104,16 @@ public class EntityImpl implements EntityBase {
     }
 
     @Override
-   public Date getCreated() {
-       return created;
-   }
+    public Date getCreated() {
+        return created;
+    }
 
-   @Override
-   public void setCreated(final Date created) {
-       this.created = created;
-   }
+    @Override
+    public void setCreated(final Date created) {
+        this.created = created;
+    }
 
-     @Override
+    @Override
     public Date getModified() {
         return modified;
     }
@@ -130,5 +131,9 @@ public class EntityImpl implements EntityBase {
     @Override
     public String getCursor() {
         return cursor;
+    }
+
+    public boolean validate(List<String> errors) {
+        return true;
     }
 }
