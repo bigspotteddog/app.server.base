@@ -56,6 +56,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
@@ -67,6 +68,7 @@ import com.maintainer.data.controller.Resource;
 import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
 import com.maintainer.data.model.User;
+import com.maintainer.data.model.UserBase;
 import com.maintainer.data.provider.Key;
 import com.maintainer.data.router.WebSwitch;
 
@@ -102,7 +104,7 @@ public class Utils {
     private static final SimpleDateFormat sdf4 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private static final SimpleDateFormat sdf5 = new SimpleDateFormat("yyyy-MM-dd");
 
-    public static final void setDateSerializationFormat(SimpleDateFormat incoming) {
+    public static final void setDateSerializationFormat(final SimpleDateFormat incoming) {
         sdf = incoming;
     }
 
@@ -210,7 +212,7 @@ public class Utils {
         return gsonPretty;
     }
 
-    private static GsonBuilder getGsonBuilder() {
+    public static GsonBuilder getGsonBuilder() {
         // from stackoverflow: http://stackoverflow.com/a/6875295/591203
         final JsonSerializer<Date> dateSerializer = new JsonSerializer<Date>() {
             @Override
@@ -245,7 +247,12 @@ public class Utils {
                                 try {
                                     date = sdf5.parse(asString);
                                 } catch (final ParseException e4) {
-                                    e4.printStackTrace();
+                                    try {
+                                        long time = Long.parseLong(asString);
+                                        date = new Date(time);
+                                    } catch( Exception e5) {
+                                        e5.printStackTrace();
+                                    }
                                 }
                             }
                         }
@@ -316,6 +323,24 @@ public class Utils {
             }
         };
 
+        final JsonSerializer<UserBase> userSerializer = new JsonSerializer<UserBase>() {
+            @Override
+            public JsonElement serialize(final UserBase user, final Type typeOfSrc, final JsonSerializationContext context) {
+                if (user == null) return null;
+
+                JsonObject object = new JsonObject();
+                if (user.getKey() != null) {
+                    object.add("id", new JsonPrimitive(user.getKey().toString()));
+                }
+
+                if (user.getUsername() != null) {
+                    object.add("username", new JsonPrimitive(user.getUsername()));
+                }
+
+                return object;
+            }
+        };
+
         final GsonBuilder builder = new GsonBuilder()
         .registerTypeAdapter(Date.class, dateSerializer)
         .registerTypeAdapter(Date.class, dateDeserializer)
@@ -325,6 +350,7 @@ public class Utils {
         .registerTypeAdapter(JsonString.class, jsonStringSerializer)
         .registerTypeAdapter(Key.class, keyDeserializer)
         .registerTypeAdapter(Key.class, keySerializer)
+        .registerTypeAdapter(User.class, userSerializer)
         .serializeSpecialFloatingPointValues();
 
         return builder;
@@ -931,5 +957,9 @@ public class Utils {
 
     public static boolean isEmpty(final String string) {
         return string == null || string.trim().length() == 0;
+    }
+
+    public static void setIsEncodeKeys(boolean b) {
+        isEncodeKeys = b;
     }
 }

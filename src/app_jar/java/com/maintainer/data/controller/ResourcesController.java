@@ -94,15 +94,19 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         return getJsonResponse(json);
     }
 
+    protected void preGet(Request request) throws Exception {}
+    protected void postGet(Request request, Object result) throws Exception {}
+
     @Get("json")
     public Representation getItems() throws Exception {
         final Request request = getRequest();
+
         final Method method = request.getMethod();
         if (Method.HEAD.equals(method)) {
             return getHead();
         }
-
-        return getItems(request);
+        Representation items = getItems(request);
+        return items;
     }
 
     protected Representation getItems(final Request request) throws Exception {
@@ -110,7 +114,9 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         String json = null;
         try {
             Status status = Status.SUCCESS_OK;
+            preGet(request);
             final Object obj = get(request);
+            postGet(request, obj);
             if (List.class.isAssignableFrom(obj.getClass())) {
                 json = toJson((List) obj);
             } else {
