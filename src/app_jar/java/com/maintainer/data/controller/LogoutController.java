@@ -3,6 +3,7 @@ package com.maintainer.data.controller;
 import org.restlet.data.CookieSetting;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
+import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 import org.restlet.security.User;
@@ -13,6 +14,7 @@ import com.maintainer.util.Utils;
 
 public class LogoutController extends ServerResource {
     @SuppressWarnings("unused")
+    @Get
     @Post
     public Representation process() {
         final Series<CookieSetting> cookieSettings = getResponse().getCookieSettings();

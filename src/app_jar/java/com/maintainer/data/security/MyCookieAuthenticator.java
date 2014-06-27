@@ -103,7 +103,8 @@ public class MyCookieAuthenticator extends CookieAuthenticator {
             }
 
             if (html) {
-                response.redirectSeeOther(new Reference(request.getRootRef(), "/"));
+                //response.redirectSeeOther(new Reference(request.getRootRef(), "/"));
+                response.setStatus(Status.CLIENT_ERROR_UNAUTHORIZED, "Not authorized.");
             } else {
                 response.setStatus(Status.CLIENT_ERROR_UNAUTHORIZED, "Not authorized.");
             }
