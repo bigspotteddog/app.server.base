@@ -5,9 +5,6 @@ import java.util.Properties;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import com.maintainer.data.model.EntityBase;
-import com.maintainer.data.provider.datastore.DatastoreDataProvider;
-import com.maintainer.data.provider.hibernate.HibernateDataProvider;
 import com.maintainer.util.Utils;
 
 
@@ -47,11 +44,6 @@ public class DataProviderFactory {
         if (defaultDataProvider == null) {
             final Properties properties = Utils.getDatabaseConfigurationProperties();
             final String driver = (String) properties.get("hibernate.connection.driver_class");
-            if ("com.maintainer.data.provider.datastore.DatastoreDataProvider".equals(driver)) {
-                defaultDataProvider = new DatastoreDataProvider<EntityBase>();
-            } else {
-                defaultDataProvider = new HibernateDataProvider<EntityBase>();
-            }
         }
 
         return defaultDataProvider;
