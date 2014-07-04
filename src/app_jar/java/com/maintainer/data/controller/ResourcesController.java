@@ -39,7 +39,7 @@ import com.maintainer.data.provider.DataProviderFactory;
 import com.maintainer.data.provider.DefaultDataProviderInitializationException;
 import com.maintainer.data.provider.Key;
 import com.maintainer.data.provider.Query;
-import com.maintainer.data.provider.datastore.ResultList;
+import com.maintainer.data.provider.ResultList;
 import com.maintainer.data.router.WebSwitch;
 import com.maintainer.util.Utils;
 
@@ -94,8 +94,8 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         return getJsonResponse(json);
     }
 
-    protected void preGet(Request request) throws Exception {}
-    protected void postGet(Request request, Object result) throws Exception {}
+    protected void preGet(final Request request) throws Exception {}
+    protected void postGet(final Request request, final Object result) throws Exception {}
 
     @Get("json")
     public Representation getItems() throws Exception {
@@ -105,7 +105,7 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         if (Method.HEAD.equals(method)) {
             return getHead();
         }
-        Representation items = getItems(request);
+        final Representation items = getItems(request);
         return items;
     }
 
@@ -325,16 +325,16 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
             prePost(obj);
             obj = service.post(obj);
             postPost(obj);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             addError(e.getMessage());
         }
 
         if (errors != null && !errors.isEmpty()) {
-            Status status = Status.CLIENT_ERROR_PRECONDITION_FAILED;
+            final Status status = Status.CLIENT_ERROR_PRECONDITION_FAILED;
             final ErrorResponse errorResponse = new ErrorResponse(errors, obj);
-            String json = Utils.getGson().toJson(errorResponse);
+            final String json = Utils.getGson().toJson(errorResponse);
 
-            JsonRepresentation response = new JsonRepresentation(json);
+            final JsonRepresentation response = new JsonRepresentation(json);
             response.setMediaType(MediaType.APPLICATION_JSON);
             setStatus(status);
 
@@ -365,16 +365,16 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
             prePut(obj);
             obj = service.merge(obj);
             postPut(obj);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             addError(e.getMessage());
         }
 
         if (errors != null && !errors.isEmpty()) {
-            Status status = Status.CLIENT_ERROR_PRECONDITION_FAILED;
+            final Status status = Status.CLIENT_ERROR_PRECONDITION_FAILED;
             final ErrorResponse errorResponse = new ErrorResponse(errors, obj);
-            String json = Utils.getGson().toJson(errorResponse);
+            final String json = Utils.getGson().toJson(errorResponse);
 
-            JsonRepresentation response = new JsonRepresentation(json);
+            final JsonRepresentation response = new JsonRepresentation(json);
             response.setMediaType(MediaType.APPLICATION_JSON);
             setStatus(status);
 
@@ -403,16 +403,16 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
         try {
             preDelete(obj);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             addError(e.getMessage());
         }
 
         if (errors != null && !errors.isEmpty()) {
-            Status status = Status.CLIENT_ERROR_PRECONDITION_FAILED;
+            final Status status = Status.CLIENT_ERROR_PRECONDITION_FAILED;
             final ErrorResponse errorResponse = new ErrorResponse(errors, obj);
-            String json = Utils.getGson().toJson(errorResponse);
+            final String json = Utils.getGson().toJson(errorResponse);
 
-            JsonRepresentation response = new JsonRepresentation(json);
+            final JsonRepresentation response = new JsonRepresentation(json);
             response.setMediaType(MediaType.APPLICATION_JSON);
             setStatus(status);
 
@@ -423,7 +423,7 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
         try {
             postDelete(obj);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             addError(e.getMessage());
         }
 
@@ -708,8 +708,8 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
     }
 
     private void validate(final T obj) throws Exception {
-        List<String> errors = new ArrayList<String>();
-        boolean valid = obj.validate(errors);
+        final List<String> errors = new ArrayList<String>();
+        final boolean valid = obj.validate(errors);
 
         if (!errors.isEmpty()) {
             getErrors().addAll(errors);
