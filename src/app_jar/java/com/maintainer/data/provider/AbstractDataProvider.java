@@ -149,7 +149,10 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
                         final EntityBase entity = (EntityBase) value;
                         f.set(target, createOrUpdate(entity, autocreate));
                     } else if (Collection.class.isAssignableFrom(value.getClass())) {
-                        final List<Object> list = new ArrayList<Object>((Collection<Object>) value);
+                        final List<Object> list = new ArrayList<Object>();
+                        if (value != null) {
+                            list.addAll((Collection<Object>) value);
+                        }
 
                         List<Object> removeThese = null;
                         if (existing != null) {
