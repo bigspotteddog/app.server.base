@@ -6,7 +6,7 @@ cd $DIR
 
 mkdir -p .linter-javac/build
 
-javac -cp lib/runtime/'*'\
+javac -cp lib/test/'*':lib/runtime/'*'\
  -sourcepath src/app_jar/java:test/app_jar/java\
  -d .linter-javac/build\
  -Xlint\
