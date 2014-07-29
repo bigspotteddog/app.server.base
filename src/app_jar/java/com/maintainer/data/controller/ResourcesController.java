@@ -79,6 +79,11 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         return errors;
     }
 
+    public void addError(final Exception e) {
+        e.printStackTrace();
+        addError(e.getMessage());
+    }
+
     public void addError(final String error) {
         getErrors().add(error);
     }
@@ -323,10 +328,10 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
         try {
             prePost(obj);
-            obj = service.post(obj);
+            obj = post(service, obj);
             postPost(obj);
         } catch (final Exception e) {
-            addError(e.getMessage());
+            addError(e);
         }
 
         if (errors != null && !errors.isEmpty()) {
@@ -346,6 +351,10 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         return getJsonResponse(json);
     }
 
+    protected T post(final DataProvider<T> service, final T obj) throws Exception {
+        return service.post(obj);
+    }
+
     @Put("json")
     public Representation putItem(final Representation rep) throws Exception {
         final Class<?> kind = getType();
@@ -363,10 +372,10 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
         try {
             prePut(obj);
-            obj = service.merge(obj);
+            obj = put(service, obj);
             postPut(obj);
         } catch (final Exception e) {
-            addError(e.getMessage());
+            addError(e);
         }
 
         if (errors != null && !errors.isEmpty()) {
@@ -383,6 +392,10 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
         final String json = getGson().toJson(obj);
         return getJsonResponse(json);
+    }
+
+    protected T put(final DataProvider<T> service, final T obj) throws Exception {
+        return service.merge(obj);
     }
 
     @Delete("json")
@@ -404,7 +417,7 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         try {
             preDelete(obj);
         } catch (final Exception e) {
-            addError(e.getMessage());
+            addError(e);
         }
 
         if (errors != null && !errors.isEmpty()) {
@@ -419,18 +432,22 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
             return response;
         }
 
-        key = service.delete(key);
+        key = delete(service, key);
 
         try {
             postDelete(obj);
         } catch (final Exception e) {
-            addError(e.getMessage());
+            addError(e);
         }
 
         final Representation response = new StringRepresentation("{\"" + ID + "\":\"" + key.toString() + "\"}");
         response.setMediaType(MediaType.APPLICATION_JSON);
         setStatus(Status.SUCCESS_OK);
         return response;
+    }
+
+    protected Key delete(final DataProvider<T> service, final Key key) throws Exception {
+        return service.delete(key);
     }
 
     protected abstract DataProvider<T> getDataProvider() throws DefaultDataProviderInitializationException;

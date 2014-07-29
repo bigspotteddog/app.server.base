@@ -153,9 +153,9 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
                         List<Object> removeThese = null;
                         if (existing != null) {
-                            removeThese = (List<Object>) f.get(existing);
-                            if (removeThese != null) {
-                                removeThese = new ArrayList<Object>(removeThese);
+                            Collection<Object> collection = (Collection<Object>) f.get(existing);
+                            if (collection != null) {
+                                removeThese = new ArrayList<Object>(collection);
                             }
                         }
 

@@ -1,0 +1,633 @@
+commit f79c74dbc6146263f92546ef75152923b22bf738
+Merge: 48669e6 62de89d
+Author: bigspotteddog <bink.lynch@gmail.com>
+Date:   Fri Jul 4 16:20:01 2014 -0700
+
+    Merge pull request #2 from bigspotteddog/develop
+    
+    Separated out the data provider implementations.
+
+commit 62de89d6994e43de20181a001a200cdc85dde886
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Jul 4 16:00:06 2014 -0700
+
+    Separated out the data provider implementations.
+
+commit 48669e640c860658bbeded34cee6383f4bc5bbb9
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Jun 27 07:16:00 2014 -0700
+
+    Various changes for user serialization and pre/post callbacks.
+
+commit 6cf97205062895b840a35130743aac6d666cd4e6
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue May 20 18:13:27 2014 -0700
+
+    Refactoring to keep up to date.
+
+commit 627c65a0d960313ec19b43e5f2cc5678bcacacea
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sun Feb 23 07:35:17 2014 -0800
+
+    See #196: Do not overwrite fields marked as autocreate.readonly. Set the field only if null.
+
+commit fc6d7ad9b4cde1e2c7602e8b5fbfe175eac483e5
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Feb 22 19:13:53 2014 -0800
+
+    Refactoring.
+
+commit 565082a6241aa2ef5259031715a94565553f0136
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat May 25 23:32:33 2013 +0000
+
+    See #161: Various fixes for the keys distringuishing between Long and String id.
+
+commit 2f83f3d50a4815f86a03197032c9728d02c76f9c
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Apr 25 20:33:06 2013 +0000
+
+    See #161: Log datastore reads when getting indexes.
+
+commit 988eb78a6f783a6e7a517b05e058eb863362f76e
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Apr 25 19:09:46 2013 +0000
+
+    See #161: Created and switched to a memcache service factory that can be deactivated so I can turn it off to take measurements.
+
+commit d0c880cec8f2eff9537fc192a0c0b83113240519
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Mon Apr 15 04:24:33 2013 +0000
+
+    See #161: Corrected a type-mismatch issue where the bytes where being cached instead of the new Blob instance.
+
+commit b951ad1955a44e8bcebde133a76a4a9f2e47018d
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sun Apr 14 06:11:53 2013 +0000
+
+    See #161: Added blob instead of byte[].
+
+commit c743be7d6b20bbabc6daa624a9bcd0b1dcec7d97
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sun Apr 14 02:39:46 2013 +0000
+
+    See #161: Converted the readBlob function to return a Blob instead of a byte[].
+
+commit 39a3d79dcfe4adfa35acee0c2fe7f8eee369c53c
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Apr 12 18:40:14 2013 +0000
+
+    See #161: Refactored the blob store read and writes to allow a parent.
+
+commit abfc5056fc473a77dbd97985701a18d8333b682a
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Mar 30 03:05:36 2013 +0000
+
+    See #161: Corrected permissions for multiple wildcards from Loren's code.  Corrected some other security related functions.
+
+commit 2a98b54da0bfa12fe8c2a138d453682aeda05482
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Wed Mar 13 00:33:44 2013 +0000
+
+    See #161: Added overrides for security classes.
+
+commit 0e58d49bfe90068c6825a3f0bd629bf67680633e
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Feb 8 22:07:37 2013 +0000
+
+    See #161: Added a pretty printing option for gson.
+
+commit 9f6fe5a4f172b295d07ee93c0b2176901140280b
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Feb 5 04:37:08 2013 +0000
+
+    See #161: Corrected issues with deserializing keys.  Added recursive parents, so I think it should be working for all now.
+
+commit d0e2cbebc4dae12078923132512afdedf9e308d5
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Mon Feb 4 23:54:05 2013 +0000
+
+    See #161: Corrected issues with deserializing keys.  Added recursive parents, so I think it should be working for all now.
+
+commit 6083a77d3888535f11846f99784df3c63dfd3fb0
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Mon Feb 4 22:51:02 2013 +0000
+
+    See #161: Corrected issues with deserializing keys.  At least we can now do a string id from a key.asString with a parent.  Don't know if anything else beyond this works yet.
+
+commit a9ea3f01622b18da3279f35727c235047214ee6c
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Jan 25 23:22:06 2013 +0000
+
+    See #161: Corrected a generics issue where the 'embedded' type was not using the generic type when deserializing the field value.
+
+commit f7eeb3b99435934eeec6a5a02a53b2cd2a9eab2c
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sun Jan 13 05:35:12 2013 +0000
+
+    See #161: Corrected for an issue where restlet seems to be populating the credentials cookie twice.  Make an error response.
+
+commit 4286d8835177a743ff082957e9a60107155146ad
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Jan 10 06:47:49 2013 +0000
+
+    See #161: Allow the override of keyedOnly relationships.
+
+commit eda6032d59a02883c88be004b16b7388030d6e9e
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Wed Jan 9 06:04:34 2013 +0000
+
+    See #161: Corrected NPE issue with autocomplete keys.
+
+commit 6620b7feab296215f533e3cfd056f090df03470e
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sun Dec 30 06:29:39 2012 +0000
+
+    See #161: Unindex password.
+
+commit fa3172d9836a3aae624d52921dd4dcf9b002985d
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sun Dec 30 02:57:34 2012 +0000
+
+    See #161: Corrected an issue where the key was created without considering the parent.
+
+commit a27bf49fe2d68e93332033ba8a66929b523c2414
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sun Dec 30 02:18:30 2012 +0000
+
+    See #161: Removed an unused attribute.
+
+commit 73c97fd6f80aeeab869cb48833e03e02699000e9
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sun Dec 30 01:01:31 2012 +0000
+
+    See #161: Added the ability to turn off caching in the datastore data provider.
+
+commit f731da561dd84b2bf0b8c67fd628d5fc7eebdf7c
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Dec 29 21:31:07 2012 +0000
+
+    See #161: Added error messaging and corrected entity ids.
+
+commit 103f1b590143d5cf047a173e3752b3ff4904e301
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Dec 18 22:33:20 2012 +0000
+
+    See #161: Added the ability to use a key-only field as the id.  This works great for user specific classes.
+
+commit bd490cf524da5a56d1ab42c15f480495f9bd835f
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sun Dec 9 06:53:35 2012 +0000
+
+    See #161: Corrected an issue with the embedded associations.
+
+commit ab631782467ce20a1102a1d2de9a85ad7a424b02
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Dec 8 23:18:58 2012 +0000
+
+    See #161: Added support for embedded objects.
+
+commit 2c4ceb3778633ef2c4bf6680ec6526e88952cfeb
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Nov 29 02:19:09 2012 +0000
+
+    See #161: Added more properties to the filters to pass data to the next step.
+
+commit c21f5c9bd5e9c25ddc03850f6680bd7532d060cd
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Nov 27 00:54:58 2012 +0000
+
+    See #161: Added support for a JSON that will not be deserialized when saved to the datastore.
+
+commit c876b876545dadee00ab71dd1dc158131eee4abc
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Nov 20 23:46:53 2012 +0000
+
+    See #161: Various library changes in support of stock screening.
+
+commit 302cb00af41ecbe4f6647cf3311b95dd063ee367
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Nov 3 02:37:10 2012 +0000
+
+    See #160: Corrected empty :order, :limit, and :pos.
+
+commit c06065895f3830339310222383221a0c2be2a986
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Oct 30 18:54:43 2012 +0000
+
+    See #160: Genericized the toJson calls so maps could be processed as well.
+
+commit bb7eedc383b1805457a6f1a3c10bf5c189460dfc
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Oct 30 01:24:31 2012 +0000
+
+    See #160: Corrected an NPE.
+
+commit 147677770a772454e570479cff1101fe509ff934
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Oct 30 01:08:17 2012 +0000
+
+    See #160: Refactored the map data provider to use a subclass of EntityImpl that contains a map of extended properties.
+
+commit 58684a02015b4caea2a22a4710c9aa57b566e6cf
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Mon Oct 29 22:14:12 2012 +0000
+
+    See #160: Completed the implementation of the map data provider, minus autocreate.
+
+commit 864a111a0f7af8c0370e94a2ffa89a95e03d6a02
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Oct 27 23:36:51 2012 +0000
+
+    See #160: Data provider stuff.
+
+commit 95c402b29445534cd7e6fef289879995855ba599
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Wed Sep 26 17:14:36 2012 +0000
+
+    See #160: Set the key on objects pulled from the cache as the key is transient so it is not cachable.
+
+commit db2a3c0df886ade8974a09592c04fc4bf57b4a51
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Wed Sep 26 05:27:39 2012 +0000
+
+    See #160: Updated the appengine api.
+
+commit b967f98fcb8aa3abf281610c5ca98a8299774aeb
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Wed Sep 26 00:14:24 2012 +0000
+
+    See #160: Added the ability to specify the parent to use with queries.  This was used to find user tag symbols by user tag.
+
+commit ebb99fbbf73d2b08bf932ce813ba7a5c1b4d4c72
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Wed Sep 19 19:57:23 2012 +0000
+
+    See #159: Added a post post hook to allow for clients to do something with newly created entities.  I used this to create the initial statement adjustment index for a user who just added an adjustment.
+
+commit f30e0b4e19d18df9dfc996788b6831dd83f9b9a5
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Wed Sep 19 04:25:30 2012 +0000
+
+    See #159: Added the ability to fetch keys only when using a query.  Added the ability to fetch by a list of keys.
+
+commit 76e2a2e486f554e53ed36b59bfed245f1b9b5072
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Wed Sep 19 01:06:13 2012 +0000
+
+    See #159: Correct various issues related to ids from keys when serializing and deserializing entities to and from the browser.  Added the user information to the request so it could be used by other handles without an additional lookup.
+
+commit f27683b53371eba48714953a6d0f1308ff628384
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Sep 15 23:40:22 2012 +0000
+
+    See #159: Allowed controller subclasses access to the resources list coming from the request when parsed.
+
+commit edebc972312d0c219fb2e5cc109a3ca7942cec66
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Sep 14 00:07:24 2012 +0000
+
+    See #159: Corrected one more spot where the encoding was doubled.
+
+commit 624b7fb94bfeac4e97aed7b5500ee770667a3b18
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Sep 13 23:45:11 2012 +0000
+
+    See #159: Put the encode keys flag in the application properties file.
+
+commit 9838bb65b7e190e2c9ed2baddccb5e76ed345af9
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Sep 13 23:27:21 2012 +0000
+
+    See #159: Corrected issues with deleting with the keys are encrypted.
+
+commit b8a129cfdcc36347f2186f0127d83b6cbb5acece
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Sep 13 22:47:28 2012 +0000
+
+    See #159: Encrypted key strings now working when posted back to the server.
+
+commit 3c0ee0aa5b7c37e2f30df8b69ded4f849196afaa
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Wed Sep 12 01:37:15 2012 +0000
+
+    See #159: Isolate the key encoding so it can be easily maintained in as few places as possible.  Had to change the parent-child key delimeter as it was using the backslash which was difficult to use when the key is not encoded.
+
+commit eaf8d9b7ea22288a592442b255022b7b534e6a79
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Wed Sep 12 00:17:21 2012 +0000
+
+    See #159: Base64 encode keys sent to the browsers.  Decode them when they come back.
+
+commit 78e2353f5235ff55ef7a5d936df32258b4d2ca74
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Sep 11 23:27:58 2012 +0000
+
+    See #159: Corrected another location where the id was used instead of the key.
+
+commit cc3f0dcd7c2abcc0be3df8121a6a8cf17307fbdb
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Sep 11 22:34:25 2012 +0000
+
+    See #159: Use keys for ids instead of names and numbers.  As you can imagine, this effects a lot of processing.
+
+commit 2a25e0cbbc4f443a245054e769c7ee896e3efb40
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Sep 11 17:43:10 2012 +0000
+
+    See #159: Tuned the placeholder regex.
+
+commit aa45bf2e2a2d4ddbd592147c13a142eeadaa91e6
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Sep 11 02:20:08 2012 +0000
+
+    See #159: Added the ability to get url parts by regex.
+
+commit 6da433083d50cbde751ac793fb47a2ee3b7c8e98
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Sep 8 01:11:37 2012 +0000
+
+    See #159: Added a Base64 codec. Corrected an issue where entities with parents would not be retrieved in collection queries.
+
+commit f4790e236b370954e4b2eac9469052c291fe3023
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Sep 7 02:05:25 2012 +0000
+
+    See #159: Added the sharded counter code from GAE samples.  Might use this for counters and unique ids for entities with parents.
+
+commit 08b21b52d82a0da6b3b756a69413e98bc1f2ef20
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Sep 7 02:01:23 2012 +0000
+
+    See #159: Rearranged the 'create key' on id filter code to be in the query instead of duplicating it in the data provider.
+
+commit 8631341931fa732a5563a8612c7fdd6dc30eca69
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Sep 6 22:04:58 2012 +0000
+
+    See #159: Corrected an issue when an entity with a parent was not creating the correct key for lookup.
+
+commit 656e0bb2b52139a84f234d796daacc9e9341a034
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Sep 6 21:20:25 2012 +0000
+
+    See #159: A lot of refactoring around parent support, especially in keys.
+
+commit b1e455e2771b8e37964d850437b3d139d4da3a68
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Sep 6 01:51:41 2012 +0000
+
+    See #159: Added parent support and mulitple filter conditions.
+
+commit d9489b25ef4c13ac6a3e4b106668106825b1e078
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Sep 6 00:02:10 2012 +0000
+
+    See #159: Modified the datastore data provider to respond to unindexed and non-stored properties.  Also, made the udate/create autocreator look at both the field and the class annotations when determining what to do.  Class first order.
+
+commit 8d20d0e56321c6b14f9ceb56e302e2b47546242b
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Aug 24 20:16:07 2012 +0000
+
+    See #155: Removed unused libs. Added gson.
+
+commit 82f6b1aefc636088457a9f31fc3265f2fb006f69
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Wed Aug 22 20:46:12 2012 +0000
+
+    See #153: Corrected issues with parsing json with gson.  Gson will fail the entire call if any number or date do parse.  Needed to make these parse operations more atomic so each could fail individually without effecting the entire batch.
+
+commit 682cadbe18e7969a4e2b5a1cf1102b3259d8390e
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Aug 21 21:00:52 2012 +0000
+
+    See #153: Added an option to make a field keys only.  This was to speed up the company lists page which listed all companies in the system.  This meant all of them needed to be fetched.  Ouch!
+
+commit e6f7a326445ae0fa259145bee00ce49084c563c4
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Aug 21 09:24:40 2012 -0700
+
+    See #153: Added a null check when converting the id to a long.  Invalidated the cache for changed or posted entities.
+
+commit 21de63630c3cf99b88e615d77b85ceb66ef0b4ac
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Mon Aug 20 18:14:06 2012 -0700
+
+    See #153: Corrected an very tricky issue where the Gson parsed id was a double, which was causing the keys to not match in memcache, even though the were equal values.
+
+commit 5a2dfcb0248eaa4abda1cd523138685f4adaf4e7
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Aug 18 16:56:39 2012 -0700
+
+    See #153: Final changes for generic paging.  Checks the boundaries to decide when to send back previous and next cursors.  Needed an additional query to accomplish this.
+
+commit a9abe9c7164f0815ca1003760b072fad9e547a56
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Aug 18 15:29:25 2012 -0700
+
+    See #153: Optimizing page to test for the boundaries to detect no more records before or after.
+
+commit 7a20039d48cc17fa251a2a391feedea6cfd8f82e
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Aug 17 21:25:26 2012 -0700
+
+    See #153: Protect cursors from tampering.  Allow a flag to ignore invalid fields.
+
+commit 984650758d9c728533b2fe41b5c7a897424bba79
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Aug 17 18:17:15 2012 -0700
+
+    See #153: Corrected an issue where the result list might be an array list.  Compensated for a changed query string that now has irrelevant cursors.  Made it execute the query again without the cursors.
+
+commit e3733d3e4893b1b4c46239e4b7d5659d8c4afe02
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Aug 17 17:14:48 2012 -0700
+
+    See #153: Performance is now better.  Went back to only a start and and end cursor, rather than one for each row returned.  Conversion to a string and back is expensive.
+
+commit 8dd69a793a05dc3ddd9f4435ba8edfad939367b0
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Aug 17 16:56:53 2012 -0700
+
+    See #153: Cursor paging works well now, but it is a little slow.
+
+commit 36969369074f2cc4b39e62e1cbbcf8105abd2ee1
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Aug 16 16:53:32 2012 -0700
+
+    See #152: Added pagination for appengine.  Supports page forward and backward.
+
+commit 4e26d052938dfdd5408e549fc0b977cc10e0b5f5
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Aug 11 16:09:26 2012 -0700
+
+    See #142: Added better support for String ids.
+
+commit b64e1d55cb086c272af947998a8ccb9cc6414799
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Wed Aug 1 12:34:07 2012 -0700
+
+    See #149: Corrected an issue where the entities needed were not being fetched from the datastore because the local cache had changed the needed list.  Made it check to see if anything was in the list instead of checking that the list was changed or not.
+
+commit 77e2565162a3547209afa5f484da777d093b5a31
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Jul 27 18:55:32 2012 -0700
+
+    See #143: Ordered the find result list by the key order from the query response.
+
+commit 8d1e32554ed18b994f78dfd76253cd97e5c5f287
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Jul 24 18:45:46 2012 -0700
+
+    See #143: Major refactoring around the datastore and caching.  Made everything go the a local cache and the memcache.  Update the caches when things change, fetch only what is not cached from the datastore.
+
+commit 00d76c07d142b10d162f3bbd3218e1156b6e63bf
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Jul 24 16:21:24 2012 -0700
+
+    See #143: Refactored the cache calls to separate functions to prepare for adding memcache and keysOnly queries.
+
+commit 6beae57aed1211772f2fc7ca4ffe915bd8254433
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Mon Jul 23 16:48:23 2012 -0700
+
+    See #142: Added local caching for the datastore data provider.  Get, put, post, and delete update the cache.  GetAll updates the individual items and post, put and delete flush the 'all items' cache.
+
+commit c55eca88e1af50f29b0c5f3eec07b3b6253b1c34
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Jul 21 15:32:41 2012 -0700
+
+    See #142: The controller and the get resources classes were splitting an id with a / in it as it would a path.  This was corrected by removing the decode option from the get resource function call.  This could cause other problems, though.
+
+commit 64c8b86243c7429d5f77b2a6c411964d6590d766
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Jul 20 22:05:28 2012 -0700
+
+    See #142: Corrected a delete issue related to the change to keys over ids.
+
+commit 3ffbfbaac0681c5fdc1ffd45ea20913c4b916b09
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Jul 20 19:49:07 2012 -0700
+
+    See #142: Completed the switch to key over id. Removed support for mongodb.
+
+commit 78d88a8a88769fc0455ae5323aef232f32aea7f4
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Jul 20 17:37:44 2012 -0700
+
+    See #142: Start working with keys instead of long ids.
+
+commit 71a43d2c30847401e44fbbe557373c7a1f39dc5a
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Tue Jul 10 15:46:14 2012 -0700
+
+    See #137: Added an autocreate skip for performance.
+
+commit 49a7b78f36c315c94c21a4c1b22e0009be523de0
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Mon Jul 9 18:51:59 2012 -0700
+
+    See #137: Changed the unknown user to guest.  Send the string 'Logged in as guest' when there is no registered user.
+
+commit 18a19da715a77c54c74b84fce75b7ea96533230c
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Jul 6 17:29:45 2012 -0700
+
+    See #137: Some refactoring for overriding max limit values.
+
+commit bab168bef7dfa7711a63f52315d7bb72bf51254d
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Jul 5 16:08:51 2012 -0700
+
+    See #137: Refactoring to get so more flexible subclasses of abstract data provider.  Added a toBigDecimal method to Utils.
+
+commit c426bf27559043ecf08e66c43be7fc299bbe515d
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Jun 29 16:00:49 2012 -0700
+
+    See #137: Allow a resource to be completely unsecured by setting the Resource annotation to unsecured.  Also, allow for a useKey option that will use the key credential from the request.
+
+commit 86fc7ab10cb2b7ebd8791357cbe61831a113b28d
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Fri Jun 29 15:47:47 2012 -0700
+
+    See #137: Added the ability to specify an unsecured server resource.  Right now, a credentials key must be provided as a query parameter which will be used to verify the access to be granted.
+
+commit 4e3160e2a3cbeb8b83239fd3a802fb3d9a860247
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Jun 28 18:03:57 2012 -0700
+
+    See #137: Added utility functions for converting values and parsing dates.
+
+commit 4d44203243c7efead9545aff264b0424d1e8276a
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Jun 28 13:28:45 2012 -0700
+
+    See #137: Removed build files.
+
+commit d3320f2b17f83b02b2100c80b4d5d893081e0f16
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Jun 28 13:21:24 2012 -0700
+
+    See #137: Added eclipse settings files.
+
+commit 01e341a2b0a1cfb89826434c2dce072111e68051
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Jun 28 13:15:01 2012 -0700
+
+    See #137: Started the refactor toward a more flexible datastore data provider.
+
+commit 64f6f4f5ae2ac9542dcc4c3fd6afc587327abfc3
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Thu Jun 21 12:31:22 2012 -0700
+
+    Refactored the datastore data provider to use FilterOperator enums.
+
+commit 14d21791a48b10d880035b90f9fc6fdaa1db8e19
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Wed Jun 20 17:36:19 2012 -0700
+
+    Added the versioned data provider for google app engine.
+
+commit fca7eec6a353f03091553cd376c5ba204ac4cbb4
+Author: bigspotteddog <bink.lynch@gmail.com>
+Date:   Sat Jun 2 15:05:23 2012 -0700
+
+    Update license.txt
+
+commit bddca5614eba96bf44442ef005525f417d0a50f4
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Jun 2 15:04:21 2012 -0700
+
+    Added the license.
+
+commit 5a8392f06ecf4db63ba978e074fef688e8118f33
+Merge: 1dbba54 2096b5b
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Jun 2 14:35:11 2012 -0700
+
+    Merge branch 'master' of https://github.com/bigspotteddog/app.server.base
+
+commit 1dbba54a8b3740d5225160946458c91e498d9d00
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Jun 2 14:34:38 2012 -0700
+
+    Added jar from Jenkins build.
+
+commit 2096b5b3f25e17488b3b364268f00371ddf23ee8
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Jun 2 10:33:51 2012 -0700
+
+    Corrected ant to no longer include lib/compile.
+
+commit c1c02b9f1f3149e5569be834846a4d07c438afc4
+Author: Joseph Cava-Lynch <bink.lynch@gmail.com>
+Date:   Sat Jun 2 09:17:28 2012 -0700
+
+    Initial import.
+
+commit 8bd2fc52f14fe619014debdf5aec79852d1d06d1
+Author: bigspotteddog <bink.lynch@gmail.com>
+Date:   Sat Jun 2 09:04:30 2012 -0700
+
+    Initial commit
