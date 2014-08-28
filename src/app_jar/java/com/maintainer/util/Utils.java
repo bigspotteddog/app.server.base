@@ -367,6 +367,15 @@ public class Utils {
         primitiveMap.put(double.class, Double.class);
     }
 
+    @SuppressWarnings("rawtypes")
+    public static Class getType(Class clazz) {
+        Class<?> class1 = primitiveMap.get(clazz);
+        if (class1 == null) {
+            return clazz;
+        }
+        return class1;
+    }
+
     public static Object convert(Object value, Class<?> destClass) throws Exception {
         if ((value == null) || "".equals(value)) {
             return value;
@@ -535,6 +544,28 @@ public class Utils {
             }
         }
         return field;
+    }
+
+    public static List<Field> getFields(final Object target) {
+        final List<Field> fields = new ArrayList<Field>();
+        Class<?> clazz = target.getClass();
+        while (clazz != null) {
+            final Field[] fields2 = clazz.getDeclaredFields();
+            fields.addAll(Lists.newArrayList(fields2));
+            clazz = clazz.getSuperclass();
+        }
+        return fields;
+    }
+
+    public static List<Field> getFields(final Class<?> clazz0) {
+        final List<Field> fields = new ArrayList<Field>();
+        Class<?> clazz = clazz0;
+        while (clazz != null) {
+            final Field[] fields2 = clazz.getDeclaredFields();
+            fields.addAll(Lists.newArrayList(fields2));
+            clazz = clazz.getSuperclass();
+        }
+        return fields;
     }
 
     public static Class<? extends ServerResource> getTargetServerResource(final WebSwitch router, final Request request) {

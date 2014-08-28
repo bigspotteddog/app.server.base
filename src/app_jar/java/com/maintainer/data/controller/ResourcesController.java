@@ -100,7 +100,10 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
     }
 
     protected void preGet(final Request request) throws Exception {}
-    protected void postGet(final Request request, final Object result) throws Exception {}
+
+    protected Object postGet(final Request request, final Object result) throws Exception {
+        return result;
+    }
 
     @Get("json")
     public Representation getItems() throws Exception {
@@ -120,8 +123,11 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         try {
             Status status = Status.SUCCESS_OK;
             preGet(request);
-            final Object obj = get(request);
-            postGet(request, obj);
+            Object obj = get(request);
+            obj = postGet(request, obj);
+            if (obj == null) {
+                throw new NotFoundException();
+            }
             if (List.class.isAssignableFrom(obj.getClass())) {
                 json = toJson((List) obj);
             } else {
@@ -295,9 +301,9 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
                 last.setCursor(list2.next());
             }
 
-            postGet((Collection<T>) obj);
+            obj = postGet((Collection<T>) obj);
         } else {
-            postGet((T) obj);
+            obj = postGet((T) obj);
         }
         return obj;
     }
@@ -466,9 +472,13 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         this.ignoreInvalidFields = ignoreInvalidFields;
     }
 
-    protected void postGet(final T entity) {}
+    protected T postGet(final T entity) throws Exception {
+        return entity;
+    }
 
-    protected void postGet(final Collection<T> collection) {}
+    protected Collection<T> postGet(final Collection<T> collection) throws Exception {
+        return collection;
+    }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private Object autocreate(final Object target) throws Exception {
@@ -581,6 +591,18 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         return value;
     }
 
+    protected void addOffset(final Query query, int value) {
+        query.setOffset(value);
+    }
+
+    protected void addLimit(final Query query, int value) {
+        query.setLimit(value);
+    }
+
+    protected void addOrder(final Query query, String value) {
+        query.setOrder(value);
+    }
+
     protected Query addParametersToQuery(final Request request, final Resource resource, final Query query) throws Exception {
         final Form form = request.getResourceRef().getQueryAsForm(true);
         final Map<String, String> map = form.getValuesMap();
@@ -594,15 +616,15 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
             if (Query.OFFSET.equals(key)) {
                 if (!Strings.isNullOrEmpty(value)) {
-                    query.setOffset(Integer.parseInt(value));
+                    addOffset(query, Integer.parseInt(value));
                 }
             } else if (Query.LIMIT.equals(key)) {
                 if (!Strings.isNullOrEmpty(value)) {
-                    query.setLimit(Integer.parseInt(value));
+                    addLimit(query, Integer.parseInt(value));
                 }
             } else if (Query.ORDER.equals(key)) {
                 if (!Strings.isNullOrEmpty(value)) {
-                    query.setOrder(value);
+                    addOrder(query, value);
                 }
             } else if (Query.POS.equals(key)) {
                 if (!Strings.isNullOrEmpty(value)) {
@@ -674,6 +696,7 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         return clazz;
     }
 
+    @SuppressWarnings({ "rawtypes" })
     protected String toJson(final List list) {
         return getGson().toJson(list);
     }
