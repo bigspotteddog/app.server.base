@@ -3,7 +3,9 @@ package com.maintainer.util;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -30,12 +32,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.apache.log4j.Logger;
 import org.jasypt.util.password.StrongPasswordEncryptor;
 import org.restlet.Request;
 import org.restlet.Response;
@@ -153,7 +155,7 @@ public class Utils {
         }
 
         if (isMatch) {
-            log.debug("Matched: " + path0 + " to " + path1);
+            log.fine("Matched: " + path0 + " to " + path1);
         }
 
         return isMatch;
@@ -394,7 +396,7 @@ public class Utils {
             for (String s : split) {
                 s = s.trim();
                 final Object convertedValue = getConvertedValue(s, destClass, s);
-                log.debug("adding converted value: '" + convertedValue + "'");
+                log.fine("adding converted value: '" + convertedValue + "'");
                 list.add(convertedValue);
             }
             value = list;
@@ -679,7 +681,7 @@ public class Utils {
             } else if (file.getName().endsWith(".class")) {
                 final String className = packageName + '.' + file.getName().substring(0, file.getName().length() - 6);
                 if (regex == null || regex.matcher(className).matches()) {
-                    log.debug("adding mapped class: " + className);
+                    log.fine("adding mapped class: " + className);
                     classes.add(className);
                 }
             }
@@ -763,9 +765,9 @@ public class Utils {
             try {
                 request2.setChallengeResponse(challengeResponse);
 
-                log.debug("Handle: " + request2);
+                log.fine("Handle: " + request2);
                 application.handle(request2, response2);
-                log.debug("Response: " + response2.getEntityAsText());
+                log.fine("Response: " + response2.getEntityAsText());
 
                 final Representation representation = response2.getEntity();
                 if (representation != null) {
@@ -992,5 +994,21 @@ public class Utils {
 
     public static void setIsEncodeKeys(boolean b) {
         isEncodeKeys = b;
+    }
+
+    public static void severe(final Logger log, final Exception e) {
+        log.severe(e.getMessage());
+        log.severe(getStackTrace(e));
+    }
+
+    public static void severe(final Logger log, final String message) {
+        log.severe(message);
+    }
+
+    public static String getStackTrace(final Exception e) {
+        final StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        final String stacktrace = sw.toString();
+        return stacktrace;
     }
 }
