@@ -3,6 +3,7 @@ package com.maintainer.util;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
@@ -30,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Scanner;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -1010,5 +1012,10 @@ public class Utils {
         e.printStackTrace(new PrintWriter(sw));
         final String stacktrace = sw.toString();
         return stacktrace;
+    }
+
+    public static String convertStreamToString(InputStream is) {
+        java.util.Scanner s = new Scanner(is).useDelimiter("\\A");
+        return s.hasNext() ? s.next() : "";
     }
 }
