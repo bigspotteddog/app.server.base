@@ -309,7 +309,7 @@ public class Utils {
         final JsonDeserializer<JsonString> jsonStringDeserializer = new JsonDeserializer<JsonString>() {
             @Override
             public JsonString deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
-                return null;
+                return new JsonString(json.toString());
             }
         };
 
