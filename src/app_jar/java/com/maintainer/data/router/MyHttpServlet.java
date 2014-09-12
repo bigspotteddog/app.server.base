@@ -24,6 +24,12 @@ public class MyHttpServlet extends HttpServlet {
     public static final String APPLICATION_JSON = "application/json; charset=UTF-8";
 
     @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        ThreadLocalInfo.setInfo(req);
+        super.service(req, resp);
+    }
+
+    @Override
     protected void doGet(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
         try {
             get(req, resp);
