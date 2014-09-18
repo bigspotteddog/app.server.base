@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -12,6 +13,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.maintainer.data.controller.ErrorResponse;
 import com.maintainer.data.model.ThreadLocalInfo;
 import com.maintainer.data.model.User;
 import com.maintainer.util.Utils;
@@ -102,9 +104,13 @@ public class MyHttpServlet extends HttpServlet {
     }
 
     public static void sendError(final HttpServletResponse resp, final Exception e) throws IOException {
+        ErrorResponse errorResponse = new ErrorResponse(Arrays.asList(e.getMessage()), null);
+        final String json = Utils.getGson().toJson(errorResponse);
+        resp.setContentType(APPLICATION_JSON);
+
         Utils.severe(log, e);
         resp.setStatus(BAD_REQUEST);
-        resp.getWriter().write(e.getMessage());
+        resp.getWriter().write(json);
     }
 
     public static void recordError(final Exception e) {
