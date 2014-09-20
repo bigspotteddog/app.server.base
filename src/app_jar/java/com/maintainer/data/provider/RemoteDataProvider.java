@@ -33,7 +33,7 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
         String root = getPath(type);
         root = root + '/' + key.toString();
 
-        HttpRequestCommand command = new HttpRequestCommand(root, Method.GET, headers);
+        HttpRequestCommand command = getHttpRequestCommand(root, Method.GET, headers);
         HttpResponseModel resp = command.execute();
 
         int status = resp.getStatus();
@@ -48,6 +48,11 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
         return object;
     }
 
+    protected HttpRequestCommand getHttpRequestCommand(String root, Method method, Map<String, String> headers) {
+        HttpRequestCommand command = new HttpRequestCommand(root, method, headers);
+        return command;
+    }
+
     @Override
     public List<T> getAll(Class<?> type) throws Exception {
         HttpServletRequest original = getHttpServletRequest();
@@ -55,7 +60,7 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
 
         String root = getPath(type);
 
-        HttpRequestCommand command = new HttpRequestCommand(root, Method.GET, headers);
+        HttpRequestCommand command = getHttpRequestCommand(root, Method.GET, headers);
         HttpResponseModel resp = command.execute();
         int status = resp.getStatus();
         byte[] bytes = resp.getBytes();
@@ -82,7 +87,8 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
         String body = com.maintainer.util.Utils.getGson().toJson(obj);
 
         headers.put("Content-Type", "application/json; charset=UTF-8");
-        HttpRequestCommand command = new HttpRequestCommand(root, Method.POST, headers, body);
+        Method method = Method.POST;
+        HttpRequestCommand command = getHttpRequestCommand(root, method, headers, body);
         HttpResponseModel resp = command.execute();
         int status = resp.getStatus();
         byte[] bytes = resp.getBytes();
@@ -94,6 +100,12 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
 
         obj = (T) Utils.getGson().fromJson(json, type);
         return obj;
+    }
+
+    protected HttpRequestCommand getHttpRequestCommand(String root, Method method, Map<String, String> headers, String body) {
+        HttpRequestCommand command = getHttpRequestCommand(root, method, headers);
+        command.setBody(body);
+        return command;
     }
 
     @SuppressWarnings("unchecked")
@@ -115,7 +127,7 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
         String body = com.maintainer.util.Utils.getGson().toJson(obj);
 
         headers.put("Content-Type", "application/json; charset=UTF-8");
-        HttpRequestCommand command = new HttpRequestCommand(root, Method.PUT, headers, body);
+        HttpRequestCommand command = getHttpRequestCommand(root, Method.PUT, headers, body);
         HttpResponseModel resp = command.execute();
         int status = resp.getStatus();
         byte[] bytes = resp.getBytes();
@@ -138,7 +150,7 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
         String root = getPath(type);
         root = root + '/' + key.toString();
 
-        HttpRequestCommand command = new HttpRequestCommand(root, Method.DELETE, headers);
+        HttpRequestCommand command = getHttpRequestCommand(root, Method.DELETE, headers);
         HttpResponseModel resp = command.execute();
         int status = resp.getStatus();
         byte[] bytes = resp.getBytes();

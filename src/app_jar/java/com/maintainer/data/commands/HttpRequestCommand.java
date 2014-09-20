@@ -215,6 +215,10 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
         return body;
     }
 
+    public void setBody(String body) {
+        this.body = body;
+    }
+
     @SuppressWarnings("unchecked")
     public static Map<String, String> getHeaders(HttpServletRequest req) {
         Map<String, String> requestHeaders = new LinkedHashMap<String, String>();
