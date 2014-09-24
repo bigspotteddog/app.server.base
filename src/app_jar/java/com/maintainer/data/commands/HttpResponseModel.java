@@ -2,13 +2,13 @@ package com.maintainer.data.commands;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HttpResponseModel {
     private int status;
-    private Map<String, String> headers = new LinkedHashMap<String, String>();
-    private ByteArrayOutputStream out = new ByteArrayOutputStream();
+    private final List<HttpHeader> headers = new ArrayList<HttpHeader>();
+    private final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
     public void setStatus(int status) {
         this.status = status;
@@ -18,11 +18,11 @@ public class HttpResponseModel {
         return status;
     }
 
-    public String setHeader(String key, String value) {
-        return headers.put(key, value);
+    public void addHeader(HttpHeader header) {
+        headers.add(header);
     }
 
-    public Map<String, String> getHeaders() {
+    public List<HttpHeader> getHeaders() {
         return headers;
     }
 

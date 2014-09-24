@@ -6,12 +6,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.LinkedHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -28,7 +29,7 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
 
     private final String path;
     private final Method method;
-    private Map<String, String> headers;
+    private List<HttpHeader> headers;
     private String body;
 
     public HttpRequestCommand(String path) {
@@ -41,7 +42,7 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
         this.method = method;
     }
 
-    public HttpRequestCommand(String path, Method method, Map<String, String> headers) {
+    public HttpRequestCommand(String path, Method method, List<HttpHeader> headers) {
         this.path = path;
         this.method = method;
         this.headers = headers;
@@ -53,7 +54,7 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
         this.headers = getHeaders(req);
     }
 
-    public HttpRequestCommand(String path, Method method, Map<String, String> headers, String body) {
+    public HttpRequestCommand(String path, Method method, List<HttpHeader> headers, String body) {
         this.path = path;
         this.method = method;
         this.headers = headers;
@@ -96,14 +97,21 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method.name());
             connection.setUseCaches(false);
+            connection.setDefaultUseCaches(false);
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setInstanceFollowRedirects(false);
 
             if (headers != null) {
-                for (Entry<String, String> e : headers.entrySet()) {
-                    String headerName = e.getKey();
-                    String headerValue = e.getValue();
+                String host = url.getHost();
+
+                for (HttpHeader header : headers) {
+                    String headerName = header.getKey();
+                    String headerValue = header.getValue();
+
+                    if ("host".equals(headerName.toLowerCase())) {
+                        headerValue = host;
+                    }
 
                     if (headerValue != null) {
                         connection.setRequestProperty(headerName, headerValue);
@@ -169,7 +177,7 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
 
                             v = buf.toString();
                         }
-                        response.setHeader(key, v);
+                        response.addHeader(new HttpHeader(key, v));
                     }
                 }
             }
@@ -180,10 +188,30 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
                 is = connection.getInputStream();
             }
 
+            List<String> contentEncodings = responseHeaders.get("Content-Encoding");
+            boolean gzip = contentEncodings != null && contentEncodings.contains("gzip");
+            if (gzip) {
+                is = new GZIPInputStream(is);
+            }
+
+            int total = 0;
             int n = 0;
             byte[] b = new byte[1024];
             while ((n = is.read(b)) > 0) {
                 out.write(b, 0, n);
+                total += n;
+            }
+
+            if (gzip) {
+                Iterator<HttpHeader> iterator = response.getHeaders().iterator();
+                while(iterator.hasNext()) {
+                    HttpHeader httpHeader = iterator.next();
+                    if ("Content-Encoding".equals(httpHeader.getKey())) {
+                        iterator.remove();
+                    } else if ("Content-Length".equals(httpHeader.getKey())) {
+                        httpHeader.setValue(String.valueOf(total));
+                    }
+                }
             }
 
             if (responseCode == 303) {
@@ -191,7 +219,6 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
             }
             log.info("Send Response Code: " + responseCode);
             response.setStatus(responseCode);
-
         } catch (final Exception e) {
             e.printStackTrace();
         } finally {
@@ -220,15 +247,16 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
     }
 
     @SuppressWarnings("unchecked")
-    public static Map<String, String> getHeaders(HttpServletRequest req) {
-        Map<String, String> requestHeaders = new LinkedHashMap<String, String>();
+    public static List<HttpHeader> getHeaders(HttpServletRequest req) {
+        List<HttpHeader> headers = new ArrayList<HttpHeader>();
         Enumeration<String> headerNames = req.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String headerName = headerNames.nextElement();
             String headerValue = req.getHeader(headerName);
-            requestHeaders.put(headerName, headerValue);
+            HttpHeader header = new HttpHeader(headerName, headerValue);
+            headers.add(header);
         }
-        return requestHeaders;
+        return headers;
     }
 
     private String getPath(String root, HttpServletRequest req) {
