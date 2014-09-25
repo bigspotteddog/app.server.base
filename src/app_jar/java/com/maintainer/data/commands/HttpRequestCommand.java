@@ -6,11 +6,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
@@ -29,7 +30,7 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
 
     private final String path;
     private final Method method;
-    private List<HttpHeader> headers;
+    private Map<String, List<String>> headers;
     private String body;
 
     public HttpRequestCommand(String path) {
@@ -42,7 +43,7 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
         this.method = method;
     }
 
-    public HttpRequestCommand(String path, Method method, List<HttpHeader> headers) {
+    public HttpRequestCommand(String path, Method method, Map<String, List<String>> headers) {
         this.path = path;
         this.method = method;
         this.headers = headers;
@@ -54,7 +55,7 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
         this.headers = getHeaders(req);
     }
 
-    public HttpRequestCommand(String path, Method method, List<HttpHeader> headers, String body) {
+    public HttpRequestCommand(String path, Method method, Map<String, List<String>> headers, String body) {
         this.path = path;
         this.method = method;
         this.headers = headers;
@@ -105,16 +106,17 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
             if (headers != null) {
                 String host = url.getHost();
 
-                for (HttpHeader header : headers) {
+                for (Entry<String, List<String>> header : headers.entrySet()) {
                     String headerName = header.getKey();
-                    String headerValue = header.getValue();
-
-                    if ("host".equals(headerName.toLowerCase())) {
-                        headerValue = host;
-                    }
+                    List<String> headerValue = header.getValue();
 
                     if (headerValue != null) {
-                        connection.setRequestProperty(headerName, headerValue);
+                        for (String value : headerValue) {
+                            if ("host".equals(headerName.toLowerCase())) {
+                                value = host;
+                            }
+                            connection.setRequestProperty(headerName, value);
+                        }
                     }
                 }
             }
@@ -147,37 +149,38 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
                 if (key != null) {
                     List<String> value = e.getValue();
                     if (!value.isEmpty()) {
-                        String v = value.iterator().next();
-                        if (responseCode == 303 && key.toLowerCase().equals("location") && req != null) {
-                            URL url2 = new URL(v);
-                            String path2 = url2.getPath();
-                            String query2 = url2.getQuery();
+                        for (String v : value) {
+                            if (responseCode == 303 && key.toLowerCase().equals("location") && req != null) {
+                                URL url2 = new URL(v);
+                                String path2 = url2.getPath();
+                                String query2 = url2.getQuery();
 
-                            String scheme = req.getScheme();
-                            String server = req.getServerName();
-                            int port = req.getServerPort();
+                                String scheme = req.getScheme();
+                                String server = req.getServerName();
+                                int port = req.getServerPort();
 
-                            StringBuilder buf = new StringBuilder(scheme)
-                            .append("://")
-                            .append(server);
+                                StringBuilder buf = new StringBuilder(scheme)
+                                .append("://")
+                                .append(server);
 
-                            if (port != 80) {
-                                buf
-                                .append(':')
-                                .append(port);
+                                if (port != 80) {
+                                    buf
+                                    .append(':')
+                                    .append(port);
+                                }
+
+                                if (path2 != null) {
+                                    buf.append(path2);
+                                }
+
+                                if (query2 != null) {
+                                    buf.append('?').append(query2);
+                                }
+
+                                v = buf.toString();
                             }
-
-                            if (path2 != null) {
-                                buf.append(path2);
-                            }
-
-                            if (query2 != null) {
-                                buf.append('?').append(query2);
-                            }
-
-                            v = buf.toString();
+                            response.addHeader(key, v);
                         }
-                        response.addHeader(new HttpHeader(key, v));
                     }
                 }
             }
@@ -203,15 +206,12 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
             }
 
             if (gzip) {
-                Iterator<HttpHeader> iterator = response.getHeaders().iterator();
-                while(iterator.hasNext()) {
-                    HttpHeader httpHeader = iterator.next();
-                    if ("Content-Encoding".equals(httpHeader.getKey())) {
-                        iterator.remove();
-                    } else if ("Content-Length".equals(httpHeader.getKey())) {
-                        httpHeader.setValue(String.valueOf(total));
-                    }
-                }
+                Map<String, List<String>> headers2 = response.getHeaders();
+                List<String> list = headers.remove("Content-Encoding");
+
+                List<String> list2 = headers2.get("Content-Length");
+                list2.clear();
+                list2.add(String.valueOf(total));
             }
 
             if (responseCode == 303) {
@@ -247,14 +247,16 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
     }
 
     @SuppressWarnings("unchecked")
-    public static List<HttpHeader> getHeaders(HttpServletRequest req) {
-        List<HttpHeader> headers = new ArrayList<HttpHeader>();
+    public static Map<String, List<String>> getHeaders(HttpServletRequest req) {
+        Map<String, List<String>> headers = new LinkedHashMap<String, List<String>>();
+
         Enumeration<String> headerNames = req.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String headerName = headerNames.nextElement();
             String headerValue = req.getHeader(headerName);
-            HttpHeader header = new HttpHeader(headerName, headerValue);
-            headers.add(header);
+            String[] split = headerValue.split(",\\s*");
+            List<String> list = Arrays.asList(split);
+            headers.put(headerName, list);
         }
         return headers;
     }

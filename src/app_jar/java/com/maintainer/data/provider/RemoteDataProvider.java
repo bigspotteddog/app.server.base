@@ -1,11 +1,12 @@
 package com.maintainer.data.provider;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.maintainer.data.commands.HttpHeader;
 import com.maintainer.data.commands.HttpRequestCommand;
 import com.maintainer.data.commands.HttpRequestCommand.Method;
 import com.maintainer.data.commands.HttpResponseModel;
@@ -27,7 +28,7 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
     @Override
     public T get(Key key) throws Exception {
         HttpServletRequest original = getHttpServletRequest();
-        List<HttpHeader> headers = HttpRequestCommand.getHeaders(original);
+        Map<String, List<String>> headers = HttpRequestCommand.getHeaders(original);
 
         Class<?> type = key.getKind();
         String root = getPath(type);
@@ -48,7 +49,7 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
         return object;
     }
 
-    protected HttpRequestCommand getHttpRequestCommand(String root, Method method, List<HttpHeader> headers) {
+    protected HttpRequestCommand getHttpRequestCommand(String root, Method method, Map<String, List<String>> headers) {
         HttpRequestCommand command = new HttpRequestCommand(root, method, headers);
         return command;
     }
@@ -56,7 +57,7 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
     @Override
     public List<T> getAll(Class<?> type) throws Exception {
         HttpServletRequest original = getHttpServletRequest();
-        List<HttpHeader> headers = HttpRequestCommand.getHeaders(original);
+        Map<String, List<String>> headers = HttpRequestCommand.getHeaders(original);
 
         String root = getPath(type);
 
@@ -79,14 +80,14 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
     @Override
     public T post(T obj) throws Exception {
         HttpServletRequest original = getHttpServletRequest();
-        List<HttpHeader> headers = HttpRequestCommand.getHeaders(original);
+        Map<String, List<String>> headers = HttpRequestCommand.getHeaders(original);
 
         Class<?> type = obj.getClass();
         String root = getPath(type);
 
         String body = com.maintainer.util.Utils.getGson().toJson(obj);
 
-        headers.add(new HttpHeader("Content-Type", "application/json; charset=UTF-8"));
+        headers.put("Content-Type", Arrays.asList("application/json; charset=UTF-8"));
         Method method = Method.POST;
         HttpRequestCommand command = getHttpRequestCommand(root, method, headers, body);
         HttpResponseModel resp = command.execute();
@@ -102,7 +103,7 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
         return obj;
     }
 
-    protected HttpRequestCommand getHttpRequestCommand(String root, Method method, List<HttpHeader> headers, String body) {
+    protected HttpRequestCommand getHttpRequestCommand(String root, Method method, Map<String, List<String>> headers, String body) {
         HttpRequestCommand command = getHttpRequestCommand(root, method, headers);
         command.setBody(body);
         return command;
@@ -118,7 +119,7 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
         }
 
         HttpServletRequest original = getHttpServletRequest();
-        List<HttpHeader> headers = HttpRequestCommand.getHeaders(original);
+        Map<String, List<String>> headers = HttpRequestCommand.getHeaders(original);
 
         Class<?> type = obj.getClass();
         String root = getPath(type);
@@ -126,7 +127,7 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
 
         String body = com.maintainer.util.Utils.getGson().toJson(obj);
 
-        headers.add(new HttpHeader("Content-Type", "application/json; charset=UTF-8"));
+        headers.put("Content-Type", Arrays.asList("application/json; charset=UTF-8"));
         HttpRequestCommand command = getHttpRequestCommand(root, Method.PUT, headers, body);
         HttpResponseModel resp = command.execute();
         int status = resp.getStatus();
@@ -144,7 +145,7 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
     @Override
     public Key delete(Key key) throws Exception {
         HttpServletRequest original = getHttpServletRequest();
-        List<HttpHeader> headers = HttpRequestCommand.getHeaders(original);
+        Map<String, List<String>> headers = HttpRequestCommand.getHeaders(original);
 
         Class<?> type = key.getKind();
         String root = getPath(type);
