@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -151,33 +152,7 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
                     if (!value.isEmpty()) {
                         for (String v : value) {
                             if (responseCode == 303 && key.toLowerCase().equals("location") && req != null) {
-                                URL url2 = new URL(v);
-                                String path2 = url2.getPath();
-                                String query2 = url2.getQuery();
-
-                                String scheme = req.getScheme();
-                                String server = req.getServerName();
-                                int port = req.getServerPort();
-
-                                StringBuilder buf = new StringBuilder(scheme)
-                                .append("://")
-                                .append(server);
-
-                                if (port != 80) {
-                                    buf
-                                    .append(':')
-                                    .append(port);
-                                }
-
-                                if (path2 != null) {
-                                    buf.append(path2);
-                                }
-
-                                if (query2 != null) {
-                                    buf.append('?').append(query2);
-                                }
-
-                                v = buf.toString();
+                                v = handleRedirectValue(v);
                             }
                             response.addHeader(key, v);
                         }
@@ -207,11 +182,11 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
 
             if (gzip) {
                 Map<String, List<String>> headers2 = response.getHeaders();
-                List<String> list = headers.remove("Content-Encoding");
+                headers.remove("Content-Encoding");
 
-                List<String> list2 = headers2.get("Content-Length");
-                list2.clear();
-                list2.add(String.valueOf(total));
+                List<String> list = headers2.get("Content-Length");
+                list.clear();
+                list.add(String.valueOf(total));
             }
 
             if (responseCode == 303) {
@@ -236,6 +211,37 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
         }
 
         return response;
+    }
+
+    private String handleRedirectValue(String v) throws MalformedURLException {
+        URL url2 = new URL(v);
+        String path2 = url2.getPath();
+        String query2 = url2.getQuery();
+
+        String scheme = req.getScheme();
+        String server = req.getServerName();
+        int port = req.getServerPort();
+
+        StringBuilder buf = new StringBuilder(scheme)
+        .append("://")
+        .append(server);
+
+        if (port != 80) {
+            buf
+            .append(':')
+            .append(port);
+        }
+
+        if (path2 != null) {
+            buf.append(path2);
+        }
+
+        if (query2 != null) {
+            buf.append('?').append(query2);
+        }
+
+        v = buf.toString();
+        return v;
     }
 
     public String getBody() {
