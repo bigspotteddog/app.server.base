@@ -656,12 +656,20 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         if (checkFields) {
             final Field field = getField(resource, fieldName);
             if (field != null) {
-                query.filter(key, Utils.convert(value, field.getType()));
+                addFilterToQuery(key, value, query, field);
             }
         } else {
-            query.filter(key, value);
+            addFilterToQuery(key, value, query);
         }
         return query;
+    }
+
+    protected void addFilterToQuery(final String key, final Object value, final Query query) throws Exception {
+        query.filter(key, value);
+    }
+
+    protected void addFilterToQuery(final String key, final Object value, final Query query, final Field field) throws Exception {
+        query.filter(key, Utils.convert(value, field.getType()));
     }
 
     protected Field getField(final Resource resource, final String fieldName) throws Exception, InvalidResourceException {
