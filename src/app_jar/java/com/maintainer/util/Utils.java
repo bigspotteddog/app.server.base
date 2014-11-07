@@ -252,9 +252,9 @@ public class Utils {
                                     date = sdf5.parse(asString);
                                 } catch (final ParseException e4) {
                                     try {
-                                        long time = Long.parseLong(asString);
+                                        final long time = Long.parseLong(asString);
                                         date = new Date(time);
-                                    } catch( Exception e5) {
+                                    } catch( final Exception e5) {
                                         e5.printStackTrace();
                                     }
                                 }
@@ -293,7 +293,6 @@ public class Utils {
                     number = new BigDecimal(json.getAsString());
                 } catch (final Exception e) {
                     number = BigDecimal.ZERO;
-                    e.printStackTrace();
                 }
                 return number;
             }
@@ -332,7 +331,7 @@ public class Utils {
             public JsonElement serialize(final UserBase user, final Type typeOfSrc, final JsonSerializationContext context) {
                 if (user == null) return null;
 
-                JsonObject object = new JsonObject();
+                final JsonObject object = new JsonObject();
                 if (user.getKey() != null) {
                     object.add("id", new JsonPrimitive(user.getKey().toString()));
                 }
@@ -342,6 +341,33 @@ public class Utils {
                 }
 
                 return object;
+            }
+        };
+
+        final JsonSerializer<Double> doubleSerializer = new JsonSerializer<Double>() {
+            @Override
+            public JsonElement serialize(final Double src, final Type typeOfSrc, final JsonSerializationContext context) {
+                if (src == null) {
+                    return null;
+                }
+
+                final Number number = src.doubleValue();
+
+                return new JsonPrimitive(number);
+            }
+
+        };
+
+        final JsonDeserializer<Double> doubleDeserializer = new JsonDeserializer<Double>() {
+            @Override
+            public Double deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+                BigDecimal number = null;
+                try {
+                    number = new BigDecimal(json.getAsString());
+                } catch (final Exception e) {
+                    return null;
+                }
+                return number.doubleValue();
             }
         };
 
@@ -355,6 +381,8 @@ public class Utils {
         .registerTypeAdapter(Key.class, keyDeserializer)
         .registerTypeAdapter(Key.class, keySerializer)
         .registerTypeAdapter(User.class, userSerializer)
+        .registerTypeAdapter(Double.class, doubleSerializer)
+        .registerTypeAdapter(Double.class, doubleDeserializer)
         .serializeSpecialFloatingPointValues();
 
         return builder;
@@ -372,8 +400,8 @@ public class Utils {
     }
 
     @SuppressWarnings("rawtypes")
-    public static Class getType(Class clazz) {
-        Class<?> class1 = primitiveMap.get(clazz);
+    public static Class getType(final Class clazz) {
+        final Class<?> class1 = primitiveMap.get(clazz);
         if (class1 == null) {
             return clazz;
         }
@@ -994,7 +1022,7 @@ public class Utils {
         return string == null || string.trim().length() == 0;
     }
 
-    public static void setIsEncodeKeys(boolean b) {
+    public static void setIsEncodeKeys(final boolean b) {
         isEncodeKeys = b;
     }
 
@@ -1014,8 +1042,8 @@ public class Utils {
         return stacktrace;
     }
 
-    public static String convertStreamToString(InputStream is) {
-        java.util.Scanner s = new Scanner(is).useDelimiter("\\A");
+    public static String convertStreamToString(final InputStream is) {
+        final java.util.Scanner s = new Scanner(is).useDelimiter("\\A");
         return s.hasNext() ? s.next() : "";
     }
 }
