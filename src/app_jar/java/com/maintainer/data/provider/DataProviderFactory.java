@@ -44,8 +44,19 @@ public class DataProviderFactory {
         if (defaultDataProvider == null) {
             final Properties properties = Utils.getDatabaseConfigurationProperties();
             final String driver = (String) properties.get("hibernate.connection.driver_class");
+            try {
+                Class<?> driverClass = Class.forName(driver);
+                try {
+                        defaultDataProvider = (DataProvider<?>) driverClass.newInstance();
+                    } catch (InstantiationException e) {
+                        throw new DefaultDataProviderInitializationException(e);
+                    } catch (IllegalAccessException e) {
+                        throw new DefaultDataProviderInitializationException(e);
+                    }
+            } catch (ClassNotFoundException e) {
+                throw new DefaultDataProviderInitializationException(e);
+            }
         }
-
         return defaultDataProvider;
     }
 }
