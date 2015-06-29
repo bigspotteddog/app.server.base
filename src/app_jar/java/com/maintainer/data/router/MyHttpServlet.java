@@ -99,6 +99,7 @@ public class MyHttpServlet extends HttpServlet {
 
     public static void sendJsonResponse(final HttpServletResponse resp, final byte[] bytes) throws IOException {
         resp.setContentType(APPLICATION_JSON);
+        resp.setCharacterEncoding("UTF-8");
         resp.setContentLength(bytes.length);
         resp.getOutputStream().write(bytes);
     }
@@ -107,6 +108,7 @@ public class MyHttpServlet extends HttpServlet {
         ErrorResponse errorResponse = new ErrorResponse(Arrays.asList(e.getMessage()), null);
         final String json = Utils.getGson().toJson(errorResponse);
         resp.setContentType(APPLICATION_JSON);
+        resp.setCharacterEncoding("UTF-8");
 
         Utils.severe(log, e);
         resp.setStatus(BAD_REQUEST);

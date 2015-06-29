@@ -99,8 +99,9 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
             throw new Exception(json);
         }
 
-        obj = (T) Utils.getGson().fromJson(json, type);
-        return obj;
+        T obj2 = (T) Utils.getGson().fromJson(json, type);
+        obj.setKey(obj2.getKey());
+        return obj2;
     }
 
     protected HttpRequestCommand getHttpRequestCommand(String root, Method method, Map<String, List<String>> headers, String body) {
@@ -138,8 +139,9 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
             throw new Exception(json);
         }
 
-        obj = (T) Utils.getGson().fromJson(json, type);
-        return obj;
+        T obj2 = (T) Utils.getGson().fromJson(json, type);
+        obj.setKey(obj2.getKey());
+        return obj2;
     }
 
     @Override
