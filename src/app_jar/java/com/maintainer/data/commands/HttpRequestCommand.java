@@ -256,14 +256,17 @@ public class HttpRequestCommand extends AbstractCommand<HttpResponseModel> {
     public static Map<String, List<String>> getHeaders(HttpServletRequest req) {
         Map<String, List<String>> headers = new LinkedHashMap<String, List<String>>();
 
-        Enumeration<String> headerNames = req.getHeaderNames();
-        while (headerNames.hasMoreElements()) {
-            String headerName = headerNames.nextElement();
-            String headerValue = req.getHeader(headerName);
-            String[] split = headerValue.split(",\\s*");
-            List<String> list = Arrays.asList(split);
-            headers.put(headerName, list);
+        if (req != null) {
+            Enumeration<String> headerNames = req.getHeaderNames();
+            while (headerNames.hasMoreElements()) {
+                String headerName = headerNames.nextElement();
+                String headerValue = req.getHeader(headerName);
+                String[] split = headerValue.split(",\\s*");
+                List<String> list = Arrays.asList(split);
+                headers.put(headerName, list);
+            }
         }
+
         return headers;
     }
 
