@@ -1,6 +1,7 @@
 sudo: false
 language: java
 script: ant release
+
 deploy:
   provider: releases
   api_key:
