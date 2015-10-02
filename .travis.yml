@@ -9,3 +9,5 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
+    repo: bigspotteddog/app.server.base
+    all_branches: true
