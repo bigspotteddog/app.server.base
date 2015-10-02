@@ -409,7 +409,7 @@ public class Utils {
     }
 
     public static Object convert(Object value, Class<?> destClass) throws Exception {
-        if ((value == null) || "".equals(value.trim())) {
+        if ((value == null) || value.toString().trim().length() == 0) {
             return value;
         }
 
