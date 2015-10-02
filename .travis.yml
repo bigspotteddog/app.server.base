@@ -1,3 +1,13 @@
 sudo: false
 language: java
 script: ant release
+
+deploy:
+  provider: releases
+  api_key: "1c02c8da2a440270f6d1278fbb37c5cacef82268"
+  file: "build/dist/app.server.base-1.0.0.UNSTABLE.jar"
+  skip_cleanup: true
+  on:
+    tags: true
+    
+
