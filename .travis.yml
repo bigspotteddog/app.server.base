@@ -2,6 +2,11 @@ sudo: false
 language: java
 script: ant release
 
+branches:
+  only:
+    - master
+    - /v\d+\.\d+[a-z]/
+
 deploy:
   provider: releases
   api_key:
