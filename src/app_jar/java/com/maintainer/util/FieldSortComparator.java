@@ -39,7 +39,7 @@ public class FieldSortComparator implements Comparator<Object> {
                     throw new Exception("Not comparable.");
                 }
 
-                if (v1.getClass().isAssignableFrom(v2.getClass())) {
+                if (!v1.getClass().isAssignableFrom(v2.getClass())) {
                     throw new Exception("Not compatible");
                 }
 
