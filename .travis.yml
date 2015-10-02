@@ -1,3 +1,10 @@
 sudo: false
 language: java
 script: ant release
+deploy:
+  provider: releases
+  api_key:
+    secure: LnO4tOdUZXMTIkcnsOeskB9KDFt3Y+aesqhTlIE6P0Csn4mjJTi3jCgZDa09qyP9JHiXKovLpD6uoVf7BYublZ1nwayCrrRraTDuPZ7dTEL/D/lPezEpGz1gRsHN4B0QI1Cfgwm8f34xd2k77GNCm2Y9vlu8LpkildZJ6clp4gw=
+  file: build/dist/app.server.base-1.0.0.UNSTABLE.jar
+  on:
+    repo: bigspotteddog/app.server.base
