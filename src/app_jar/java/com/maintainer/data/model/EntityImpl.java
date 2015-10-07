@@ -22,6 +22,9 @@ public class EntityImpl implements EntityBase {
     private String id;
 
     @NotIndexed
+    private Object identity;
+
+    @NotIndexed
     @Autocreate(readonly=true)
     transient private Date created;
 
@@ -57,6 +60,11 @@ public class EntityImpl implements EntityBase {
         this.id = id;
     }
 
+    @Override
+    public void setIdentity(final Object identity) {
+        this.identity = identity;
+    }
+
     public String getWebSafeKey() {
         return keyString;
     }
@@ -64,6 +72,11 @@ public class EntityImpl implements EntityBase {
     @Override
     public String getId() {
         return id;
+    }
+
+    @Override
+    public Object getIdentity() {
+        return identity;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.maintainer.data.controller;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -322,22 +323,24 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         checkReadOnly(kind);
 
         final String incomingJson = rep.getText();
+        System.out.println(incomingJson);
 
         final DataProvider<T> service = getDataProvider();
 
-        T obj = service.fromJson(kind, incomingJson);
-
-        final EntityImpl obj2 = obj;
-        if (obj2.getId() != null) {
-            throw new Exception(ID_PROVIDED);
-        }
-
-        try {
-            prePost(obj);
-            obj = post(service, obj);
-            postPost(obj);
-        } catch (final Exception e) {
-            addError(e);
+        Object obj = null;
+        if (incomingJson.charAt(0) == '[') {
+            Type t = Utils.getParameterizedListType(kind);
+            Gson gson = Utils.getGson();
+            List<T> list = gson.fromJson(incomingJson, t);
+            System.out.println(gson.toJson(list));
+            for (T o : list) {
+                postObject(o);
+            }
+            obj = list;
+        } else {
+            T o = service.fromJson(kind, incomingJson);
+            postObject(o);
+            obj = o;
         }
 
         if (errors != null && !errors.isEmpty()) {
@@ -355,6 +358,25 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         final String json = getGson().toJson(obj);
 
         return getJsonResponse(json);
+    }
+
+    protected T postObject(T obj) throws Exception {
+        final EntityImpl obj2 = obj;
+        if (obj2.getId() != null) {
+            throw new Exception(ID_PROVIDED);
+        }
+
+        final DataProvider<T> service = getDataProvider();
+
+        try {
+            prePost(obj);
+            obj = post(service, obj);
+            postPost(obj);
+        } catch (final Exception e) {
+            addError(e);
+        }
+
+        return obj;
     }
 
     protected T post(final DataProvider<T> service, final T obj) throws Exception {
