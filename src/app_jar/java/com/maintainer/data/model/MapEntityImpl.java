@@ -16,11 +16,6 @@ public class MapEntityImpl extends EntityImpl { //implements Map<String, Object>
         return true;
     }
 
-    @Override
-    public void setCursor(final String cursor) {
-        properties.put("cursor", cursor);
-    }
-
     public void clear() {
         properties.clear();
     }
