@@ -20,6 +20,11 @@ public class MapEntityImpl extends EntityImpl implements Map<String, Object> {
     }
 
     @Override
+    public void setIdentity(final Object identity) {
+        put("identity", identity);
+    }
+
+    @Override
     public void setCursor(final String cursor) {
         put("cursor", cursor);
     }
@@ -53,6 +58,9 @@ public class MapEntityImpl extends EntityImpl implements Map<String, Object> {
         return properties.get(key);
     }
 
+    public void set(final String key, final Object value) {
+        properties.put(key, value);
+    }
 
     @Override
     public boolean isEmpty() {

@@ -49,8 +49,8 @@
         <property name="build-folder" value="${build.home}/${ant.project.name}.jar.build"/>
         <mkdir dir="${build-folder}"/>
 
-        <javac source="1.6"
-               target="1.6"
+        <javac source="1.7"
+               target="1.7"
                debug="true"
                optimize="true"
                srcdir="src/${app.folder.name}_jar/java"

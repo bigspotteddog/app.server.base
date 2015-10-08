@@ -101,7 +101,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         }
     }
 
-    private Field[] getFields(final Object incoming) {
+    protected Field[] getFields(final Object incoming) {
         final ArrayList<Field> fields = new ArrayList<Field>();
         Class<?> clazz = incoming.getClass();
 
@@ -227,7 +227,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     }
 
     @SuppressWarnings("unchecked")
-    private EntityBase createOrUpdate(EntityBase target, final Autocreate fieldAutocreate) throws Exception {
+    protected EntityBase createOrUpdate(EntityBase target, final Autocreate fieldAutocreate) throws Exception {
         if (target == null) {
             return target;
         }
@@ -265,7 +265,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     }
 
     @SuppressWarnings("unchecked")
-    private void delete(final Object target, final Autocreate fieldAutocreate) throws Exception {
+    protected void delete(final Object target, final Autocreate fieldAutocreate) throws Exception {
         if (target == null || fieldAutocreate.embedded()) {
             return;
         }
@@ -298,7 +298,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         }
     }
 
-    private Autocreate getAutocreate(final Object object) {
+    protected Autocreate getAutocreate(final Object object) {
         final Class<? extends Object> class1 = object.getClass();
         final Autocreate classAutocreate = class1.getAnnotation(Autocreate.class);
         return classAutocreate;
