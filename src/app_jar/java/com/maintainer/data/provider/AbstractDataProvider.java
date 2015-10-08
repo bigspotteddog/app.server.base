@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 
 import com.maintainer.data.model.Autocreate;
 import com.maintainer.data.model.EntityBase;
+import com.maintainer.util.MyField;
 import com.maintainer.util.Utils;
 
 public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCreateVisitor {
@@ -84,8 +85,8 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     protected void mergeAny(final Object incoming, final Object existing) throws Exception {
         log.debug("mergeAny");
 
-        final List<Field> fields = getFields(incoming);
-        for (final Field f : fields) {
+        final List<MyField> fields = getFields(incoming);
+        for (final MyField f : fields) {
             final Object value = getFieldValue(incoming, f);
             if (value != null) {
                 log.debug(f.getName() + " = " + value);
@@ -100,24 +101,28 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         }
     }
 
-    protected Autocreate getAutocreateAnnotation(final Field f) {
+    protected Autocreate getAutocreateAnnotation(final MyField f) {
         f.setAccessible(true);
         return f.getAnnotation(Autocreate.class);
     }
 
-    protected Object getFieldValue(final Object obj, final Field f) throws IllegalAccessException {
+    protected Object getFieldValue(final Object obj, final MyField f) throws IllegalAccessException {
         f.setAccessible(true);
         final Object value = f.get(obj);
         return value;
     }
 
-    protected void setFieldValue(final Object obj, final Field f, final Object value) throws IllegalAccessException {
+    protected void setFieldValue(final Object obj, final MyField f, final Object value) throws IllegalAccessException {
         f.setAccessible(true);
         f.set(obj, value);
     }
 
-    protected ArrayList<Field> getFields(final Object target) {
-        final Map<String, Field> fieldMap = new LinkedHashMap<String, Field>();
+    protected ArrayList<MyField> getFields(final Object target) {
+        return getFields(target, true);
+    }
+
+    protected ArrayList<MyField> getFields(final Object target, boolean isRecurse) {
+        final Map<String, MyField> fieldMap = new LinkedHashMap<String, MyField>();
         Class<?> clazz = target.getClass();
         while (clazz != null) {
             final Field[] fields2 = clazz.getDeclaredFields();
@@ -125,13 +130,19 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
                 final Field f = fields2[i];
                 final String name = f.getName();
 
+                final MyField myField = new MyField(f);
                 if (!fieldMap.containsKey(name)) {
-                    fieldMap.put(name, f);
+                    fieldMap.put(name, myField);
                 }
             }
+
+            if (!isRecurse) {
+                break;
+            }
+
             clazz = clazz.getSuperclass();
         }
-        return new ArrayList<Field>(fieldMap.values());
+        return new ArrayList<MyField>(fieldMap.values());
     }
 
     @SuppressWarnings("unchecked")
@@ -142,7 +153,6 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public EntityBase autocreate(final EntityBase target) throws Exception {
 
         T existing = null;
@@ -150,15 +160,15 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
             existing = get(target.getKey());
         }
 
-        final Field[] fields = target.getClass().getDeclaredFields();
-        for (final Field f : fields) {
+        final List<MyField> fields = getFields(target, false);
+        for (final MyField f : fields) {
             autocreateFromField(target, existing, f);
         }
 
         return target;
     }
 
-    protected void autocreateFromField(final EntityBase target, final T existing, final Field f) {
+    protected void autocreateFromField(final EntityBase target, final T existing, final MyField f) {
         final Autocreate autocreate = getAutocreateAnnotation(f);
         if (autocreate != null && !autocreate.embedded()) {
             try {
@@ -218,8 +228,8 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
             return null;
         }
 
-        final Field[] fields = target.getClass().getDeclaredFields();
-        for (final Field f : fields) {
+        final List<MyField> fields = getFields(target, false);
+        for (final MyField f : fields) {
             final Autocreate autocreate = getAutocreateAnnotation(f);
             if (autocreate != null) {
                 try {
