@@ -101,11 +101,6 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         }
     }
 
-    protected Autocreate getAutocreateAnnotation(final MyField f) {
-        f.setAccessible(true);
-        return f.getAnnotation(Autocreate.class);
-    }
-
     protected Object getFieldValue(final Object obj, final MyField f) throws IllegalAccessException {
         f.setAccessible(true);
         final Object value = f.get(obj);
@@ -169,14 +164,17 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     }
 
     protected void autocreateFromField(final EntityBase target, final T existing, final MyField f) {
-        final Autocreate autocreate = getAutocreateAnnotation(f);
-        if (autocreate != null && !autocreate.embedded()) {
+//        final Autocreate autocreate = getFieldAutocreateAnnotation(f);
+        boolean isAutocreate = f.isAutocreate();
+        boolean isEmbedded = f.embedded();
+
+        if (isAutocreate && !isEmbedded) {
             try {
                 final Object value = f.get(target);
                 if (value != null) {
                     if (EntityBase.class.isAssignableFrom(value.getClass())) {
                         final EntityBase entity = (EntityBase) value;
-                        setFieldValue(target, f, createOrUpdate(entity, autocreate));
+                        setFieldValue(target, f, createOrUpdate(entity, f.readonly(), f.create(), f.update()));
                     } else if (Collection.class.isAssignableFrom(value.getClass())) {
                         final List<Object> list = new ArrayList<Object>();
                         if (value != null) {
@@ -199,21 +197,21 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
                             }
                             if (EntityBase.class.isAssignableFrom(o.getClass())) {
                                 final EntityBase entity = (EntityBase) o;
-                                iterator.set(createOrUpdate(entity, autocreate));
+                                iterator.set(createOrUpdate(entity, f.readonly(), f.create(), f.update()));
                             }
                         }
 
                         if (removeThese != null && !removeThese.isEmpty()) {
                             removeThese.removeAll(list);
                             for (final Object object : removeThese) {
-                                delete(object, autocreate);
+                                delete(object, f.embedded(), f.readonly(), f.delete());
                             }
                         }
                     }
                 } else {
                     if (existing != null) {
                         final Object object = f.get(existing);
-                        delete(object, autocreate);
+                        delete(object, f.embedded(), f.readonly(), f.delete());
                     }
                 }
             } catch (final Exception e) {
@@ -230,11 +228,10 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
         final List<MyField> fields = getFields(target, false);
         for (final MyField f : fields) {
-            final Autocreate autocreate = getAutocreateAnnotation(f);
-            if (autocreate != null) {
+            if (f.isAutocreate()) {
                 try {
                     final Object object = getFieldValue(target, f);
-                    delete(object, autocreate);
+                    delete(object, f.embedded(), f.readonly(), f.delete());
                 } catch (final Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -254,14 +251,14 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     }
 
     @SuppressWarnings("unchecked")
-    protected EntityBase createOrUpdate(EntityBase target, final Autocreate fieldAutocreate) throws Exception {
+    protected EntityBase createOrUpdate(EntityBase target, boolean isFieldReadOnly, boolean isFieldCreate, boolean isFieldUpdate) throws Exception {
         if (target == null) {
             return target;
         }
 
         final Autocreate classAutocreate = getAutocreate(target);
 
-        boolean readonly = fieldAutocreate.readonly();
+        boolean readonly = isFieldReadOnly;
         if (readonly) {
             readonly = classAutocreate == null || classAutocreate.readonly();
         }
@@ -270,12 +267,12 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
             return target;
         }
 
-        boolean create = fieldAutocreate.create();
+        boolean create = isFieldCreate;
         if (create) {
             create = classAutocreate == null || classAutocreate.create();
         }
 
-        boolean update = fieldAutocreate.update();
+        boolean update = isFieldUpdate;
         if (update) {
             update = classAutocreate == null || classAutocreate.update();
         }
@@ -292,19 +289,19 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     }
 
     @SuppressWarnings("unchecked")
-    protected void delete(final Object target, final Autocreate fieldAutocreate) throws Exception {
-        if (target == null || fieldAutocreate.embedded()) {
+    protected void delete(final Object target, final boolean isEmbedded, final boolean isReadOnly, final boolean isDelete) throws Exception {
+        if (target == null || isEmbedded) {
             return;
         }
 
         final Autocreate classAutocreate = getAutocreate(target);
 
-        boolean readonly = fieldAutocreate.readonly();
+        boolean readonly = isReadOnly;
         if (readonly) {
             readonly = classAutocreate == null || classAutocreate.readonly();
         }
 
-        boolean delete = fieldAutocreate.delete();
+        boolean delete = isDelete;
         if (delete) {
             delete = classAutocreate == null || classAutocreate.delete();
         }
@@ -314,7 +311,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
             if (Collection.class.isAssignableFrom(target.getClass())) {
                 final List<Object> list = new ArrayList<Object>((Collection<Object>) target);
                 for (final Object o : list) {
-                    delete(o, fieldAutocreate);
+                    delete(o, isEmbedded, isReadOnly, isDelete);
                 }
             } else {
                 final Object id = ((EntityBase) target).getId();

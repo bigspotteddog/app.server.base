@@ -196,8 +196,6 @@ public class UtilsTest extends TestCase {
         Field f = fields[0];
 
         MyField myField = new MyField(f);
-
-
     }
 
     private static class FieldTest {
