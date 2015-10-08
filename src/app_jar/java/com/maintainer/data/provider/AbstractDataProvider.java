@@ -2,10 +2,11 @@ package com.maintainer.data.provider;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -83,35 +84,54 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     protected void mergeAny(final Object incoming, final Object existing) throws Exception {
         log.debug("mergeAny");
 
-        final Field[] fields = getFields(incoming);
+        final List<Field> fields = getFields(incoming);
         for (final Field f : fields) {
-            f.setAccessible(true);
-
-            final Object value = f.get(incoming);
+            final Object value = getFieldValue(incoming, f);
             if (value != null) {
                 log.debug(f.getName() + " = " + value);
-                f.set(existing, value);
+                setFieldValue(existing, f, value);
             } else {
-                final Object value2 = f.get(existing);
+                final Object value2 = getFieldValue(existing, f);
                 if (value2 != null) {
                     log.debug("clearing " + f.getName() + " = " + value);
-                    f.set(existing, null);
+                    setFieldValue(existing, f, null);
                 }
             }
         }
     }
 
-    protected Field[] getFields(final Object incoming) {
-        final ArrayList<Field> fields = new ArrayList<Field>();
-        Class<?> clazz = incoming.getClass();
+    protected Autocreate getAutocreateAnnotation(final Field f) {
+        f.setAccessible(true);
+        return f.getAnnotation(Autocreate.class);
+    }
 
-        do {
-            final Field[] f = clazz.getDeclaredFields();
-            fields.addAll(Arrays.asList(f));
+    protected Object getFieldValue(final Object obj, final Field f) throws IllegalAccessException {
+        f.setAccessible(true);
+        final Object value = f.get(obj);
+        return value;
+    }
+
+    protected void setFieldValue(final Object obj, final Field f, final Object value) throws IllegalAccessException {
+        f.setAccessible(true);
+        f.set(obj, value);
+    }
+
+    protected ArrayList<Field> getFields(final Object target) {
+        final Map<String, Field> fieldMap = new LinkedHashMap<String, Field>();
+        Class<?> clazz = target.getClass();
+        while (clazz != null) {
+            final Field[] fields2 = clazz.getDeclaredFields();
+            for (int i = 0; i < fields2.length; i++) {
+                final Field f = fields2[i];
+                final String name = f.getName();
+
+                if (!fieldMap.containsKey(name)) {
+                    fieldMap.put(name, f);
+                }
+            }
             clazz = clazz.getSuperclass();
-        } while (clazz != null);
-
-        return fields.toArray(new Field[0]);
+        }
+        return new ArrayList<Field>(fieldMap.values());
     }
 
     @SuppressWarnings("unchecked")
@@ -139,15 +159,14 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     }
 
     protected void autocreateFromField(final EntityBase target, final T existing, final Field f) {
-        f.setAccessible(true);
-        final Autocreate autocreate = f.getAnnotation(Autocreate.class);
+        final Autocreate autocreate = getAutocreateAnnotation(f);
         if (autocreate != null && !autocreate.embedded()) {
             try {
                 final Object value = f.get(target);
                 if (value != null) {
                     if (EntityBase.class.isAssignableFrom(value.getClass())) {
                         final EntityBase entity = (EntityBase) value;
-                        f.set(target, createOrUpdate(entity, autocreate));
+                        setFieldValue(target, f, createOrUpdate(entity, autocreate));
                     } else if (Collection.class.isAssignableFrom(value.getClass())) {
                         final List<Object> list = new ArrayList<Object>();
                         if (value != null) {
@@ -194,7 +213,6 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     }
 
     public T autodelete(final Key key) throws Exception {
-
         final T target = get(key);
         if (target == null) {
             return null;
@@ -202,11 +220,10 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
         final Field[] fields = target.getClass().getDeclaredFields();
         for (final Field f : fields) {
-            f.setAccessible(true);
-            final Autocreate autocreate = f.getAnnotation(Autocreate.class);
+            final Autocreate autocreate = getAutocreateAnnotation(f);
             if (autocreate != null) {
                 try {
-                    final Object object = f.get(target);
+                    final Object object = getFieldValue(target, f);
                     delete(object, autocreate);
                 } catch (final Exception e) {
                     throw new RuntimeException(e);

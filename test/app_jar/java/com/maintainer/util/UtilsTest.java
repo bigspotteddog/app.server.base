@@ -1,13 +1,12 @@
 package com.maintainer.util;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import junit.framework.TestCase;
 
 import org.jasypt.util.text.BasicTextEncryptor;
 import org.junit.Test;
@@ -18,6 +17,8 @@ import org.restlet.data.Reference;
 import com.google.gson.Gson;
 import com.maintainer.data.model.User;
 import com.maintainer.data.provider.Key;
+
+import junit.framework.TestCase;
 
 public class UtilsTest extends TestCase {
 
@@ -188,5 +189,18 @@ public class UtilsTest extends TestCase {
 
         final String string2 = encryptor.decrypt(string);
         System.out.println(string2);
+    }
+
+    public void testMyField() {
+        Field[] fields = FieldTest.class.getDeclaredFields();
+        Field f = fields[0];
+
+        MyField myField = new MyField(f);
+
+
+    }
+
+    private static class FieldTest {
+        private String name;
     }
 }
