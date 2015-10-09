@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 
 public class MyField extends EntityImpl {
     private String name;
+    private String description;
     private String typeName;
     private Boolean embedded;
     private Boolean readonly;

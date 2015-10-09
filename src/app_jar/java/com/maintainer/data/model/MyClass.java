@@ -6,6 +6,8 @@ import java.util.List;
 @Autocreate(id="name")
 public class MyClass extends EntityImpl {
     private String name;
+    private String description;
+
     @Autocreate(embedded=true)
     private List<MyField> fields;
 
