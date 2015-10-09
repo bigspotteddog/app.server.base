@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
@@ -35,6 +36,7 @@ import com.maintainer.data.model.Autocreate;
 import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
 import com.maintainer.data.model.EntityRemote;
+import com.maintainer.data.model.MapEntityImpl;
 import com.maintainer.data.provider.DataProvider;
 import com.maintainer.data.provider.DataProviderFactory;
 import com.maintainer.data.provider.DefaultDataProviderInitializationException;
@@ -728,11 +730,45 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
     @SuppressWarnings({ "rawtypes" })
     protected String toJson(final List list) {
-        return getGson().toJson(list);
+        List<Object> entities = new ArrayList<Object>();
+
+        for (Object entity : list) {
+            if (MapEntityImpl.class.isAssignableFrom(entity.getClass())) {
+                Map<String, Object> map = getMapEntityAsMap(entity);
+                entities.add(map);
+            } else {
+                entities.add(entity);
+            }
+        }
+
+        return getGson().toJson(entities);
     }
 
     protected String toJson(final Object entity) {
-        return getGson().toJson(entity);
+        Object obj = entity;
+        if (MapEntityImpl.class.isAssignableFrom(entity.getClass())) {
+            Map<String, Object> map = getMapEntityAsMap(entity);
+            obj = map;
+        }
+        return getGson().toJson(obj);
+    }
+
+    protected Map<String, Object> getMapEntityAsMap(final Object entity) {
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+
+        MapEntityImpl mapEntityImpl = (MapEntityImpl) entity;
+        for (Entry<String, Object> e : mapEntityImpl.entrySet()) {
+            result.put(e.getKey(), e.getValue());
+        }
+
+        Map<String, Object> map = Utils.asMap(mapEntityImpl);
+        for (Entry<String, Object> e : map.entrySet()) {
+            String key = e.getKey();
+            if ("properties".equals(key)) continue;
+            result.put(e.getKey(), e.getValue());
+        }
+
+        return result;
     }
 
     protected Gson getGson() {
