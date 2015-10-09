@@ -11,6 +11,7 @@ import java.util.Properties;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.maintainer.data.model.EntityImpl;
+import com.maintainer.data.model.MyClass;
 import com.maintainer.data.model.Resource;
 import com.maintainer.data.provider.DataProvider;
 import com.maintainer.data.provider.DataProviderFactory;
@@ -34,6 +35,8 @@ public class GenericController<T extends EntityImpl> extends ResourcesController
                 register(name, clazz);
             }
         }
+
+        register("classes", MyClass.class);
     }
 
     public static void register(final String resource, final Class<?> clazz) {

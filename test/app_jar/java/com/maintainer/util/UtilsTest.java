@@ -15,6 +15,7 @@ import org.restlet.data.Method;
 import org.restlet.data.Reference;
 
 import com.google.gson.Gson;
+import com.maintainer.data.model.MyField;
 import com.maintainer.data.model.User;
 import com.maintainer.data.provider.Key;
 

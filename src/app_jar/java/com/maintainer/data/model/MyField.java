@@ -1,14 +1,23 @@
-package com.maintainer.util;
+package com.maintainer.data.model;
 
 import java.lang.reflect.Field;
 
-import com.maintainer.data.model.Autocreate;
-
-public class MyField {
+public class MyField extends EntityImpl {
     private String name;
-    private Class<?> type;
-    private Field field;
-    private Autocreate autocreate;
+    private String typeName;
+    private Boolean embedded;
+    private Boolean readonly;
+    private Boolean create;
+    private Boolean update;
+    private Boolean delete;
+    private Boolean remote;
+    private Boolean skip;
+
+    transient private Autocreate autocreate;
+    transient private Class<?> type;
+    transient private Field field;
+
+    protected MyField() {}
 
     public MyField(Field field) {
         this.name = field.getName();
@@ -22,10 +31,35 @@ public class MyField {
     public MyField(String name, Class<?> class1) {
         this.name = name;
         this.type = class1;
+        this.typeName = class1.getName();
+    }
+
+    public MyField(String name, String typeName) throws ClassNotFoundException {
+        this.name = name;
+        this.typeName = typeName;
+        this.type = Class.forName(typeName);
     }
 
     public String getName() {
         return name;
+    }
+
+    public Class<?> getType() {
+        if (type != null) {
+            return type;
+        }
+
+        if (typeName != null) {
+            try {
+                Class<?> class1 = Class.forName(typeName);
+                type = class1;
+                return class1;
+            } catch (ClassNotFoundException e) {
+                // ignored
+            }
+        }
+
+        return null;
     }
 
     public void setAccessible(boolean b) {
@@ -62,34 +96,55 @@ public class MyField {
         if (autocreate != null) {
             return autocreate.embedded();
         }
-        return false;
+        if (embedded == null) return false;
+        return embedded;
     }
 
     public boolean readonly() {
         if (autocreate != null) {
             return autocreate.readonly();
         }
-        return false;
+        if (readonly == null) return false;
+        return readonly;
     }
 
     public boolean create() {
         if (autocreate != null) {
             return autocreate.create();
         }
-        return false;
+        if (create == null) return false;
+        return create;
     }
 
     public boolean update() {
         if (autocreate != null) {
             return autocreate.update();
         }
-        return false;
+        if (update == null) return false;
+        return update;
     }
 
     public boolean delete() {
         if (autocreate != null) {
             return autocreate.delete();
         }
-        return false;
+        if (delete == null) return false;
+        return delete;
+    }
+
+    public boolean remote() {
+        if (autocreate != null) {
+            return autocreate.remote();
+        }
+        if (remote == null) return false;
+        return remote;
+    }
+
+    public boolean skip() {
+        if (autocreate != null) {
+            return autocreate.skip();
+        }
+        if (skip == null) return false;
+        return skip;
     }
 }

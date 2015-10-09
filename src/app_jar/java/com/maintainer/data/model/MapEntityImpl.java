@@ -5,12 +5,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import javax.persistence.Transient;
-
 public class MapEntityImpl extends EntityImpl { //implements Map<String, Object> {
 
-    @NotStored @NotIndexed @Transient
-    transient private final LinkedHashMap<String, Object> properties = new LinkedHashMap<String, Object>();
+    @NotStored @NotIndexed
+    private final LinkedHashMap<String, Object> properties = new LinkedHashMap<String, Object>();
 
     public boolean isIndexed(final Object key) {
         return true;

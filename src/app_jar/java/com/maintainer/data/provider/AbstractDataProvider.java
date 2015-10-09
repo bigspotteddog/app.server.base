@@ -12,7 +12,7 @@ import org.apache.log4j.Logger;
 
 import com.maintainer.data.model.Autocreate;
 import com.maintainer.data.model.EntityBase;
-import com.maintainer.util.MyField;
+import com.maintainer.data.model.MyField;
 import com.maintainer.util.Utils;
 
 public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCreateVisitor {
@@ -112,11 +112,11 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         f.set(obj, value);
     }
 
-    protected ArrayList<MyField> getFields(final Object target) {
+    protected List<MyField> getFields(final Object target) throws Exception {
         return getFields(target, true);
     }
 
-    protected ArrayList<MyField> getFields(final Object target, boolean isRecurse) {
+    protected List<MyField> getFields(final Object target, boolean isRecurse) throws Exception {
         final Map<String, MyField> fieldMap = new LinkedHashMap<String, MyField>();
         Class<?> clazz = target.getClass();
         while (clazz != null) {
@@ -142,7 +142,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
     @SuppressWarnings("unchecked")
     @Override
-    public T fromJson(final Class<?> kind, final String json) {
+    public T fromJson(final Class<?> kind, final String json) throws Exception {
         final T obj = (T) Utils.getGson().fromJson(json, kind);
         return obj;
     }
@@ -164,7 +164,6 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     }
 
     protected void autocreateFromField(final EntityBase target, final T existing, final MyField f) {
-//        final Autocreate autocreate = getFieldAutocreateAnnotation(f);
         boolean isAutocreate = f.isAutocreate();
         boolean isEmbedded = f.embedded();
 

@@ -24,6 +24,7 @@ import com.maintainer.data.controller.LoginController;
 import com.maintainer.data.controller.LogoutController;
 import com.maintainer.data.controller.PingController;
 import com.maintainer.data.controller.UserResourceController;
+import com.maintainer.data.model.MyClass;
 import com.maintainer.data.provider.DataProvider;
 import com.maintainer.data.provider.DataProviderFactory;
 import com.maintainer.data.security.MyCookieAuthenticator;
@@ -116,6 +117,7 @@ public class WebSwitch extends Application {
         for (final Entry<String, Class<?>> e : map.entrySet()) {
             GenericController.register(e.getKey(), e.getValue());
         }
+        GenericController.register("classes", MyClass.class);
     }
 
     protected void initializeDataProviders() {
@@ -224,13 +226,21 @@ public class WebSwitch extends Application {
 
     private void commit(final Request request) {
         if (isTransactional  && !Utils.isInternalRequest(request)) {
-            DataProviderFactory.instance().getDefaultDataProvider().commitTransaction();
+            try {
+                DataProviderFactory.instance().getDefaultDataProvider().commitTransaction();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
     private void begin(final Request request) {
         if (isTransactional && !Utils.isInternalRequest(request)) {
-            DataProviderFactory.instance().getDefaultDataProvider().beginTransaction();
+            try {
+                DataProviderFactory.instance().getDefaultDataProvider().beginTransaction();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

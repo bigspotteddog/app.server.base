@@ -11,9 +11,9 @@ public interface DataProvider<T> {
     public abstract T put(T item) throws Exception;
     public abstract T merge(T incoming) throws Exception;
     public abstract Key delete(Key key) throws Exception;
-    public abstract T fromJson(Class<?> kind, String json);
+    public abstract T fromJson(Class<?> kind, String json) throws Exception;
     public abstract List<T> find(Query query) throws Exception;
-    public abstract Object getId(Object object);
-    public abstract void beginTransaction();
-    public abstract void commitTransaction();
+    public abstract Object getId(Object object) throws Exception;
+    public abstract void beginTransaction() throws Exception;
+    public abstract void commitTransaction() throws Exception;
 }

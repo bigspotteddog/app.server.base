@@ -105,12 +105,12 @@ public class Key implements Comparable<Key>, Serializable {
             .append(':');
         }
 
-        final String[] path = kindName.split("\\.");
-        final String k = path[path.length - 1];
+//        final String[] path = kindName.split("\\.");
+//        final String k = path[path.length - 1];
 
         final boolean isStringId = String.class.isAssignableFrom(id.getClass());
 
-        buf.append(k).append('(');
+        buf.append(kindName).append('(');
 
         if (isStringId) {
             buf.append('"');
