@@ -1,6 +1,7 @@
 package com.maintainer.data.router;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -23,7 +24,9 @@ import com.maintainer.data.controller.GenericController;
 import com.maintainer.data.controller.LoginController;
 import com.maintainer.data.controller.LogoutController;
 import com.maintainer.data.controller.PingController;
+import com.maintainer.data.controller.UserDefinedClassController;
 import com.maintainer.data.controller.UserResourceController;
+import com.maintainer.data.model.MapEntityImpl;
 import com.maintainer.data.model.MyClass;
 import com.maintainer.data.model.ThreadLocalInfo;
 import com.maintainer.data.provider.DataProvider;
@@ -112,6 +115,7 @@ public class WebSwitch extends Application {
         }
     }
 
+    @SuppressWarnings("unchecked")
     protected void initializeControllerClasses() {
         final Map<String, Class<?>> map = new LinkedHashMap<String, Class<?>>();
         registerControllerClasses(map);
@@ -119,6 +123,20 @@ public class WebSwitch extends Application {
             GenericController.register(e.getKey(), e.getValue());
         }
         GenericController.register("classes", MyClass.class);
+
+        DataProvider<MyClass> dataProvider = (DataProvider<MyClass>) DataProviderFactory.instance().getDataProvider(MyClass.class);
+        try {
+            List<MyClass> list = dataProvider.getAll(MyClass.class);
+            for (MyClass c : list) {
+                try {
+                    Class.forName(c.getName());
+                } catch (Exception e) {
+                    GenericController.register(c.getName(), MapEntityImpl.class);
+                }
+            }
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
     }
 
     protected void initializeDataProviders() {
@@ -186,6 +204,7 @@ public class WebSwitch extends Application {
         routes.put("/login", LoginController.class);
         routes.put("/logout", LogoutController.class);
         routes.put("/users", UserResourceController.class, Template.MODE_STARTS_WITH);
+        routes.put("/classes", UserDefinedClassController.class, Template.MODE_STARTS_WITH);
         routes.put(GENERIC, getGenericControllerClass(), Template.MODE_STARTS_WITH);
 
         fillRoutes(routes);

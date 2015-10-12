@@ -482,7 +482,6 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
     protected abstract DataProvider<T> getDataProvider() throws DefaultDataProviderInitializationException;
     protected abstract Class<?> getControllerClass(String resource);
-    protected abstract String getResourceMapping(Class<?> clazz);
 
     protected void setMaxRows(final int maxRows) {
         this.maxRows = maxRows;

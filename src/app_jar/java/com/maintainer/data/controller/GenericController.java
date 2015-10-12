@@ -3,13 +3,12 @@ package com.maintainer.data.controller;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.maintainer.data.model.EntityImpl;
 import com.maintainer.data.model.MyClass;
 import com.maintainer.data.model.Resource;
@@ -20,7 +19,7 @@ import com.maintainer.util.Utils;
 
 public class GenericController<T extends EntityImpl> extends ResourcesController<T> {
 
-    private static final BiMap<String, Class<?>> map = HashBiMap.create();
+    private static final Map<String, Class<?>> map = new LinkedHashMap<String, Class<?>>();
 
     static {
         final File file = Utils.getDatabaseConfigurationFile();
@@ -76,11 +75,6 @@ public class GenericController<T extends EntityImpl> extends ResourcesController
         return map.get(resource);
     }
 
-    @Override
-    public String getResourceMapping(final Class<?> clazz) {
-        return map.inverse().get(clazz);
-    }
-
     public static List<String> getResources() {
         final List<String> resources = new ArrayList<String>();
         for (final Entry<String, Class<?>> e : map.entrySet()) {
@@ -91,5 +85,9 @@ public class GenericController<T extends EntityImpl> extends ResourcesController
 
     public static Class<?> getRegistered(String kind) {
         return map.get(kind);
+    }
+
+    public static void unregister(String key) {
+        map.remove(key);
     }
 }
