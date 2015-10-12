@@ -7,6 +7,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.maintainer.data.controller.GenericController;
+import com.maintainer.data.controller.Resource;
+import com.maintainer.data.model.MapEntityImpl;
+import com.maintainer.data.model.ThreadLocalInfo;
 import com.maintainer.util.Utils;
 
 public class Key implements Comparable<Key>, Serializable {
@@ -73,6 +77,12 @@ public class Key implements Comparable<Key>, Serializable {
     }
 
     public static String getKindName(final Class<?> kind) {
+        if (MapEntityImpl.class.equals(kind)) {
+            String path = ThreadLocalInfo.getInfo().getPath();
+            ArrayList<Resource> resources = Utils.getResources(path);
+            Resource resource = resources.get(resources.size() - 1);
+            return resource.getResource();
+        }
         return kind.getName();
     }
 
@@ -199,7 +209,10 @@ public class Key implements Comparable<Key>, Serializable {
 
         String kind = me.substring(0, firstParen);
         if (kind.indexOf('.') == -1) {
-            kind = Utils.getModelPackageName() + '.' + kind;
+            Class<?> class1 = GenericController.getRegistered(kind);
+            if (!MapEntityImpl.class.equals(class1)) {
+                kind = Utils.getModelPackageName() + '.' + kind;
+            }
         }
 
         String id = me.substring(firstParen + 1);

@@ -25,6 +25,7 @@ import com.maintainer.data.controller.LogoutController;
 import com.maintainer.data.controller.PingController;
 import com.maintainer.data.controller.UserResourceController;
 import com.maintainer.data.model.MyClass;
+import com.maintainer.data.model.ThreadLocalInfo;
 import com.maintainer.data.provider.DataProvider;
 import com.maintainer.data.provider.DataProviderFactory;
 import com.maintainer.data.security.MyCookieAuthenticator;
@@ -215,6 +216,7 @@ public class WebSwitch extends Application {
     @Override
     public void handle(final Request request, final Response response) {
         try {
+            ThreadLocalInfo.getInfo().setPath(request.getOriginalRef().getPath());
             begin(request);
             super.handle(request, response);
             commit(request);

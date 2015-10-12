@@ -1,6 +1,7 @@
 package com.maintainer.data.model;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 
 public class MyField extends EntityImpl {
     private String name;
@@ -17,6 +18,8 @@ public class MyField extends EntityImpl {
     transient private Autocreate autocreate;
     transient private Class<?> type;
     transient private Field field;
+    transient private NotStored notStored;
+    transient private NotIndexed notIndexed;
 
     protected MyField() {}
 
@@ -27,6 +30,8 @@ public class MyField extends EntityImpl {
 
         field.setAccessible(true);
         this.autocreate = field.getAnnotation(Autocreate.class);
+        this.notStored = field.getAnnotation(NotStored.class);
+        this.notIndexed = field.getAnnotation(NotIndexed.class);
     }
 
     public MyField(String name, Class<?> class1) {
@@ -82,15 +87,28 @@ public class MyField extends EntityImpl {
         }
     }
 
-    public Autocreate getAnnotation(Class<Autocreate> class1) {
-        if (field != null) {
-            return field.getAnnotation(class1);
-        }
-        return null;
-    }
-
     public boolean isAutocreate() {
         return autocreate != null;
+    }
+
+    public Autocreate getAutocreate() {
+        return autocreate;
+    }
+
+    public boolean isNotStored() {
+        return notStored != null;
+    }
+
+    public NotStored getNotStored() {
+        return notStored;
+    }
+
+    public boolean isNotIndexed() {
+        return notIndexed != null;
+    }
+
+    public NotIndexed getNotIndexed() {
+        return notIndexed;
     }
 
     public boolean embedded() {
@@ -147,5 +165,12 @@ public class MyField extends EntityImpl {
         }
         if (skip == null) return false;
         return skip;
+    }
+
+    public Type getGenericType() {
+        if (field != null) {
+            return field.getGenericType();
+        }
+        return null;
     }
 }

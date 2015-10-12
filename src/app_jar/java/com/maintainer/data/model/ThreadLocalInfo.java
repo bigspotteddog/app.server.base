@@ -13,6 +13,7 @@ public class ThreadLocalInfo {
 
     private User user;
     private HttpServletRequest req;
+    private String path;
 
     public void setUser(final User user) {
         this.user = user;
@@ -28,6 +29,14 @@ public class ThreadLocalInfo {
 
     public HttpServletRequest getReq() {
         return req;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public String getPath() {
+        return path;
     }
 
     public static ThreadLocalInfo getInfo() {

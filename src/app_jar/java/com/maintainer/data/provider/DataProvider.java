@@ -3,6 +3,8 @@ package com.maintainer.data.provider;
 import java.util.Collection;
 import java.util.List;
 
+import com.maintainer.data.model.MyField;
+
 public interface DataProvider<T> {
     public abstract T get(Key key) throws Exception;
     public abstract List<T> getAll(Class<?> kind) throws Exception;
@@ -16,4 +18,9 @@ public interface DataProvider<T> {
     public abstract Object getId(Object object) throws Exception;
     public abstract void beginTransaction() throws Exception;
     public abstract void commitTransaction() throws Exception;
+
+    public abstract List<MyField> getFields(final Object target) throws Exception;
+    public abstract List<MyField> getFields(final Object target, boolean isRecurse) throws Exception;
+    public abstract void setFieldValue(final Object obj, final MyField f, final Object value) throws IllegalAccessException;
+    public abstract Object getFieldValue(final Object obj, final MyField f) throws IllegalAccessException;
 }

@@ -88,4 +88,8 @@ public class GenericController<T extends EntityImpl> extends ResourcesController
         }
         return resources;
     }
+
+    public static Class<?> getRegistered(String kind) {
+        return map.get(kind);
+    }
 }

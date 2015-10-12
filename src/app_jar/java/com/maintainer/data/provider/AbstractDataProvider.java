@@ -101,22 +101,26 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         }
     }
 
-    protected Object getFieldValue(final Object obj, final MyField f) throws IllegalAccessException {
+    @Override
+    public Object getFieldValue(final Object obj, final MyField f) throws IllegalAccessException {
         f.setAccessible(true);
         final Object value = f.get(obj);
         return value;
     }
 
-    protected void setFieldValue(final Object obj, final MyField f, final Object value) throws IllegalAccessException {
+    @Override
+    public void setFieldValue(final Object obj, final MyField f, final Object value) throws IllegalAccessException {
         f.setAccessible(true);
         f.set(obj, value);
     }
 
-    protected List<MyField> getFields(final Object target) throws Exception {
+    @Override
+    public List<MyField> getFields(final Object target) throws Exception {
         return getFields(target, true);
     }
 
-    protected List<MyField> getFields(final Object target, boolean isRecurse) throws Exception {
+    @Override
+    public List<MyField> getFields(final Object target, boolean isRecurse) throws Exception {
         final Map<String, MyField> fieldMap = new LinkedHashMap<String, MyField>();
         Class<?> clazz = target.getClass();
         while (clazz != null) {
