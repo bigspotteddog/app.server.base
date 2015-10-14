@@ -151,6 +151,7 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
                 json = Utils.getGson().toJson(errorResponse);
             }
 
+            log.info("returning: " + json);
             response = new StringRepresentation(json);
             response.setMediaType(MediaType.APPLICATION_JSON);
             setStatus(status);
@@ -322,12 +323,14 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
     @Post("json")
     public Representation postItem(final Representation rep) throws Exception {
         final Class<?> kind = getType();
+        log.info("kind: " + kind.getName());
         checkReadOnly(kind);
 
         final String incomingJson = rep.getText();
-        System.out.println(incomingJson);
+        log.info("json: " + incomingJson);
 
         final DataProvider<T> service = getDataProvider();
+        log.info("service: " + service.getClass().getName());
 
         Object obj = null;
         if (incomingJson.charAt(0) == '[') {
