@@ -3,6 +3,7 @@ package com.maintainer.data.model;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 
+@SuppressWarnings("serial")
 public class MyField extends EntityImpl {
     private String name;
     private String description;
@@ -172,5 +173,24 @@ public class MyField extends EntityImpl {
             return field.getGenericType();
         }
         return null;
+    }
+
+    @Override
+    public int hashCode() {
+        if (name != null) {
+            return name.hashCode();
+        }
+        return super.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        MyField other = (MyField) obj;
+        if (obj == null) return false;
+
+        if (name != null) {
+            return name.equals(other.name);
+        }
+        return false;
     }
 }
