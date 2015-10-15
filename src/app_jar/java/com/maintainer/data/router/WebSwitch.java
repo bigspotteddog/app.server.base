@@ -28,6 +28,7 @@ import com.maintainer.data.controller.UserDefinedClassController;
 import com.maintainer.data.controller.UserResourceController;
 import com.maintainer.data.model.MapEntityImpl;
 import com.maintainer.data.model.MyClass;
+import com.maintainer.data.model.MyType;
 import com.maintainer.data.model.ThreadLocalInfo;
 import com.maintainer.data.provider.DataProvider;
 import com.maintainer.data.provider.DataProviderFactory;
@@ -123,6 +124,7 @@ public class WebSwitch extends Application {
             GenericController.register(e.getKey(), e.getValue());
         }
         GenericController.register("classes", MyClass.class);
+        GenericController.register("types", MyType.class);
 
         DataProvider<MyClass> dataProvider = (DataProvider<MyClass>) DataProviderFactory.instance().getDataProvider(MyClass.class);
         try {

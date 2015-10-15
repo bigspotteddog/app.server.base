@@ -7,7 +7,6 @@ import java.lang.reflect.Type;
 public class MyField extends EntityImpl {
     private String name;
     private String description;
-    private String typeName;
     private Boolean embedded;
     private Boolean readonly;
     private Boolean create;
@@ -15,6 +14,9 @@ public class MyField extends EntityImpl {
     private Boolean delete;
     private Boolean remote;
     private Boolean skip;
+
+    @Autocreate(create=false, update=false, delete=false, embedded=true)
+    private MyType myType;
 
     transient private Autocreate autocreate;
     transient private Class<?> type;
@@ -38,13 +40,7 @@ public class MyField extends EntityImpl {
     public MyField(String name, Class<?> class1) {
         this.name = name;
         this.type = class1;
-        this.typeName = class1.getName();
-    }
-
-    public MyField(String name, String typeName) throws ClassNotFoundException {
-        this.name = name;
-        this.typeName = typeName;
-        this.type = Class.forName(typeName);
+        this.myType = new MyType(class1);
     }
 
     public String getName() {
@@ -56,9 +52,10 @@ public class MyField extends EntityImpl {
             return type;
         }
 
-        if (typeName != null) {
+        if (myType != null) {
             try {
-                Class<?> class1 = Class.forName(typeName);
+                String className = myType.getClassName();
+                Class<?> class1 = Class.forName(className);
                 type = class1;
                 return class1;
             } catch (ClassNotFoundException e) {
