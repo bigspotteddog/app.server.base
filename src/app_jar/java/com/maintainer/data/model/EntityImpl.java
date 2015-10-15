@@ -11,6 +11,7 @@ import javax.persistence.Transient;
 import com.maintainer.data.provider.AutoCreateVisitor;
 import com.maintainer.data.provider.Key;
 
+@SuppressWarnings("serial")
 @MappedSuperclass
 public class EntityImpl implements EntityBase {
     @NotIndexed @NotStored
