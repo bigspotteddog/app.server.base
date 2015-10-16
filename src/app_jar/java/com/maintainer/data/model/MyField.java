@@ -66,6 +66,10 @@ public class MyField extends EntityImpl {
         return null;
     }
 
+    public MyType getMyType() {
+        return myType;
+    }
+
     public void setAccessible(boolean b) {
         if (field != null) {
             field.setAccessible(b);

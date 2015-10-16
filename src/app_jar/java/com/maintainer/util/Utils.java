@@ -216,6 +216,40 @@ public class Utils {
         return gsonPretty;
     }
 
+    public static Date convertToDate(final String asString) {
+        if (Utils.isEmpty(asString)) return null;
+
+        Date date = null;
+
+        try {
+            date = sdf.parse(asString);
+        } catch (final ParseException e) {
+            try {
+                date = sdf2.parse(asString);
+            } catch (final ParseException e1) {
+                try {
+                    date = sdf3.parse(asString);
+                } catch (final ParseException e2) {
+                    try {
+                        date = sdf4.parse(asString);
+                    } catch (final ParseException e3) {
+                        try {
+                            date = sdf5.parse(asString);
+                        } catch (final ParseException e4) {
+                            try {
+                                final long time = Long.parseLong(asString);
+                                date = new Date(time);
+                            } catch( final Exception e5) {
+                                e5.printStackTrace();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return date;
+    }
+
     public static GsonBuilder getGsonBuilder() {
         // from stackoverflow: http://stackoverflow.com/a/6875295/591203
         final JsonSerializer<Date> dateSerializer = new JsonSerializer<Date>() {
@@ -229,39 +263,11 @@ public class Utils {
         final JsonDeserializer<Date> dateDeserializer = new JsonDeserializer<Date>() {
             @Override
             public Date deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
-                Date date = null;
                 if (json == null) return null;
 
                 final String asString = json.getAsString();
 
-                if (Utils.isEmpty(asString)) return null;
-
-                try {
-                    date = sdf.parse(asString);
-                } catch (final ParseException e) {
-                    try {
-                        date = sdf2.parse(asString);
-                    } catch (final ParseException e1) {
-                        try {
-                            date = sdf3.parse(asString);
-                        } catch (final ParseException e2) {
-                            try {
-                                date = sdf4.parse(asString);
-                            } catch (final ParseException e3) {
-                                try {
-                                    date = sdf5.parse(asString);
-                                } catch (final ParseException e4) {
-                                    try {
-                                        final long time = Long.parseLong(asString);
-                                        date = new Date(time);
-                                    } catch( final Exception e5) {
-                                        e5.printStackTrace();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                Date date = Utils.convertToDate(asString);
                 return date;
             }
         };
@@ -431,6 +437,9 @@ public class Utils {
             }
             value = list;
         } else {
+            if (Date.class.equals(destClass)) {
+                value = convertToDate(value2);
+            }
             value = getConvertedValue(value, destClass, value2);
         }
 
@@ -638,6 +647,7 @@ public class Utils {
      *            an optional class name pattern.
      * @return The classes
      */
+    @SuppressWarnings("rawtypes")
     public static Class<?>[] getClassesInPackage(final String packageName, final String regexFilter) {
         Pattern regex = null;
         if (regexFilter != null) {
