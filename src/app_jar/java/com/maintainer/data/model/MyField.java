@@ -63,7 +63,7 @@ public class MyField extends EntityImpl {
             }
         }
 
-        return null;
+        return MapEntityImpl.class;
     }
 
     public MyType getMyType() {
@@ -90,6 +90,10 @@ public class MyField extends EntityImpl {
     }
 
     public boolean isAutocreate() {
+        if (MapEntityImpl.class == type || type == null) {
+            // Assume autocreate for now.
+            return true;
+        }
         return autocreate != null;
     }
 
