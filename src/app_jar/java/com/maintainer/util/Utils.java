@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.TreeSet;
@@ -71,6 +72,7 @@ import com.maintainer.data.controller.GenericController;
 import com.maintainer.data.controller.Resource;
 import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
+import com.maintainer.data.model.MapEntityImpl;
 import com.maintainer.data.model.User;
 import com.maintainer.data.model.UserBase;
 import com.maintainer.data.provider.Key;
@@ -304,6 +306,22 @@ public class Utils {
             }
         };
 
+        final JsonSerializer<MapEntityImpl> jsonMapEntityImplSerializer = new JsonSerializer<MapEntityImpl>() {
+            @Override
+            public JsonElement serialize(final MapEntityImpl map, final Type typeOfSrc, final JsonSerializationContext context) {
+                JsonObject object = new JsonObject();
+                object.add("id", context.serialize(map.getId()));
+                object.add("identity", context.serialize(map.getIdentity()));
+                for (Entry<String, Object> e : map.entrySet()) {
+                    String key = e.getKey();
+                    Object value = e.getValue();
+
+                    object.add(key, context.serialize(value));
+                }
+                return object;
+            }
+        };
+
         final JsonSerializer<JsonString> jsonStringSerializer = new JsonSerializer<JsonString>() {
             @Override
             public JsonElement serialize(final JsonString string, final Type typeOfSrc, final JsonSerializationContext context) {
@@ -382,6 +400,7 @@ public class Utils {
         .registerTypeAdapter(Date.class, dateDeserializer)
         .registerTypeAdapter(BigDecimal.class, bigDecimalSerializer)
         .registerTypeAdapter(BigDecimal.class, bigDecimalDeserializer)
+        .registerTypeAdapter(MapEntityImpl.class, jsonMapEntityImplSerializer)
         .registerTypeAdapter(JsonString.class, jsonStringDeserializer)
         .registerTypeAdapter(JsonString.class, jsonStringSerializer)
         .registerTypeAdapter(Key.class, keyDeserializer)
