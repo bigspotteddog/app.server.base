@@ -77,12 +77,6 @@ public class Key implements Comparable<Key>, Serializable {
     }
 
     public static String getKindName(final Class<?> kind) {
-        if (MapEntityImpl.class.equals(kind)) {
-            String path = ThreadLocalInfo.getInfo().getPath();
-            ArrayList<Resource> resources = Utils.getResources(path);
-            Resource resource = resources.get(resources.size() - 1);
-            return resource.getResource();
-        }
         return kind.getName();
     }
 
