@@ -130,10 +130,8 @@ public class WebSwitch extends Application {
         try {
             List<MyClass> list = dataProvider.getAll(MyClass.class);
             for (MyClass c : list) {
-                try {
-                    Class.forName(c.getName());
-                } catch (Exception e) {
-                    GenericController.register(c.getName(), MapEntityImpl.class);
+                if (c.getRoute() != null) {
+                    GenericController.register(c.getRoute(), MapEntityImpl.class);
                 }
             }
         } catch (Exception e1) {

@@ -35,10 +35,8 @@ public class UserDefinedClassController extends GenericController<MyClass> {
     }
 
     private void registerPath(MyClass obj) {
-        try {
-            Class.forName(obj.getName());
-        } catch (Exception e) {
-            GenericController.register(obj.getName(), MapEntityImpl.class);
+        if (obj.getRoute() != null) {
+            GenericController.register(obj.getRoute(), MapEntityImpl.class);
         }
     }
 }
