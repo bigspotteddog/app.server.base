@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("serial")
 public class MapEntityImpl extends EntityImpl { //implements Map<String, Object> {
 
     @NotStored @NotIndexed

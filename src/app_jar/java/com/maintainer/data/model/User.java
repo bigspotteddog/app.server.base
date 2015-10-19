@@ -2,6 +2,7 @@ package com.maintainer.data.model;
 
 import javax.persistence.MappedSuperclass;
 
+@SuppressWarnings("serial")
 @MappedSuperclass
 public class User extends EntityImpl implements UserBase {
 

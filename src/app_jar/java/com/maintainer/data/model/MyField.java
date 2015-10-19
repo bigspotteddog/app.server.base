@@ -16,7 +16,7 @@ public class MyField extends EntityImpl {
     private Boolean skip;
 
     @Autocreate(create=false, update=false, delete=false, embedded=true)
-    private MyType myType;
+    private MyClass myClass;
 
     transient private Autocreate autocreate;
     transient private Class<?> type;
@@ -37,10 +37,9 @@ public class MyField extends EntityImpl {
         this.notIndexed = field.getAnnotation(NotIndexed.class);
     }
 
-    public MyField(String name, Class<?> class1) {
+    public MyField(final String name, final Class<?> type) {
         this.name = name;
-        this.type = class1;
-        this.myType = new MyType(class1);
+        this.type = type;
     }
 
     public String getName() {
@@ -52,22 +51,24 @@ public class MyField extends EntityImpl {
             return type;
         }
 
-        if (myType != null) {
-            try {
-                String className = myType.getClassName();
-                Class<?> class1 = Class.forName(className);
-                type = class1;
-                return class1;
-            } catch (ClassNotFoundException e) {
-                // ignored
-            }
+        if (myClass != null) {
+                String className = myClass.getBaseClassName();
+                if (className != null) {
+                    try {
+                        Class<?> class1 = Class.forName(className);
+                        type = class1;
+                        return class1;
+                    } catch (ClassNotFoundException e) {
+                        // ignored
+                    }
+                }
         }
 
         return MapEntityImpl.class;
     }
 
-    public MyType getMyType() {
-        return myType;
+    public MyClass getMyClass() {
+        return myClass;
     }
 
     public void setAccessible(boolean b) {

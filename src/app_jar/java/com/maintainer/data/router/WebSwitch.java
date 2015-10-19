@@ -220,6 +220,7 @@ public class WebSwitch extends Application {
         }
     }
 
+    @SuppressWarnings("rawtypes")
     protected Class<? extends GenericController> getGenericControllerClass() {
         return GenericController.class;
     }
