@@ -204,7 +204,7 @@ public class Key implements Comparable<Key>, Serializable {
         String kind = me.substring(0, firstParen);
         if (kind.indexOf('.') == -1) {
             Class<?> class1 = GenericController.getRegistered(kind);
-            if (!MapEntityImpl.class.equals(class1)) {
+            if (class1 != null && !MapEntityImpl.class.equals(class1)) {
                 kind = Utils.getModelPackageName() + '.' + kind;
             }
         }
