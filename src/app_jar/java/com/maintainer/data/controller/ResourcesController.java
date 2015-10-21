@@ -699,7 +699,8 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         query.filter(key, Utils.convert(value, field.getType()));
     }
 
-    protected MyField getField(final Resource resource, final String fieldName) throws Exception, InvalidResourceException {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    protected MyField getField(final Resource resource, final String fieldName) throws Exception {
         final Class<?> clazz = getResourceClass(resource);
         DataProvider dataProvider = DataProviderFactory.instance().getDataProvider(clazz);
         MyField field = dataProvider.getField(clazz, fieldName);

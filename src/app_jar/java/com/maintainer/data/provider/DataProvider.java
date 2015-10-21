@@ -20,10 +20,10 @@ public interface DataProvider<T> {
     public abstract void beginTransaction() throws Exception;
     public abstract void commitTransaction() throws Exception;
 
-    public abstract MyField getField(final Class<?> clazz, final String fieldName);
-    public abstract MyField getField(final String className, final String fieldName);
-    public abstract Map<String, MyField> getFieldsAsMap(final Object target, boolean isRecurse);
-    public abstract Map<String, MyField> getFieldsAsMap(final Class<?> clazz, final boolean isRecurse);
+    public abstract MyField getField(final Class<?> clazz, final String fieldName) throws Exception;
+    public abstract MyField getField(final String className, final String fieldName) throws Exception;
+    public abstract Map<String, MyField> getFieldsAsMap(final Object target, boolean isRecurse) throws Exception;
+    public abstract Map<String, MyField> getFieldsAsMap(final Class<?> clazz, final boolean isRecurse) throws Exception;
     public abstract List<MyField> getFields(final Object target) throws Exception;
     public abstract List<MyField> getFields(final Object target, boolean isRecurse) throws Exception;
     public abstract void setFieldValue(final Object obj, final MyField f, final Object value) throws IllegalAccessException;

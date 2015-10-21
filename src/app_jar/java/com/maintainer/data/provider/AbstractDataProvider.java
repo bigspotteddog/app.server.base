@@ -125,12 +125,12 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         return new ArrayList<MyField>(fieldMap.values());
     }
 
-    public Map<String, MyField> getFieldsAsMap(final Object target, final boolean isRecurse) {
+    public Map<String, MyField> getFieldsAsMap(final Object target, final boolean isRecurse) throws Exception {
         Class<?> clazz = target.getClass();
         return getFieldsAsMap(clazz, isRecurse);
     }
 
-    public Map<String, MyField> getFieldsAsMap(final Class<?> clazz, final boolean isRecurse) {
+    public Map<String, MyField> getFieldsAsMap(final Class<?> clazz, final boolean isRecurse) throws Exception {
         final Map<String, MyField> fieldMap = new LinkedHashMap<String, MyField>();
         Class<?> class1 = clazz;
         while (class1 != null) {
@@ -177,6 +177,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         return target;
     }
 
+    @SuppressWarnings("unchecked")
     protected void autocreateFromField(final EntityBase target, final T existing, final MyField f) {
         boolean isAutocreate = f.isAutocreate();
         boolean isEmbedded = f.embedded();
