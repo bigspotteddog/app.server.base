@@ -939,8 +939,12 @@ public class Utils {
     }
 
     public static EntityImpl getKeyedOnly(final Key key) throws Exception {
-        final Class<?> forName = Class.forName(key.getKindName());
-        final Constructor<?> constructor = forName.getDeclaredConstructor(NO_ARGS);
+        final Class<?> class1 = Class.forName(key.getKindName());
+        return getKeyedOnly(class1, key);
+    }
+
+    public static EntityImpl getKeyedOnly(final Class<?> class1, final Key key) throws Exception {
+        final Constructor<?> constructor = class1.getDeclaredConstructor(NO_ARGS);
         constructor.setAccessible(true);
         final EntityImpl entity = (EntityImpl) constructor.newInstance(NO_PARAMS);
         entity.setId(key.toString());
