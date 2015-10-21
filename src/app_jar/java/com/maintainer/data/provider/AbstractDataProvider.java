@@ -120,11 +120,21 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     }
 
     @Override
-    public List<MyField> getFields(final Object target, boolean isRecurse) throws Exception {
-        final Map<String, MyField> fieldMap = new LinkedHashMap<String, MyField>();
+    public List<MyField> getFields(final Object target, final boolean isRecurse) throws Exception {
+        Map<String, MyField> fieldMap = getFieldsAsMap(target, isRecurse);
+        return new ArrayList<MyField>(fieldMap.values());
+    }
+
+    public Map<String, MyField> getFieldsAsMap(final Object target, final boolean isRecurse) {
         Class<?> clazz = target.getClass();
-        while (clazz != null) {
-            final Field[] fields2 = clazz.getDeclaredFields();
+        return getFieldsAsMap(clazz, isRecurse);
+    }
+
+    public Map<String, MyField> getFieldsAsMap(final Class<?> clazz, final boolean isRecurse) {
+        final Map<String, MyField> fieldMap = new LinkedHashMap<String, MyField>();
+        Class<?> class1 = clazz;
+        while (class1 != null) {
+            final Field[] fields2 = class1.getDeclaredFields();
             for (int i = 0; i < fields2.length; i++) {
                 final Field f = fields2[i];
                 final String name = f.getName();
@@ -139,9 +149,9 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
                 break;
             }
 
-            clazz = clazz.getSuperclass();
+            class1 = class1.getSuperclass();
         }
-        return new ArrayList<MyField>(fieldMap.values());
+        return fieldMap;
     }
 
     @SuppressWarnings("unchecked")

@@ -11,6 +11,7 @@ import com.maintainer.data.commands.HttpRequestCommand;
 import com.maintainer.data.commands.HttpRequestCommand.Method;
 import com.maintainer.data.commands.HttpResponseModel;
 import com.maintainer.data.model.EntityImpl;
+import com.maintainer.data.model.MyField;
 import com.maintainer.data.model.Resource;
 import com.maintainer.data.model.ThreadLocalInfo;
 import com.maintainer.util.ParameterizedTypeImpl;
@@ -189,5 +190,13 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
         String path = resource.name();
         String root = host + "/data/" + path;
         return root;
+    }
+
+    public MyField getField(final Class<?> clazz, final String fieldName) {
+        return null;
+    }
+
+    public MyField getField(final String className, final String fieldName) {
+        return null;
     }
 }

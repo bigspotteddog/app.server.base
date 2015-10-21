@@ -37,6 +37,7 @@ import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
 import com.maintainer.data.model.EntityRemote;
 import com.maintainer.data.model.MapEntityImpl;
+import com.maintainer.data.model.MyField;
 import com.maintainer.data.provider.DataProvider;
 import com.maintainer.data.provider.DataProviderFactory;
 import com.maintainer.data.provider.DefaultDataProviderInitializationException;
@@ -680,7 +681,7 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
     protected Query addFilterToQuery(final Resource resource, final String key, final String fieldName, final Object value, final Query query) throws Exception {
         if (checkFields) {
-            final Field field = getField(resource, fieldName);
+            final MyField field = getField(resource, fieldName);
             if (field != null) {
                 addFilterToQuery(key, value, query, field);
             }
@@ -694,16 +695,14 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         query.filter(key, value);
     }
 
-    protected void addFilterToQuery(final String key, final Object value, final Query query, final Field field) throws Exception {
+    protected void addFilterToQuery(final String key, final Object value, final Query query, final MyField field) throws Exception {
         query.filter(key, Utils.convert(value, field.getType()));
     }
 
-    protected Field getField(final Resource resource, final String fieldName) throws Exception, InvalidResourceException {
+    protected MyField getField(final Resource resource, final String fieldName) throws Exception, InvalidResourceException {
         final Class<?> clazz = getResourceClass(resource);
-        final Field field = Utils.getField(clazz, fieldName);
-        if (!ignoreInvalidFields && field == null) {
-            throw new InvalidResourceException();
-        }
+        DataProvider dataProvider = DataProviderFactory.instance().getDataProvider(clazz);
+        MyField field = dataProvider.getField(clazz, fieldName);
         return field;
     }
 
@@ -725,7 +724,7 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
     protected Class<?> getResourceClass(final Resource resource) throws Exception {
         final Class<?> clazz = getControllerClass(resource.getResource());
         if (clazz == null) {
-            throw new InvalidResourceException();
+            return MapEntityImpl.class;
         }
         return clazz;
     }
