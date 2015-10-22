@@ -308,7 +308,11 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
             obj = postGet((Collection<T>) obj);
         } else {
-            obj = postGet((T) obj);
+            try {
+                obj = postGet((T) obj);
+            } catch (ClassCastException e) {
+                // ignore
+            }
         }
         return obj;
     }
@@ -601,10 +605,11 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         return target;
     }
 
-    private Object getFieldValue(final Object obj, final String fieldName) throws IllegalAccessException, InvalidResourceException {
+    private Object getFieldValue(final Object obj, final String fieldName) throws Exception {
         Object value = null;
 
-        final Field field = Utils.getField(obj, fieldName);
+        Class clazz = obj.getClass();
+        final MyField field = getField(clazz, fieldName);
 
         if (field == null) {
             throw new InvalidResourceException("Field " + fieldName + " not found.");
@@ -612,7 +617,10 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
         if (field != null) {
             field.setAccessible(true);
-            value = field.get(obj);
+            DataProvider dataProvider = DataProviderFactory.instance().getDataProvider(clazz);
+            if (dataProvider != null) {
+                value = dataProvider.getFieldValue(obj, field);
+            }
         }
 
         return value;
@@ -702,6 +710,10 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
     @SuppressWarnings({"rawtypes", "unchecked"})
     protected MyField getField(final Resource resource, final String fieldName) throws Exception {
         final Class<?> clazz = getResourceClass(resource);
+        return getField(clazz, fieldName);
+    }
+
+    protected MyField getField(final Class<?> clazz, final String fieldName) throws Exception {
         DataProvider dataProvider = DataProviderFactory.instance().getDataProvider(clazz);
         MyField field = dataProvider.getField(clazz, fieldName);
         return field;
