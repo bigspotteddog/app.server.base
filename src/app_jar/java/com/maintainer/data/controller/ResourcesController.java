@@ -37,6 +37,7 @@ import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
 import com.maintainer.data.model.EntityRemote;
 import com.maintainer.data.model.MapEntityImpl;
+import com.maintainer.data.model.MyClass;
 import com.maintainer.data.model.MyField;
 import com.maintainer.data.provider.DataProvider;
 import com.maintainer.data.provider.DataProviderFactory;
@@ -605,11 +606,24 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         return target;
     }
 
+    @SuppressWarnings("unchecked")
     private Object getFieldValue(final Object obj, final String fieldName) throws Exception {
         Object value = null;
 
-        Class clazz = obj.getClass();
-        final MyField field = getField(clazz, fieldName);
+        MyField field = null;
+        Class<?> clazz = obj.getClass();
+        if (MapEntityImpl.class.equals(clazz)) {
+            MapEntityImpl mapEntityImpl = (MapEntityImpl) obj;
+            Key key = mapEntityImpl.getKey();
+            if (key != null) {
+                String kindName = key.getKindName();
+                Key myClassKey = Key.create(MyClass.class, kindName);
+                DataProvider<MyClass> myClassDataProvider = (DataProvider<MyClass>) DataProviderFactory.instance().getDataProvider(MyClass.class);
+                MyClass myClass = myClassDataProvider.get(myClassKey);
+            }
+        } else {
+            field = getField(clazz, fieldName);
+        }
 
         if (field == null) {
             throw new InvalidResourceException("Field " + fieldName + " not found.");
@@ -617,10 +631,7 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
         if (field != null) {
             field.setAccessible(true);
-            DataProvider dataProvider = DataProviderFactory.instance().getDataProvider(clazz);
-            if (dataProvider != null) {
-                value = dataProvider.getFieldValue(obj, field);
-            }
+            value = Utils.getFieldValue(obj, field);
         }
 
         return value;
@@ -713,9 +724,10 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         return getField(clazz, fieldName);
     }
 
+    @SuppressWarnings("rawtypes")
     protected MyField getField(final Class<?> clazz, final String fieldName) throws Exception {
         DataProvider dataProvider = DataProviderFactory.instance().getDataProvider(clazz);
-        MyField field = dataProvider.getField(clazz, fieldName);
+        MyField field = Utils.getField(clazz, fieldName);
         return field;
     }
 

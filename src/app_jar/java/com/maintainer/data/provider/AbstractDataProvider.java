@@ -85,73 +85,20 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     protected void mergeAny(final Object incoming, final Object existing) throws Exception {
         log.debug("mergeAny");
 
-        final List<MyField> fields = getFields(incoming);
+        final List<MyField> fields = Utils.getFields(incoming);
         for (final MyField f : fields) {
-            final Object value = getFieldValue(incoming, f);
+            final Object value = Utils.getFieldValue(incoming, f);
             if (value != null) {
                 log.debug(f.getName() + " = " + value);
-                setFieldValue(existing, f, value);
+                Utils.setFieldValue(existing, f, value);
             } else {
-                final Object value2 = getFieldValue(existing, f);
+                final Object value2 = Utils.getFieldValue(existing, f);
                 if (value2 != null) {
                     log.debug("clearing " + f.getName() + " = " + value);
-                    setFieldValue(existing, f, null);
+                    Utils.setFieldValue(existing, f, null);
                 }
             }
         }
-    }
-
-    @Override
-    public Object getFieldValue(final Object obj, final MyField f) throws IllegalAccessException {
-        f.setAccessible(true);
-        final Object value = f.get(obj);
-        return value;
-    }
-
-    @Override
-    public void setFieldValue(final Object obj, final MyField f, final Object value) throws IllegalAccessException {
-        f.setAccessible(true);
-        f.set(obj, value);
-    }
-
-    @Override
-    public List<MyField> getFields(final Object target) throws Exception {
-        return getFields(target, true);
-    }
-
-    @Override
-    public List<MyField> getFields(final Object target, final boolean isRecurse) throws Exception {
-        Map<String, MyField> fieldMap = getFieldsAsMap(target, isRecurse);
-        return new ArrayList<MyField>(fieldMap.values());
-    }
-
-    public Map<String, MyField> getFieldsAsMap(final Object target, final boolean isRecurse) throws Exception {
-        Class<?> clazz = target.getClass();
-        return getFieldsAsMap(clazz, isRecurse);
-    }
-
-    public Map<String, MyField> getFieldsAsMap(final Class<?> clazz, final boolean isRecurse) throws Exception {
-        final Map<String, MyField> fieldMap = new LinkedHashMap<String, MyField>();
-        Class<?> class1 = clazz;
-        while (class1 != null) {
-            final Field[] fields2 = class1.getDeclaredFields();
-            for (int i = 0; i < fields2.length; i++) {
-                final Field f = fields2[i];
-                final String name = f.getName();
-
-                final MyField myField = new MyField(f);
-                if (!fieldMap.containsKey(name)) {
-                    fieldMap.put(name, myField);
-                }
-            }
-
-            if (!isRecurse) {
-                break;
-            }
-
-            class1 = class1.getSuperclass();
-        }
-        return fieldMap;
     }
 
     @SuppressWarnings("unchecked")
@@ -169,7 +116,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
             existing = get(target.getKey());
         }
 
-        final List<MyField> fields = getFields(target, false);
+        final List<MyField> fields = Utils.getFields(target, false);
         for (final MyField f : fields) {
             autocreateFromField(target, existing, f);
         }
@@ -188,7 +135,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
                 if (value != null) {
                     if (EntityBase.class.isAssignableFrom(value.getClass())) {
                         final EntityBase entity = (EntityBase) value;
-                        setFieldValue(target, f, createOrUpdate(entity, f.readonly(), f.create(), f.update()));
+                        Utils.setFieldValue(target, f, createOrUpdate(entity, f.readonly(), f.create(), f.update()));
                     } else if (Collection.class.isAssignableFrom(value.getClass())) {
                         final List<Object> list = new ArrayList<Object>();
                         if (value != null) {
@@ -240,11 +187,11 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
             return null;
         }
 
-        final List<MyField> fields = getFields(target, false);
+        final List<MyField> fields = Utils.getFields(target, false);
         for (final MyField f : fields) {
             if (f.isAutocreate()) {
                 try {
-                    final Object object = getFieldValue(target, f);
+                    final Object object = Utils.getFieldValue(target, f);
                     delete(object, f.embedded(), f.readonly(), f.delete());
                 } catch (final Exception e) {
                     throw new RuntimeException(e);

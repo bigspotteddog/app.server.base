@@ -24,15 +24,18 @@ import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -73,9 +76,15 @@ import com.maintainer.data.controller.Resource;
 import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
 import com.maintainer.data.model.MapEntityImpl;
+import com.maintainer.data.model.MyClass;
+import com.maintainer.data.model.MyField;
+import com.maintainer.data.model.ThreadLocalInfo;
 import com.maintainer.data.model.User;
 import com.maintainer.data.model.UserBase;
+import com.maintainer.data.provider.DataProvider;
+import com.maintainer.data.provider.DataProviderFactory;
 import com.maintainer.data.provider.Key;
+import com.maintainer.data.provider.Query;
 import com.maintainer.data.router.WebSwitch;
 
 public class Utils {
@@ -560,10 +569,10 @@ public class Utils {
         return resources;
     }
 
-    public static Class<?> getKeyType(Class<?> clazz, final String key) {
+    public static Class<?> getKeyType(Class<?> clazz, final String key) throws Exception {
         final String[] split = key.split("\\.");
         for (final String fieldName : split) {
-            final Field field = getField(clazz, fieldName);
+            final MyField field = Utils.getField(clazz, fieldName);
             if (field != null) {
                 clazz = field.getType();
                 if (Collection.class.isAssignableFrom(clazz)) {
@@ -576,56 +585,6 @@ public class Utils {
             }
         }
         return clazz;
-    }
-
-    public static Object getFieldValue(final EntityBase target, final String f) throws Exception {
-        final Field field = getField(target, f);
-        field.setAccessible(true);
-        final Object value = field.get(target);
-        return value;
-    }
-
-    public static Field getField(final Object obj, final String fieldName) {
-        final Class<?> clazz = obj.getClass();
-        final Field field = getField(clazz, fieldName);
-        return field;
-    }
-
-    public static Field getField(final Class<?> clazz, final String name) {
-        Field field = null;
-        try {
-            field = clazz.getDeclaredField(name);
-        } catch (final NoSuchFieldException e) {
-            if (field == null) {
-                final Class<?> superclass = clazz.getSuperclass();
-                if (superclass != null) {
-                    field = getField(superclass, name);
-                }
-            }
-        }
-        return field;
-    }
-
-    public static List<Field> getFields(final Object target) {
-        final List<Field> fields = new ArrayList<Field>();
-        Class<?> clazz = target.getClass();
-        while (clazz != null) {
-            final Field[] fields2 = clazz.getDeclaredFields();
-            fields.addAll(Lists.newArrayList(fields2));
-            clazz = clazz.getSuperclass();
-        }
-        return fields;
-    }
-
-    public static List<Field> getFields(final Class<?> clazz0) {
-        final List<Field> fields = new ArrayList<Field>();
-        Class<?> clazz = clazz0;
-        while (clazz != null) {
-            final Field[] fields2 = clazz.getDeclaredFields();
-            fields.addAll(Lists.newArrayList(fields2));
-            clazz = clazz.getSuperclass();
-        }
-        return fields;
     }
 
     public static Class<? extends ServerResource> getTargetServerResource(final WebSwitch router, final Request request) {
@@ -1078,5 +1037,131 @@ public class Utils {
     public static String convertStreamToString(final InputStream is) {
         final java.util.Scanner s = new Scanner(is).useDelimiter("\\A");
         return s.hasNext() ? s.next() : "";
+    }
+
+    public static Object getFieldValue(final Object obj, final String fieldName) throws Exception {
+        MyField field = getField(obj, fieldName);
+        return getFieldValue(obj, field);
+    }
+
+    public static Object getFieldValue(final Object obj, final MyField field) throws Exception {
+        field.setAccessible(true);
+
+        if (MapEntityImpl.class.isAssignableFrom(obj.getClass())) {
+            MapEntityImpl mapEntityImpl = (MapEntityImpl) obj;
+            return mapEntityImpl.get(field.getName());
+        }
+
+        final Object value = field.get(obj);
+        return value;
+    }
+
+    public static void setFieldValue(final Object obj, final MyField field, final Object value) throws IllegalAccessException {
+        field.setAccessible(true);
+
+        if (MapEntityImpl.class.isAssignableFrom(obj.getClass())) {
+            MapEntityImpl mapEntityImpl = (MapEntityImpl) obj;
+            mapEntityImpl.set(field.getName(), value);
+
+        } else {
+            field.set(obj, value);
+        }
+    }
+
+    public static MyField getField(final Object obj, final String fieldName) throws Exception {
+        Class<?> clazz = obj.getClass();
+        return getField(clazz, fieldName);
+    }
+
+    public static MyField getField(final Class<?> clazz, final String fieldName) throws Exception {
+        Map<String, MyField> fields = getFieldsAsMap(clazz, true);
+        return fields.get(fieldName);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<MyField> getFields(final Object target) throws Exception {
+        return getFields(target, true);
+    }
+
+    public static List<MyField> getFields(final Object target, final boolean isRecurse) throws Exception {
+        Map<String, MyField> fieldMap = getFieldsAsMap(target, isRecurse);
+        return new ArrayList<MyField>(fieldMap.values());
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<MyField> getFields(final String className) throws Exception {
+        com.maintainer.data.provider.Key key = com.maintainer.data.provider.Key.create(MyClass.class, className);
+        DataProvider<MyClass> myClassDataProvider = (DataProvider<MyClass>) DataProviderFactory.instance().getDataProvider(MyClass.class);
+        MyClass myClass = myClassDataProvider.get(key);
+        if (myClass != null) {
+            List<MyField> fields = myClass.getFields();
+            return fields;
+        }
+        return Collections.<MyField>emptyList();
+    }
+
+    public static Map<String, MyField> getFieldsAsMap(final Object target, final boolean isRecurse) throws Exception {
+        Class<?> clazz = target.getClass();
+        return getFieldsAsMap(clazz, isRecurse);
+    }
+
+    public static Map<String, MyField> getFieldsAsMap(final Class<?> clazz, final boolean isRecurse) throws Exception {
+        final Map<String, MyField> fieldMap = new LinkedHashMap<String, MyField>();
+        Class<?> class1 = clazz;
+        while (class1 != null) {
+            final Field[] fields2 = class1.getDeclaredFields();
+            for (int i = 0; i < fields2.length; i++) {
+                final Field f = fields2[i];
+                final String name = f.getName();
+
+                final MyField myField = new MyField(f);
+                if (!fieldMap.containsKey(name)) {
+                    fieldMap.put(name, myField);
+                }
+            }
+
+            if (!isRecurse) {
+                break;
+            }
+
+            class1 = class1.getSuperclass();
+        }
+
+        if (MapEntityImpl.class.isAssignableFrom(clazz)) {
+            String path = ThreadLocalInfo.getInfo().getPath();
+            MyClass myClass = getMyClassFromPath(path);
+            List<MyField> fields = myClass.getFields();
+            for (MyField field : fields) {
+                String fieldName = field.getName();
+                fieldMap.remove(fieldName);
+                fieldMap.put(fieldName, field);
+            }
+        }
+
+        return fieldMap;
+    }
+
+    public static String getKindName(final Class<?> clazz) throws Exception {
+        if (MapEntityImpl.class.isAssignableFrom(clazz)) {
+            String path = ThreadLocalInfo.getInfo().getPath();
+            MyClass myClass = getMyClassFromPath(path);
+            return myClass.getName();
+        }
+
+        return com.maintainer.data.provider.Key.getKindName(clazz);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static MyClass getMyClassFromPath(final String path) throws Exception {
+        String[] split = path.split("/");
+        String route = split[2];
+        DataProvider<MyClass> myClassDataProvider = (DataProvider<MyClass>) DataProviderFactory.instance().getDataProvider(MyClass.class);
+        Query q = new Query(MyClass.class);
+        q.filter("route", route);
+        List<MyClass> list = myClassDataProvider.find(q);
+        if (list.size() == 1) {
+            return list.get(0);
+        }
+        return null;
     }
 }

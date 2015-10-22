@@ -46,7 +46,7 @@ public class Key implements Comparable<Key>, Serializable {
             try {
                 kind = Class.forName(kindName);
             } catch (final Exception e) {
-                e.printStackTrace();
+                // ignored
             }
         }
         return kind;
@@ -142,6 +142,10 @@ public class Key implements Comparable<Key>, Serializable {
 
     public static Key create(final Class<?> kind, final Object id, final Key parent) {
         return create(kind.getName(), id, parent);
+    }
+
+    public static Key create(final String kind, final Object id) {
+        return create(kind, id, null);
     }
 
     public static Key create(final String kind, final Object id, final Key parent) {
