@@ -616,10 +616,8 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
             MapEntityImpl mapEntityImpl = (MapEntityImpl) obj;
             Key key = mapEntityImpl.getKey();
             if (key != null) {
-                String kindName = key.getKindName();
-                Key myClassKey = Key.create(MyClass.class, kindName);
-                DataProvider<MyClass> myClassDataProvider = (DataProvider<MyClass>) DataProviderFactory.instance().getDataProvider(MyClass.class);
-                MyClass myClass = myClassDataProvider.get(myClassKey);
+                String className = key.getKindName();
+                field = Utils.getField(className, fieldName);
             }
         } else {
             field = getField(clazz, fieldName);

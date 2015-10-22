@@ -1078,6 +1078,11 @@ public class Utils {
         return fields.get(fieldName);
     }
 
+    public static MyField getField(final String className, final String fieldName) throws Exception {
+        Map<String, MyField> fields = getFieldsAsMap(className);
+        return fields.get(fieldName);
+    }
+
     @SuppressWarnings("unchecked")
     public static List<MyField> getFields(final Object target) throws Exception {
         return getFields(target, true);
@@ -1105,6 +1110,18 @@ public class Utils {
         return getFieldsAsMap(clazz, isRecurse);
     }
 
+    @SuppressWarnings("unchecked")
+    public static Map<String, MyField> getFieldsAsMap(final String className) throws Exception {
+        final Map<String, MyField> fieldMap = new LinkedHashMap<String, MyField>();
+        MyClass myClass = getMyClass(className);
+        List<MyField> fields = myClass.getFields();
+        for (MyField field : fields) {
+            String fieldName = field.getName();
+            fieldMap.put(fieldName, field);
+        }
+        return fieldMap;
+    }
+
     public static Map<String, MyField> getFieldsAsMap(final Class<?> clazz, final boolean isRecurse) throws Exception {
         final Map<String, MyField> fieldMap = new LinkedHashMap<String, MyField>();
         Class<?> class1 = clazz;
@@ -1130,11 +1147,12 @@ public class Utils {
         if (MapEntityImpl.class.isAssignableFrom(clazz)) {
             String path = ThreadLocalInfo.getInfo().getPath();
             MyClass myClass = getMyClassFromPath(path);
-            List<MyField> fields = myClass.getFields();
-            for (MyField field : fields) {
-                String fieldName = field.getName();
-                fieldMap.remove(fieldName);
-                fieldMap.put(fieldName, field);
+            if (myClass != null) {
+                for (MyField field : myClass.getFields()) {
+                    String key = field.getName();
+                    fieldMap.remove(key);
+                    fieldMap.put(key, field);
+                }
             }
         }
 
@@ -1149,6 +1167,14 @@ public class Utils {
         }
 
         return com.maintainer.data.provider.Key.getKindName(clazz);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static MyClass getMyClass(final String className) throws Exception {
+        DataProvider<MyClass> myClassDataProvider = (DataProvider<MyClass>) DataProviderFactory.instance().getDataProvider(MyClass.class);
+        Key key = Key.create(MyClass.class, className);
+        MyClass myClass = myClassDataProvider.get(key);
+        return myClass;
     }
 
     @SuppressWarnings("unchecked")
