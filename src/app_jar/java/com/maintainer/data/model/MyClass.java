@@ -38,4 +38,18 @@ public class MyClass extends EntityImpl {
     public String getBaseClassName() {
         return baseClassName;
     }
+
+    public Class<?> getType() {
+        if (baseClassName != null) {
+            try {
+                Class<?> clazz = Class.forName(baseClassName);
+                return clazz;
+            } catch (ClassNotFoundException e) {
+                // ignored
+            }
+        } else {
+            return MapEntityImpl.class;
+        }
+        return null;
+    }
 }

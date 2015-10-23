@@ -696,6 +696,7 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         return query;
     }
 
+    @SuppressWarnings("rawtypes")
     protected Query addFilterToQuery(final Resource resource, final String key, final String fieldName, final Object value, final Query query) throws Exception {
         if (checkFields) {
             final MyField field = getField(resource, fieldName);
@@ -704,6 +705,15 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
                     String[] split = key.split("\\.");
                     if (split.length > 1) {
                         String subField = split[1];
+                        MyClass myClass = field.getMyClass();
+                        MyField field2 = Utils.getField(myClass, subField);
+                        if (field2 != null) {
+                            Query q = new Query(myClass);
+                            addFilterToQuery(field2.getName(), value, q, field2);
+                            DataProvider dataProvider = DataProviderFactory.instance().getDataProvider(field.getType());
+                            List<?> list = find(dataProvider, q);
+                            log.debug(Utils.getGsonPretty().toJson(list));
+                        }
                         // TODO: Issue a query to get the values here.
                         // Change the key and value to be a key or
                         // list of entity keys.
@@ -725,7 +735,14 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
     }
 
     protected void addFilterToQuery(final String key, final Object value, final Query query, final MyField field) throws Exception {
-        query.filter(key, Utils.convert(value, field.getType()));
+        Object value2 = value;
+        if (MapEntityImpl.class.isAssignableFrom(field.getType())) {
+            value2 = Key.fromString(value2.toString());
+        } else {
+            value2 = Utils.convert(value, field.getType());
+        }
+
+        query.filter(key, value2);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

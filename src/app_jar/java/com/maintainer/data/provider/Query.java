@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.google.common.base.Strings;
 import com.maintainer.data.model.Autocreate;
+import com.maintainer.data.model.MyClass;
 import com.maintainer.util.Utils;
 
 
@@ -32,6 +33,7 @@ public class Query {
     public static final String POS = ":pos";
 
 
+    private MyClass myClass;
     private Class<?> kind;
     private final List<Filter> filters = new ArrayList<Filter>();
     private String order;
@@ -49,7 +51,20 @@ public class Query {
         this.kind = kind;
     }
 
+    public Query(final MyClass myClass) {
+        this.myClass = myClass;
+    }
+
+    public Class<?> getType() {
+        Class<?> kind = getKind();
+        if (kind == null) {
+            kind = myClass.getType();
+        }
+        return kind;
+    }
+
     public Query filter(final String condition, Object value) throws Exception {
+        // Class<?> kind = getType();
         final Class<?> kind = getKind();
         final Autocreate annotation = kind.getAnnotation(Autocreate.class);
         if (ID.equals(condition) && (annotation == null || Autocreate.EMPTY.equals(annotation.parent()))) {
@@ -109,7 +124,11 @@ public class Query {
     }
 
     public String getKindName() {
-        return getKind().getSimpleName();
+        // Class<?> kind = getKind();
+        // if (myClass != null) {
+        //     return myClass.getName();
+        // }
+        return kind.getSimpleName();
     }
 
     public void setParent(final Key parent) {

@@ -483,10 +483,6 @@ public class Utils {
             return value;
         }
 
-        if (EntityBase.class.isAssignableFrom(destClass)) {
-            return Key.fromString(incoming);
-        }
-
         try {
             final Method m = destClass.getMethod("valueOf", String.class);
             final int mods = m.getModifiers();
@@ -1087,6 +1083,11 @@ public class Utils {
         return fields.get(fieldName);
     }
 
+    public static MyField getField(final MyClass myClass, final String fieldName) throws Exception {
+        Map<String, MyField> fields = getFieldsAsMap(myClass);
+        return fields.get(fieldName);
+    }
+
     @SuppressWarnings("unchecked")
     public static List<MyField> getFields(final Object target) throws Exception {
         return getFields(target, true);
@@ -1116,8 +1117,12 @@ public class Utils {
 
     @SuppressWarnings("unchecked")
     public static Map<String, MyField> getFieldsAsMap(final String className) throws Exception {
-        final Map<String, MyField> fieldMap = new LinkedHashMap<String, MyField>();
         MyClass myClass = getMyClass(className);
+        return getFieldsAsMap(myClass);
+    }
+
+    public static Map<String, MyField> getFieldsAsMap(final MyClass myClass) throws Exception {
+        final Map<String, MyField> fieldMap = new LinkedHashMap<String, MyField>();
         List<MyField> fields = myClass.getFields();
         for (MyField field : fields) {
             String fieldName = field.getName();
