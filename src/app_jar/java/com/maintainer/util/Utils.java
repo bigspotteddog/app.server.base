@@ -483,6 +483,10 @@ public class Utils {
             return value;
         }
 
+        if (EntityBase.class.isAssignableFrom(destClass)) {
+            return Key.fromString(incoming);
+        }
+
         try {
             final Method m = destClass.getMethod("valueOf", String.class);
             final int mods = m.getModifiers();
