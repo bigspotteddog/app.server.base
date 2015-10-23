@@ -326,6 +326,7 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         return Utils.getResources(request);
     }
 
+    @SuppressWarnings("unchecked")
     @Post("json")
     public Representation postItem(final Representation rep) throws Exception {
         final Class<?> kind = getType();
@@ -340,13 +341,32 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
         Object obj = null;
         if (incomingJson.charAt(0) == '[') {
-            Type t = Utils.getParameterizedListType(kind);
             Gson gson = Utils.getGson();
-            List<T> list = gson.fromJson(incomingJson, t);
-            System.out.println(gson.toJson(list));
-            for (T o : list) {
-                postObject(o);
+
+            List<T> list = null;
+            if (MapEntityImpl.class.isAssignableFrom(kind)) {
+                list = new ArrayList<T>();
+                List<?> list2 = gson.fromJson(incomingJson, Utils.getItemsType());
+                for (Object o : list2) {
+                    String json = gson.toJson(o);
+                    T o2 = service.fromJson(kind, json);
+                    o2 = postObject(o2);
+                    list.add(o2);
+                }
+            } else {
+                Type t = Utils.getParameterizedListType(kind);
+                list = gson.fromJson(incomingJson, t);
+                for (T o : list) {
+                    if (MapEntityImpl.class.isAssignableFrom(kind)) {
+                        String json = gson.toJson(o);
+                        o = service.fromJson(kind, json);
+                    }
+                    postObject(o);
+                }
             }
+
+            System.out.println(gson.toJson(list));
+
             obj = list;
         } else {
             T o = service.fromJson(kind, incomingJson);

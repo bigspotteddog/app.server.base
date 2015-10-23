@@ -1189,6 +1189,9 @@ public class Utils {
         if (MapEntityImpl.class.isAssignableFrom(clazz)) {
             String path = ThreadLocalInfo.getInfo().getPath();
             MyClass myClass = getMyClassFromPath(path);
+            if (myClass == null) {
+                return null;
+            }
             return myClass.getName();
         }
 
