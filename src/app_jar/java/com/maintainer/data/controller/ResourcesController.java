@@ -690,16 +690,26 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
                 f = key.split(":")[0];
                 f = f.split("\\.")[0];
 
-                addFilterToQuery(resource, key, f, value, query);
+                addFilterToQuery(resource.getResource(), key, f, value, query);
             }
         }
         return query;
     }
 
     @SuppressWarnings("rawtypes")
-    protected Query addFilterToQuery(final Resource resource, final String key, final String fieldName, final Object value, final Query query) throws Exception {
+    protected Query addFilterToQuery(final String resource, final String key, final String fieldName, final Object value, final Query query) throws Exception {
         if (checkFields) {
-            final MyField field = getField(resource, fieldName);
+            String route = resource;
+            Class<?> class1 = getControllerClass(route);
+
+            MyField field = null;
+            if (MapEntityImpl.class.isAssignableFrom(class1)) {
+                MyClass myClass = Utils.getMyClassFromRoute(route);
+                field = Utils.getField(myClass, fieldName);
+            } else {
+                field = getField(class1, fieldName);
+            }
+
             if (field != null) {
                 if (EntityBase.class.isAssignableFrom(field.getType())) {
                     String[] split = key.split("\\.");
@@ -709,10 +719,17 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
                         MyField field2 = Utils.getField(myClass, subField);
                         if (field2 != null) {
                             Query q = new Query(myClass);
+                            q.setKeysOnly(true);
                             addFilterToQuery(field2.getName(), value, q, field2);
                             DataProvider dataProvider = DataProviderFactory.instance().getDataProvider(field.getType());
                             List<?> list = find(dataProvider, q);
-                            log.debug(Utils.getGsonPretty().toJson(list));
+                            List<Key> keys = new ArrayList<Key>();
+                            for (Object o : list) {
+                                EntityImpl entityImpl = (EntityImpl) o;
+                                Key key1 = entityImpl.getKey();
+                                keys.add(key1);
+                            }
+                            addFilterToQuery(fieldName +":in", keys, query, field2);
                         }
                         // TODO: Issue a query to get the values here.
                         // Change the key and value to be a key or
@@ -736,8 +753,8 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
 
     protected void addFilterToQuery(final String key, final Object value, final Query query, final MyField field) throws Exception {
         Object value2 = value;
-        if (MapEntityImpl.class.isAssignableFrom(field.getType())) {
-            value2 = Key.fromString(value2.toString());
+        if (EntityBase.class.isAssignableFrom(field.getType())) {
+            value2 = Utils.convert(value, Key.class);
         } else {
             value2 = Utils.convert(value, field.getType());
         }

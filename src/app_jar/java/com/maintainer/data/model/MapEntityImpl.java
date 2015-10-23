@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.maintainer.data.provider.Key;
+
 @SuppressWarnings("serial")
 public class MapEntityImpl extends EntityImpl { //implements Map<String, Object> {
 
@@ -71,5 +73,9 @@ public class MapEntityImpl extends EntityImpl { //implements Map<String, Object>
 
     public Collection<Object> values() {
         return properties.values();
+    }
+
+    public static Key valueOf(final String string) {
+        return Key.fromString(string);
     }
 }

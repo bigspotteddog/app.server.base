@@ -64,19 +64,24 @@ public class Query {
     }
 
     public Query filter(final String condition, Object value) throws Exception {
-        // Class<?> kind = getType();
         final Class<?> kind = getKind();
-        final Autocreate annotation = kind.getAnnotation(Autocreate.class);
-        if (ID.equals(condition) && (annotation == null || Autocreate.EMPTY.equals(annotation.parent()))) {
-            final Key key = Key.create(kind, value);
-            setKey(key);
-        } else {
-            if (ID.equals(condition)) {
-                value = Utils.convert(value, Long.class);
+
+        if (kind != null) {
+            final Autocreate annotation = kind.getAnnotation(Autocreate.class);
+            if (ID.equals(condition) && (annotation == null || Autocreate.EMPTY.equals(annotation.parent()))) {
+                final Key key = Key.create(kind, value);
+                setKey(key);
+                return this;
             }
-            final Filter filter = new Filter(condition, value);
-            filters.add(filter);
         }
+
+        if (ID.equals(condition)) {
+            value = Utils.convert(value, Long.class);
+        }
+
+        final Filter filter = new Filter(condition, value);
+        filters.add(filter);
+
         return this;
     }
 
@@ -124,10 +129,10 @@ public class Query {
     }
 
     public String getKindName() {
-        // Class<?> kind = getKind();
-        // if (myClass != null) {
-        //     return myClass.getName();
-        // }
+        Class<?> kind = getKind();
+        if (kind == null) {
+            return myClass.getName();
+        }
         return kind.getSimpleName();
     }
 

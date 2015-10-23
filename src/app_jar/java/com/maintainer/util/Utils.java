@@ -587,6 +587,20 @@ public class Utils {
         return clazz;
     }
 
+    // TODO: Add support for recursion.
+    public static Class<?> getKeyType(final String className, final String key) throws Exception {
+        Class<?> clazz = null;
+        final String[] split = key.split("\\.");
+        for (final String fieldName : split) {
+            final MyField field = Utils.getField(className, fieldName);
+            if (field != null) {
+                clazz = field.getType();
+            }
+            break;
+        }
+        return clazz;
+    }
+
     public static Class<? extends ServerResource> getTargetServerResource(final WebSwitch router, final Request request) {
         Class<? extends ServerResource> target = null;
 
@@ -898,7 +912,10 @@ public class Utils {
     }
 
     public static EntityImpl getKeyedOnly(final Key key) throws Exception {
-        final Class<?> class1 = Class.forName(key.getKindName());
+        Class<?> class1 = key.getKind();
+        if (class1 == null) {
+            class1 = MapEntityImpl.class;
+        }
         return getKeyedOnly(class1, key);
     }
 
@@ -1186,10 +1203,14 @@ public class Utils {
         return myClass;
     }
 
-    @SuppressWarnings("unchecked")
     public static MyClass getMyClassFromPath(final String path) throws Exception {
         String[] split = path.split("/");
         String route = split[2];
+        return getMyClassFromRoute(route);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static MyClass getMyClassFromRoute(final String route) throws Exception {
         DataProvider<MyClass> myClassDataProvider = (DataProvider<MyClass>) DataProviderFactory.instance().getDataProvider(MyClass.class);
         Query q = new Query(MyClass.class);
         q.filter("route", route);

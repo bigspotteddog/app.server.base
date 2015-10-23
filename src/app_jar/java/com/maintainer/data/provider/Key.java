@@ -274,4 +274,8 @@ public class Key implements Comparable<Key>, Serializable {
 
         return key;
     }
+
+    public static Key valueOf(final String string) {
+        return fromString(string);
+    }
 }
