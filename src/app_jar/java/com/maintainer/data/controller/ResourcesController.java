@@ -700,7 +700,19 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         if (checkFields) {
             final MyField field = getField(resource, fieldName);
             if (field != null) {
-                addFilterToQuery(key, value, query, field);
+                if (EntityBase.class.isAssignableFrom(field.getType())) {
+                    String[] split = key.split("\\.");
+                    if (split.length > 1) {
+                        String subField = split[1];
+                        // TODO: Issue a query to get the values here.
+                        // Change the key and value to be a key or
+                        // list of entity keys.
+                    } else {
+                        addFilterToQuery(key, value, query, field);
+                    }
+                } else {
+                    addFilterToQuery(key, value, query, field);
+                }
             }
         } else {
             addFilterToQuery(key, value, query);
