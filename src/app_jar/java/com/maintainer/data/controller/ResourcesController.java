@@ -626,7 +626,6 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         return target;
     }
 
-    @SuppressWarnings("unchecked")
     private Object getFieldValue(final Object obj, final String fieldName) throws Exception {
         Object value = null;
 
@@ -819,7 +818,7 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
     }
 
     @SuppressWarnings({ "rawtypes" })
-    protected String toJson(final List list) {
+    protected String toJson(final List list) throws Exception {
         List<Object> entities = new ArrayList<Object>();
 
         for (Object entity : list) {
@@ -834,7 +833,7 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         return getGson().toJson(entities);
     }
 
-    protected String toJson(final Object entity) {
+    protected String toJson(final Object entity) throws Exception  {
         Object obj = entity;
         if (MapEntityImpl.class.isAssignableFrom(entity.getClass())) {
             Map<String, Object> map = getMapEntityAsMap(entity);

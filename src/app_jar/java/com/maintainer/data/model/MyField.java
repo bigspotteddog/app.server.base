@@ -3,6 +3,8 @@ package com.maintainer.data.model;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 
+import java.lang.annotation.Annotation;
+
 @SuppressWarnings("serial")
 public class MyField extends EntityImpl {
     private String name;
@@ -198,5 +200,12 @@ public class MyField extends EntityImpl {
             return name.equals(other.name);
         }
         return false;
+    }
+
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        if (field != null) {
+            return field.getAnnotation(annotationClass);
+        }
+        return null;
     }
 }

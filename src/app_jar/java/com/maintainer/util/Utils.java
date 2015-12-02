@@ -28,14 +28,12 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -73,7 +71,6 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import com.maintainer.data.controller.GenericController;
 import com.maintainer.data.controller.Resource;
-import com.maintainer.data.model.EntityBase;
 import com.maintainer.data.model.EntityImpl;
 import com.maintainer.data.model.MapEntityImpl;
 import com.maintainer.data.model.MyClass;
@@ -484,10 +481,20 @@ public class Utils {
         }
 
         try {
-            final Method m = destClass.getMethod("valueOf", String.class);
-            final int mods = m.getModifiers();
-            if (Modifier.isStatic(mods) && Modifier.isPublic(mods)) {
-                value = m.invoke(null, incoming);
+            if (Integer.class.isAssignableFrom(destClass)) {
+                value = new BigDecimal(incoming).intValue();
+            } else if (Double.class.isAssignableFrom(destClass)) {
+                value = new BigDecimal(incoming).doubleValue();
+            } else if (Float.class.isAssignableFrom(destClass)) {
+                value = new BigDecimal(incoming).floatValue();
+            } else if (Long.class.isAssignableFrom(destClass)) {
+                value = new BigDecimal(incoming).longValue();
+            } else {
+                final Method m = destClass.getMethod("valueOf", String.class);
+                final int mods = m.getModifiers();
+                if (Modifier.isStatic(mods) && Modifier.isPublic(mods)) {
+                    value = m.invoke(null, incoming);
+                }
             }
         } catch (final NoSuchMethodException e) {
             if (destClass == Character.class) {
@@ -1086,8 +1093,8 @@ public class Utils {
     }
 
     public static MyField getField(final Object obj, final String fieldName) throws Exception {
-        Class<?> clazz = obj.getClass();
-        return getField(clazz, fieldName);
+        Map<String, MyField> fieldsAsMap = getFieldsAsMap(obj, true);
+        return fieldsAsMap.get(fieldName);
     }
 
     public static MyField getField(final Class<?> clazz, final String fieldName) throws Exception {
@@ -1129,10 +1136,46 @@ public class Utils {
 
     public static Map<String, MyField> getFieldsAsMap(final Object target, final boolean isRecurse) throws Exception {
         Class<?> clazz = target.getClass();
-        return getFieldsAsMap(clazz, isRecurse);
+        final Map<String, MyField> fieldMap = new LinkedHashMap<String, MyField>();
+        Class<?> class1 = clazz;
+        while (class1 != null) {
+            final Field[] fields2 = class1.getDeclaredFields();
+            for (int i = 0; i < fields2.length; i++) {
+                final Field f = fields2[i];
+                final String name = f.getName();
+
+                final MyField myField = new MyField(f);
+                if (!fieldMap.containsKey(name)) {
+                    fieldMap.put(name, myField);
+                }
+            }
+
+            if (!isRecurse) {
+                break;
+            }
+
+            class1 = class1.getSuperclass();
+        }
+
+        if (MapEntityImpl.class.isAssignableFrom(clazz)) {
+            MapEntityImpl mapEntityImpl = (MapEntityImpl) target;
+            MyClass myClass = mapEntityImpl.getMyClass();
+            if (myClass == null) {
+                String path = ThreadLocalInfo.getInfo().getPath();
+                myClass = getMyClassFromPath(path);
+            }
+            if (myClass != null) {
+                for (MyField field : myClass.getFields()) {
+                    String key = field.getName();
+                    fieldMap.remove(key);
+                    fieldMap.put(key, field);
+                }
+            }
+        }
+
+        return fieldMap;
     }
 
-    @SuppressWarnings("unchecked")
     public static Map<String, MyField> getFieldsAsMap(final String className) throws Exception {
         MyClass myClass = getMyClass(className);
         return getFieldsAsMap(myClass);

@@ -5,7 +5,7 @@ import com.maintainer.data.model.EntityImpl;
 
 @SuppressWarnings("serial")
 public class UserEntityImpl extends EntityImpl {
-    @Autocreate(readonly=true)
+    @Autocreate(readonly=true, keysOnly=true)
     private User user;
 
     public void setUser(final User user) {

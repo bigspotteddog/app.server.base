@@ -11,6 +11,9 @@ import com.maintainer.data.provider.Key;
 public class MapEntityImpl extends EntityImpl { //implements Map<String, Object> {
 
     @NotStored @NotIndexed
+    private transient MyClass myClass;
+
+    @NotStored @NotIndexed
     private final LinkedHashMap<String, Object> properties = new LinkedHashMap<String, Object>();
 
     public boolean isIndexed(final Object key) {
@@ -77,5 +80,13 @@ public class MapEntityImpl extends EntityImpl { //implements Map<String, Object>
 
     public static Key valueOf(final String string) {
         return Key.fromString(string);
+    }
+
+    public MyClass getMyClass() {
+        return myClass;
+    }
+
+    public void setMyClass(MyClass myClass) {
+        this.myClass = myClass;
     }
 }
