@@ -462,10 +462,14 @@ public class Utils {
             }
             value = list;
         } else {
-            if (Date.class.equals(destClass)) {
-                value = convertToDate(value2);
+            if (Date.class.equals(destClass) && Date.class.isAssignableFrom(value.getClass())) {
+
+            } else {
+                if (Date.class.equals(destClass)) {
+                    value = convertToDate(value2);
+                }
+                value = getConvertedValue(value, destClass, value2);
             }
-            value = getConvertedValue(value, destClass, value2);
         }
 
         return value;

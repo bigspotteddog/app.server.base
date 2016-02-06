@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import com.maintainer.data.model.EntityImpl;
+import com.maintainer.data.model.MapEntityImpl;
 import com.maintainer.data.model.MyClass;
 import com.maintainer.data.model.Resource;
 import com.maintainer.data.provider.DataProvider;
@@ -72,7 +73,24 @@ public class GenericController<T extends EntityImpl> extends ResourcesController
 
     @Override
     public Class<?> getControllerClass(final String resource) {
-        return map.get(resource);
+        Class<?> class1 = map.get(resource);
+
+        if (class1 == null) {
+            class1 = MapEntityImpl.class;
+//            DataProvider<MyClass> dataProvider = (DataProvider<MyClass>) DataProviderFactory.instance().getDataProvider(MyClass.class);
+//            try {
+//                Query q = new Query(MyClass.class);
+//                q.filter("route", resource);
+//                List<MyClass> list = dataProvider.find(q);
+//                if (!list.isEmpty()) {
+//                    class1 = MapEntityImpl.class;
+//                }
+//            } catch (Exception e1) {
+//                e1.printStackTrace();
+//            }
+        }
+
+        return class1;
     }
 
     public static List<String> getResources() {
