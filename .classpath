@@ -16,6 +16,7 @@
 	<classpathentry kind="lib" path="lib/runtime/gson-2.2.3-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/hibernate-jpa-2.0-api-1.0.1.Final.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/javaee-api-7.0.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/jackson-core-2.7.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="build/app.server.base.jar.build"/>

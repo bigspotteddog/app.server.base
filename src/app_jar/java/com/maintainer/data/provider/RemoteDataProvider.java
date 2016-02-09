@@ -2,6 +2,7 @@ package com.maintainer.data.provider;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,9 +26,14 @@ public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvid
         this.host = host;
     }
 
+    @Override
+    public T get(final com.maintainer.data.provider.Key key, final int depth) throws Exception {
+        return get(key, depth, 0, new HashMap<Key, Object>());
+    }
+
     @SuppressWarnings("unchecked")
     @Override
-    public T get(Key key) throws Exception {
+    public T get(Key key, int depth, int currentDepth, Map<Key, Object> cache) throws Exception {
         HttpServletRequest original = getHttpServletRequest();
         Map<String, List<String>> headers = HttpRequestCommand.getHeaders(original);
 

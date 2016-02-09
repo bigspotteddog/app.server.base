@@ -1,9 +1,8 @@
 package com.maintainer.data.provider;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -24,8 +23,16 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     @Override
     public void commitTransaction() {}
 
+    public int getDefaultDepth() {
+        return Autocreate.MAX_DEPTH;
+    }
+
     @Override
-    public abstract T get(Key key) throws Exception;
+    public T get(Key key) throws Exception {
+        return get(key, getDefaultDepth(), 0, new HashMap<Key, Object>());
+    }
+
+    public abstract T get(Key key, int depth, int currentDepth, Map<Key, Object> cache) throws Exception;
 
     @Override
     public abstract List<T> getAll(Class<?> kind) throws Exception;
@@ -126,7 +133,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
     @SuppressWarnings("unchecked")
     protected void autocreateFromField(final EntityBase target, final T existing, final MyField f) {
-        boolean isAutocreate = f.isAutocreate();
+        boolean isAutocreate = f.hasAutocreate();
         boolean isEmbedded = f.embedded();
 
         if (isAutocreate && !isEmbedded) {
@@ -189,7 +196,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
 
         final List<MyField> fields = Utils.getFields(target, false);
         for (final MyField f : fields) {
-            if (f.isAutocreate()) {
+            if (f.hasAutocreate()) {
                 try {
                     final Object object = Utils.getFieldValue(target, f);
                     delete(object, f.embedded(), f.readonly(), f.delete());

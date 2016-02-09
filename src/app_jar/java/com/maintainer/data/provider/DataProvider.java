@@ -2,12 +2,10 @@ package com.maintainer.data.provider;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-
-import com.maintainer.data.model.MyField;
 
 public interface DataProvider<T> {
     public abstract T get(Key key) throws Exception;
+    public abstract T get(Key key, int depth) throws Exception;
     public abstract List<T> getAll(Class<?> kind) throws Exception;
     public abstract List<T> getAll(final Collection<Key> keysNeeded) throws Exception;
     public abstract T post(T item) throws Exception;

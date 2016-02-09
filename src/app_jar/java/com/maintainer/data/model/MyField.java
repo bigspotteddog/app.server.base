@@ -92,7 +92,7 @@ public class MyField extends EntityImpl {
         }
     }
 
-    public boolean isAutocreate() {
+    public boolean hasAutocreate() {
         if (MapEntityImpl.class == type || type == null) {
             // Assume autocreate for now.
             return true;
@@ -104,7 +104,7 @@ public class MyField extends EntityImpl {
         return autocreate;
     }
 
-    public boolean isNotStored() {
+    public boolean hasNotStored() {
         return notStored != null;
     }
 
@@ -112,7 +112,7 @@ public class MyField extends EntityImpl {
         return notStored;
     }
 
-    public boolean isNotIndexed() {
+    public boolean hasNotIndexed() {
         return notIndexed != null;
     }
 

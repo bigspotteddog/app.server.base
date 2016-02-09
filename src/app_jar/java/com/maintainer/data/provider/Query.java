@@ -31,6 +31,7 @@ public class Query {
     public static final String OFFSET = ":offset";
     public static final String LIMIT = ":limit";
     public static final String POS = ":pos";
+    public static final String DEPTH = ":depth";
 
 
     private MyClass myClass;
@@ -39,6 +40,7 @@ public class Query {
     private String order;
     private int offset;
     private int limit;
+    private int depth = Integer.MAX_VALUE;
     private Key parent;
     private Key key;
     private boolean isKeysOnly;
@@ -122,6 +124,15 @@ public class Query {
 
     public int getLimit() {
         return limit;
+    }
+
+    public Query setDepth(final int depth) {
+        this.depth = depth;
+        return this;
+    }
+
+    public int getDepth() {
+        return depth;
     }
 
     public boolean isOrdered() {

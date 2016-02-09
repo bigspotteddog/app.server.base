@@ -1,5 +1,6 @@
 package com.maintainer.data.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("serial")
@@ -32,6 +33,9 @@ public class MyClass extends EntityImpl {
     }
 
     public List<MyField> getFields() {
+        if (fields == null) {
+            fields = new ArrayList<MyField>();
+        }
         return fields;
     }
 
@@ -51,5 +55,17 @@ public class MyClass extends EntityImpl {
             return MapEntityImpl.class;
         }
         return null;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void addField(MyField field) {
+        getFields().add(field);
+    }
+
+    public void setRoute(String route) {
+        this.route = route;
     }
 }

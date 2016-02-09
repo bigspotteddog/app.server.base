@@ -658,6 +658,10 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
         query.setOffset(value);
     }
 
+    protected void addDepth(final Query query, int value) {
+        query.setDepth(value);
+    }
+
     protected void addLimit(final Query query, int value) {
         query.setLimit(value);
     }
@@ -680,6 +684,10 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
             if (Query.OFFSET.equals(key)) {
                 if (!Strings.isNullOrEmpty(value)) {
                     addOffset(query, Integer.parseInt(value));
+                }
+            } else if (Query.DEPTH.equals(key)) {
+                if (!Strings.isNullOrEmpty(value)) {
+                    addDepth(query, Integer.parseInt(value));
                 }
             } else if (Query.LIMIT.equals(key)) {
                 if (!Strings.isNullOrEmpty(value)) {
