@@ -28,20 +28,20 @@ public class LoginController extends ServerResource {
             identifier = user.getIdentifier();
         }
         final Gson gson = Utils.getGson();
-        final Welcome welcome = new Welcome(identifier);
-        final String json = gson.toJson(welcome);
+        final Ping ping = new Ping(user);
+        final String json = gson.toJson(ping);
         return new JsonRepresentation(json);
     }
 
-    public class Welcome {
-        private String welcome = null;
+    public class Ping {
+        private String username = null;
 
-        public Welcome(final String identifier) {
-            this.welcome = identifier;
+        public Ping(final User user) {
+            this.username = user.getIdentifier();
         }
 
         public String getWelcome() {
-            return welcome;
+            return username;
         }
     }
 }

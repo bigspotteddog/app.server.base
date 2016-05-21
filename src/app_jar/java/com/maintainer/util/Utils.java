@@ -316,14 +316,14 @@ public class Utils {
             @Override
             public JsonElement serialize(final MapEntityImpl map, final Type typeOfSrc, final JsonSerializationContext context) {
                 JsonObject object = new JsonObject();
-                object.add("id", context.serialize(map.getId()));
-                object.add("identity", context.serialize(map.getIdentity()));
                 for (Entry<String, Object> e : map.entrySet()) {
                     String key = e.getKey();
                     Object value = e.getValue();
 
                     object.add(key, context.serialize(value));
                 }
+                object.add("id", context.serialize(map.getId()));
+                object.add("identity", context.serialize(map.getIdentity()));
                 return object;
             }
         };
@@ -1085,6 +1085,10 @@ public class Utils {
     }
 
     public static void setFieldValue(final Object obj, final MyField field, final Object value) throws IllegalAccessException {
+        if (field.isStatic()) {
+            return;
+        }
+
         field.setAccessible(true);
 
         if (MapEntityImpl.class.isAssignableFrom(obj.getClass())) {

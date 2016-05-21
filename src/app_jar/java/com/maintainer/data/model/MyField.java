@@ -1,9 +1,9 @@
 package com.maintainer.data.model;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Type;
-
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 
 @SuppressWarnings("serial")
 public class MyField extends EntityImpl {
@@ -11,7 +11,7 @@ public class MyField extends EntityImpl {
     private String description;
     private Boolean embedded;
     private Boolean readonly;
-    private Boolean create;
+    private Boolean create = true;
     private Boolean update;
     private Boolean delete;
     private Boolean remote;
@@ -207,5 +207,21 @@ public class MyField extends EntityImpl {
             return field.getAnnotation(annotationClass);
         }
         return null;
+    }
+
+    public boolean isFinal() {
+        if (field == null) {
+            return false;
+        }
+        int modifiers = field.getModifiers();
+        return Modifier.isFinal(modifiers);
+    }
+
+    public boolean isStatic() {
+        if (field == null) {
+            return false;
+        }
+        int modifiers = field.getModifiers();
+        return Modifier.isStatic(modifiers);
     }
 }

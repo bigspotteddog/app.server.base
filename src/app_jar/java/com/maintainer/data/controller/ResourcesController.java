@@ -153,7 +153,7 @@ public abstract class ResourcesController<T extends EntityImpl> extends ServerRe
                 json = Utils.getGson().toJson(errorResponse);
             }
 
-            log.info("returning: " + json);
+            // log.info("returning: " + json);
             response = new StringRepresentation(json);
             response.setMediaType(MediaType.APPLICATION_JSON);
             setStatus(status);
