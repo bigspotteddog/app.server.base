@@ -102,7 +102,7 @@ public class Utils {
 
     private static final Logger log = Logger.getLogger(Utils.class.getName());
 
-    public static final String WILDCARD = "*";
+    public static final String WILDCARD = "**";
     public static final String SYSPROP_CONFIG_PATH = "app.database.configuration";
     public static final String SYSPROP_PATH = "app.configuration";
     public static final String ORG_RESTLET_HTTP_HEADERS = "org.restlet.http.headers";
@@ -520,6 +520,9 @@ public class Utils {
      * -type-in-java
      */
     public static boolean isNumeric(final String str) {
+        if (str == null) return false;
+        if (str.trim().isEmpty()) return false;
+
         final NumberFormat formatter = NumberFormat.getInstance();
         final ParsePosition pos = new ParsePosition(0);
         formatter.parse(str, pos);
