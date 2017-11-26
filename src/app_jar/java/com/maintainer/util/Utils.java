@@ -356,6 +356,24 @@ public class Utils {
             }
         };
 
+        final JsonSerializer<Class> classSerializer = new JsonSerializer<Class>() {
+            @Override
+            public JsonElement serialize(final Class class1, final Type typeOfSrc, final JsonSerializationContext context) {
+                return new JsonPrimitive(class1.getName());
+            }
+        };
+
+        final JsonDeserializer<Class> classDeserializer = new JsonDeserializer<Class>() {
+            @Override
+            public Class deserialize(final JsonElement src, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+                try {
+                    return Class.forName(src.toString());
+                } catch (ClassNotFoundException e) {
+                    return null;
+                }
+            }
+        };
+
         final JsonSerializer<UserBase> userSerializer = new JsonSerializer<UserBase>() {
             @Override
             public JsonElement serialize(final UserBase user, final Type typeOfSrc, final JsonSerializationContext context) {
@@ -414,6 +432,8 @@ public class Utils {
         .registerTypeAdapter(User.class, userSerializer)
         .registerTypeAdapter(Double.class, doubleSerializer)
         .registerTypeAdapter(Double.class, doubleDeserializer)
+        .registerTypeAdapter(Class.class, classSerializer)
+        .registerTypeAdapter(Class.class, classDeserializer)
         .serializeSpecialFloatingPointValues();
 
         return builder;

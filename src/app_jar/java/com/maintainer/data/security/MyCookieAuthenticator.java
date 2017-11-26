@@ -11,7 +11,6 @@ import org.restlet.data.ClientInfo;
 import org.restlet.data.CookieSetting;
 import org.restlet.data.MediaType;
 import org.restlet.data.Preference;
-import org.restlet.data.Reference;
 import org.restlet.data.Status;
 import org.restlet.ext.crypto.CookieAuthenticator;
 import org.restlet.resource.ServerResource;
@@ -55,6 +54,7 @@ public class MyCookieAuthenticator extends CookieAuthenticator {
         }
         return super.parseCredentials(cookieValue);
     }
+
 
     @Override
     protected boolean authenticate(final Request request, final Response response) {

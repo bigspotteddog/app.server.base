@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.text.MessageFormat;
 
 @SuppressWarnings("serial")
 public class MyField extends EntityImpl {
@@ -81,14 +82,18 @@ public class MyField extends EntityImpl {
 
     public Object get(Object obj) throws IllegalArgumentException, IllegalAccessException {
         if (field != null) {
-            return field.get(obj);
+            if (field.getDeclaringClass().isAssignableFrom(obj.getClass())) {
+                return field.get(obj);
+            }
         }
         return null;
     }
 
     public void set(Object obj, Object value) throws IllegalArgumentException, IllegalAccessException {
         if (field != null) {
-            field.set(obj, value);
+            if (field.getDeclaringClass().isAssignableFrom(obj.getClass())) {
+                field.set(obj, value);
+            }
         }
     }
 
@@ -202,6 +207,11 @@ public class MyField extends EntityImpl {
         return false;
     }
 
+    @Override
+    public String toString() {
+        return MessageFormat.format("{0} {1}", getName(), getType());
+    }
+
     public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
         if (field != null) {
             return field.getAnnotation(annotationClass);
@@ -223,5 +233,13 @@ public class MyField extends EntityImpl {
         }
         int modifiers = field.getModifiers();
         return Modifier.isStatic(modifiers);
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }
