@@ -74,6 +74,10 @@ public class MyField extends EntityImpl {
         return myClass;
     }
 
+    public void setMyClass(MyClass myClass) {
+        this.myClass = myClass;
+    }
+
     public void setAccessible(boolean b) {
         if (field != null) {
             field.setAccessible(b);
