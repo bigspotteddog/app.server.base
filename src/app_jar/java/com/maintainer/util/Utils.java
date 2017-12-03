@@ -248,7 +248,12 @@ public class Utils {
                                 final long time = Long.parseLong(asString);
                                 date = new Date(time);
                             } catch( final Exception e5) {
-                                e5.printStackTrace();
+                                try {
+                                    final Double time = Double.parseDouble(asString);
+                                    date = new Date(time.longValue());
+                                } catch( final Exception e6) {
+                                    e6.printStackTrace();
+                                }
                             }
                         }
                     }
