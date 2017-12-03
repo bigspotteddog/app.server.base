@@ -20,6 +20,10 @@ public class MapEntityImpl extends EntityImpl { //implements Map<String, Object>
         return true;
     }
 
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
     public void clear() {
         properties.clear();
     }

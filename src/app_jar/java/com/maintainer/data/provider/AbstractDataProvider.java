@@ -119,7 +119,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
     public EntityBase autocreate(final EntityBase target) throws Exception {
 
         T existing = null;
-        if (!target.isNew()) {
+        if (!isNew(target)) {
             existing = get(target.getKey());
         }
 
@@ -129,6 +129,27 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
         }
 
         return target;
+    }
+
+    protected boolean isNew(final EntityBase target) {
+        Key key = target.getKey();
+        if (key == null) {
+            if (target.getId() != null) {
+                key = Key.fromString(target.getId());
+            }
+        }
+        if (key == null) {
+            return true;
+        }
+        try {
+            T existing = get(key);
+            if (existing == null) {
+                return true;
+            }
+        } catch (Exception e) {
+            return true;
+        }
+        return false;
     }
 
     @SuppressWarnings("unchecked")
@@ -245,7 +266,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
             update = classAutocreate == null || classAutocreate.update();
         }
 
-        if (target.isNew() && create) {
+        if (isNew(target) && create) {
             final DataProvider<EntityBase> dataProvider = (DataProvider<EntityBase>) DataProviderFactory.instance().getDataProvider(target.getClass());
             target = dataProvider.post(target);
         } else if (update) {
@@ -281,7 +302,7 @@ public abstract class AbstractDataProvider<T> implements DataProvider<T>, AutoCr
                 for (final Object o : list) {
                     delete(o, isEmbedded, isReadOnly, isDelete);
                 }
-            } else {
+            } else if (EntityBase.class.isAssignableFrom(target.getClass())) {
                 final Object id = ((EntityBase) target).getId();
                 if (id != null) {
                     DataProviderFactory.instance().getDataProvider(target.getClass()).delete(getKey((T) target));

@@ -1196,6 +1196,14 @@ public class Utils {
                 myClass = getMyClassFromPath(path);
             }
             if (myClass != null) {
+                if (!myClass.hasFields()) {
+                    if (mapEntityImpl.getId() != null) {
+                        Key key = Key.fromString(mapEntityImpl.getId());
+                        Map<String, MyField> fieldsAsMap = getFieldsAsMap(key.getKind(), true);
+                        ArrayList<MyField> fields = new ArrayList<MyField>(fieldsAsMap.values());
+                        myClass.setFields(fields);
+                    }
+                }
                 for (MyField field : myClass.getFields()) {
                     String key = field.getName();
                     fieldMap.remove(key);
@@ -1262,6 +1270,9 @@ public class Utils {
     public static String getKindName(final Class<?> clazz) throws Exception {
         if (MapEntityImpl.class.isAssignableFrom(clazz)) {
             String path = ThreadLocalInfo.getInfo().getPath();
+            if (path == null) {
+                return path;
+            }
             MyClass myClass = getMyClassFromPath(path);
             if (myClass == null) {
                 return null;

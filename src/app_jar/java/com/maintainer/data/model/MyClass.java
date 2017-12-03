@@ -68,4 +68,17 @@ public class MyClass extends EntityImpl {
     public void setRoute(String route) {
         this.route = route;
     }
+
+    @Override
+    public String toString() {
+        return name + ": " + route;
+    }
+
+    public boolean hasFields() {
+        return fields != null;
+    }
+
+    public void setFields(ArrayList<MyField> fields) {
+        this.fields = fields;
+    }
 }
