@@ -153,11 +153,14 @@ public class Key implements Comparable<Key>, Serializable {
     }
 
     public static Key fromString(String string) {
+        System.out.println("Key.fromString: " + string); 
         string = Utils.fromEncodedKeyString(string);
+        System.out.println("Key.fromString: " + string); 
         return fromDecodedString(string);
     }
 
     public static Key fromDecodedString(final String string) {
+        System.out.println("Key.fromDecodeString: " + string); 
         final List<String> keys = new ArrayList<String>();
         final char[] incoming = string.toCharArray();
         int parens = 0;
