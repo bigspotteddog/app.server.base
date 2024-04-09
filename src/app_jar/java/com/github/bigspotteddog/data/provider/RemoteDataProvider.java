@@ -1,0 +1,209 @@
+package com.github.bigspotteddog.data.provider;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.github.bigspotteddog.util.ParameterizedTypeImpl;
+import com.github.bigspotteddog.util.Utils;
+import com.github.bigspotteddog.data.commands.HttpRequestCommand;
+import com.github.bigspotteddog.data.commands.HttpResponseModel;
+import com.github.bigspotteddog.data.commands.HttpRequestCommand.Method;
+import com.github.bigspotteddog.data.model.EntityImpl;
+import com.github.bigspotteddog.data.model.MyField;
+import com.github.bigspotteddog.data.model.Resource;
+import com.github.bigspotteddog.data.model.ThreadLocalInfo;
+
+public class RemoteDataProvider<T extends EntityImpl> extends AbstractDataProvider<T> {
+
+    private final String host;
+
+    public RemoteDataProvider(String host) {
+        this.host = host;
+    }
+
+    @Override
+    public T get(final com.github.bigspotteddog.data.provider.Key key, final int depth) throws Exception {
+        return get(key, depth, 0, new HashMap<Key, Object>());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T get(Key key, int depth, int currentDepth, Map<Key, Object> cache) throws Exception {
+        HttpServletRequest original = getHttpServletRequest();
+        Map<String, List<String>> headers = HttpRequestCommand.getHeaders(original);
+
+        Class<?> type = key.getKind();
+        String root = getPath(type);
+        root = root + '/' + key.toString();
+
+        HttpRequestCommand command = getHttpRequestCommand(root, Method.GET, headers);
+        HttpResponseModel resp = command.execute();
+
+        int status = resp.getStatus();
+        byte[] bytes = resp.getBytes();
+        String json = new String(bytes);
+
+        if (status != 200) {
+            throw new Exception(json);
+        }
+
+        T object = (T) Utils.getGson().fromJson(json, type);
+        return object;
+    }
+
+    protected HttpRequestCommand getHttpRequestCommand(String root, Method method, Map<String, List<String>> headers) {
+        HttpRequestCommand command = new HttpRequestCommand(root, method, headers);
+        return command;
+    }
+
+    @Override
+    public List<T> getAll(Class<?> type) throws Exception {
+        HttpServletRequest original = getHttpServletRequest();
+        Map<String, List<String>> headers = HttpRequestCommand.getHeaders(original);
+
+        String root = getPath(type);
+
+        HttpRequestCommand command = getHttpRequestCommand(root, Method.GET, headers);
+        HttpResponseModel resp = command.execute();
+        int status = resp.getStatus();
+        byte[] bytes = resp.getBytes();
+        String json = new String(bytes);
+
+        if (status != 200) {
+            throw new Exception(json);
+        }
+
+        ParameterizedTypeImpl typeImpl = com.github.bigspotteddog.util.Utils.getParameterizedListType(type);
+        List<T> list = Utils.getGson().fromJson(json, typeImpl);
+        return list;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T post(T obj) throws Exception {
+        HttpServletRequest original = getHttpServletRequest();
+        Map<String, List<String>> headers = HttpRequestCommand.getHeaders(original);
+
+        Class<?> type = obj.getClass();
+        String root = getPath(type);
+
+        String body = com.github.bigspotteddog.util.Utils.getGson().toJson(obj);
+
+        headers.put("Content-Type", Arrays.asList("application/json; charset=UTF-8"));
+        Method method = Method.POST;
+        HttpRequestCommand command = getHttpRequestCommand(root, method, headers, body);
+        HttpResponseModel resp = command.execute();
+        int status = resp.getStatus();
+        byte[] bytes = resp.getBytes();
+        String json = new String(bytes);
+
+        if (status != 200) {
+            throw new Exception(json);
+        }
+
+        T obj2 = (T) Utils.getGson().fromJson(json, type);
+        obj.setKey(obj2.getKey());
+        return obj2;
+    }
+
+    protected HttpRequestCommand getHttpRequestCommand(String root, Method method, Map<String, List<String>> headers,
+            String body) {
+        HttpRequestCommand command = getHttpRequestCommand(root, method, headers);
+        command.setBody(body);
+        return command;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T put(T obj) throws Exception {
+        Key key = obj.getKey();
+
+        if (key == null) {
+            throw new Exception("Cannot put an object that has not be previously saved.");
+        }
+
+        HttpServletRequest original = getHttpServletRequest();
+        Map<String, List<String>> headers = HttpRequestCommand.getHeaders(original);
+
+        Class<?> type = obj.getClass();
+        String root = getPath(type);
+        root = root + '/' + key.toString();
+
+        String body = com.github.bigspotteddog.util.Utils.getGson().toJson(obj);
+
+        headers.put("Content-Type", Arrays.asList("application/json; charset=UTF-8"));
+        HttpRequestCommand command = getHttpRequestCommand(root, Method.PUT, headers, body);
+        HttpResponseModel resp = command.execute();
+        int status = resp.getStatus();
+        byte[] bytes = resp.getBytes();
+        String json = new String(bytes);
+
+        if (status != 200) {
+            throw new Exception(json);
+        }
+
+        T obj2 = (T) Utils.getGson().fromJson(json, type);
+        obj.setKey(obj2.getKey());
+        return obj2;
+    }
+
+    @Override
+    public Key delete(Key key) throws Exception {
+        HttpServletRequest original = getHttpServletRequest();
+        Map<String, List<String>> headers = HttpRequestCommand.getHeaders(original);
+
+        Class<?> type = key.getKind();
+        String root = getPath(type);
+        root = root + '/' + key.toString();
+
+        HttpRequestCommand command = getHttpRequestCommand(root, Method.DELETE, headers);
+        HttpResponseModel resp = command.execute();
+        int status = resp.getStatus();
+        byte[] bytes = resp.getBytes();
+        String json = new String(bytes);
+
+        if (status != 200) {
+            throw new Exception(json);
+        }
+
+        return key;
+    }
+
+    @Override
+    public List<T> find(Query query) throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public List<T> getAll(Collection<Key> keys) throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private HttpServletRequest getHttpServletRequest() {
+        ThreadLocalInfo info = ThreadLocalInfo.getInfo();
+        HttpServletRequest req = info.getReq();
+        return req;
+    }
+
+    private String getPath(Class<?> type) {
+        Resource resource = type.getAnnotation(Resource.class);
+        String path = resource.name();
+        String root = host + "/data/" + path;
+        return root;
+    }
+
+    public MyField getField(final Class<?> clazz, final String fieldName) {
+        return null;
+    }
+
+    public MyField getField(final String className, final String fieldName) {
+        return null;
+    }
+}
