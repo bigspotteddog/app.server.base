@@ -4,16 +4,16 @@ import java.io.CharArrayWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.maintainer.data.controller.GenericController;
-import com.maintainer.data.controller.Resource;
 import com.maintainer.data.model.MapEntityImpl;
-import com.maintainer.data.model.ThreadLocalInfo;
 import com.maintainer.util.Utils;
 
 public class Key implements Comparable<Key>, Serializable {
+    private static final Logger log = Logger.getLogger(Key.class.getName());
     private static final String KEY_PATTERN = "([\\w\\.]+\\([^\\)]+\\))";
     private static final long serialVersionUID = -6778571338817109631L;
     transient private Class<?> kind;
@@ -21,7 +21,8 @@ public class Key implements Comparable<Key>, Serializable {
     private String kindName;
     private Object id;
 
-    protected Key() {}
+    protected Key() {
+    }
 
     public Key(final String kind, final Object id) {
         this(kind, id, null);
@@ -105,12 +106,12 @@ public class Key implements Comparable<Key>, Serializable {
 
         if (parent != null) {
             buf
-            .append(parent.asString())
-            .append(':');
+                    .append(parent.asString())
+                    .append(':');
         }
 
-//        final String[] path = kindName.split("\\.");
-//        final String k = path[path.length - 1];
+        // final String[] path = kindName.split("\\.");
+        // final String k = path[path.length - 1];
 
         final boolean isStringId = String.class.isAssignableFrom(id.getClass());
 
@@ -153,11 +154,15 @@ public class Key implements Comparable<Key>, Serializable {
     }
 
     public static Key fromString(String string) {
+        log.info("Key.fromString: " + string);
         string = Utils.fromEncodedKeyString(string);
+        log.info("Key.fromString2: " + string);
         return fromDecodedString(string);
     }
 
     public static Key fromDecodedString(final String string) {
+        log.info("Key.fromDecodedString: " + string);
+
         final List<String> keys = new ArrayList<String>();
         final char[] incoming = string.toCharArray();
         int parens = 0;
@@ -165,24 +170,24 @@ public class Key implements Comparable<Key>, Serializable {
         final CharArrayWriter chars = new CharArrayWriter();
         for (final char c : incoming) {
             switch (c) {
-            case '(':
-                chars.append(c);
-                parens++;
-                break;
-            case ')':
-                chars.append(c);
-                parens--;
-                break;
-            case ':':
-                if (parens == 0) {
-                    keys.add(new String(chars.toCharArray()));
-                    chars.reset();
-                } else {
+                case '(':
                     chars.append(c);
-                }
-                break;
-            default:
-                chars.append(c);
+                    parens++;
+                    break;
+                case ')':
+                    chars.append(c);
+                    parens--;
+                    break;
+                case ':':
+                    if (parens == 0) {
+                        keys.add(new String(chars.toCharArray()));
+                        chars.reset();
+                    } else {
+                        chars.append(c);
+                    }
+                    break;
+                default:
+                    chars.append(c);
             }
         }
 
@@ -241,7 +246,7 @@ public class Key implements Comparable<Key>, Serializable {
         final Matcher m = p.matcher(string);
 
         final List<String> keys = new ArrayList<String>();
-        while(m.find()) {
+        while (m.find()) {
             final String key = m.group();
             keys.add(key);
         }
@@ -260,7 +265,7 @@ public class Key implements Comparable<Key>, Serializable {
             try {
                 final Class<?> kind = Class.forName(className);
                 kindName = kind.getName();
-            } catch(final Exception e) {
+            } catch (final Exception e) {
                 e.printStackTrace();
             }
 
